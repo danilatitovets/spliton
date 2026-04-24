@@ -10,9 +10,6 @@ const appDir = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // Vercel sets `outputFileTracingRoot` for monorepos; Next requires it to match
-  // `turbopack.root`, otherwise Turbopack can resolve native deps incorrectly.
-  outputFileTracingRoot: appDir,
   turbopack: {
     root: appDir,
   },
