@@ -1,0 +1,6 @@
+@layer base {
+  ::selection {
+    background: oklch(0.93 0.03 265);
+    color: oklch(0.16 0.02 265);
+  }
+}
