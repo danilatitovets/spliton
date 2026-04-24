@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.17.1",
   "scripts": {
     "dev": "node scripts/free-dev-ports.cjs 3000 3001 && next dev -p 3000",
     "build": "next build",
