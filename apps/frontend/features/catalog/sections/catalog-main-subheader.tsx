@@ -1,40 +1,27 @@
 "use client";
 
-import { LayoutGrid } from "lucide-react";
-
 import type { CatalogGridView } from "@/types/catalog/page";
 
-import { CatalogViewIconButton } from "../ui/catalog-view-icon-button";
-
 export function CatalogMainSubheader({
-  view,
-  onViewChange,
+  view: _view,
+  onViewChange: _onViewChange,
   resultCount,
+  totalCount,
 }: {
   view: CatalogGridView;
   onViewChange: (v: CatalogGridView) => void;
   resultCount: number;
+  totalCount: number;
 }) {
   return (
     <div className="flex flex-col gap-3 font-mono text-[13px] tabular-nums tracking-tight sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Результат</p>
-        <h2 className="mt-1 font-sans text-lg font-semibold tracking-tight text-white sm:text-xl">
-          Релизы
-          <span className="ml-2 font-mono text-sm font-medium text-zinc-500">· {resultCount}</span>
-        </h2>
+        <h2 className="font-sans text-lg font-semibold tracking-tight text-white sm:text-xl">Релиз</h2>
       </div>
-      <div
-        className="flex w-fit max-w-full shrink-0 items-center gap-0.5 rounded-xl bg-[#111111] p-1 ring-1 ring-white/10 sm:ml-auto"
-        role="toolbar"
-        aria-label="Вид каталога"
-      >
-        <CatalogViewIconButton
-          icon={LayoutGrid}
-          label="Крупная сетка"
-          active={view === "grid"}
-          onClick={() => onViewChange("grid")}
-        />
+      <div className="sm:ml-auto">
+        <div className="inline-flex h-9 items-center rounded-full bg-white px-4 font-sans text-sm font-semibold text-black">
+          Позиций: <span className="ml-1 tabular-nums">{resultCount} / {totalCount}</span>
+        </div>
       </div>
     </div>
   );

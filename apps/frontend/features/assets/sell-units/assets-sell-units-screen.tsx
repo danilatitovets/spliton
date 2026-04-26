@@ -31,7 +31,7 @@ export function AssetsSellUnitsScreen({ row, holding }: Props) {
 
   return (
     <div className="space-y-8 sm:space-y-10">
-      <PayoutsSubpageHero eyebrow="USDT · Holdings · Secondary" title="Продажа units" />
+      <PayoutsSubpageHero eyebrow="USDT · Holdings · Secondary" title="Продажа UNT" />
 
       <section className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(380px,1.15fr)] lg:items-start lg:gap-10">
         <div className="min-w-0 space-y-6 rounded-3xl bg-white px-5 py-6 sm:px-7 sm:py-8">
@@ -50,7 +50,7 @@ export function AssetsSellUnitsScreen({ row, holding }: Props) {
 
           <div>
             <h1 className="text-balance text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
-              Продать units на вторичном рынке
+              Продать UNT на вторичном рынке
             </h1>
             <p className="mt-2 text-[15px] font-medium text-neutral-800 sm:text-base">
               «{row.title}» · {row.artist}
@@ -65,7 +65,7 @@ export function AssetsSellUnitsScreen({ row, holding }: Props) {
             <dl className="mt-3 space-y-2.5 text-[13px]">
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-neutral-500">В вашем портфеле</dt>
-                <dd className="font-mono font-semibold text-neutral-900">{holding.heldUnits.toLocaleString("ru-RU")} units</dd>
+                <dd className="font-mono font-semibold text-neutral-900">{holding.heldUnits.toLocaleString("ru-RU")} UNT</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-neutral-500">Референс цена</dt>

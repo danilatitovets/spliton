@@ -70,7 +70,7 @@ export function ReleaseDetailPerformanceChart({
   subtitle: string;
   seriesByPeriod: Record<ReleaseDetailChartPeriod, number[]>;
   miniStats: { label: string; value: string }[];
-  /** Id релиза в каталоге / обзоре рынка — для ссылки «Купить units», если не задан `buyHref`. */
+  /** Id релиза в каталоге / обзоре рынка — для ссылки «Купить UNT», если не задан `buyHref`. */
   releaseId: string;
   /** Переопределение целевой ссылки (напр. стакан вторичного рынка). */
   buyHref?: string;
@@ -78,7 +78,7 @@ export function ReleaseDetailPerformanceChart({
   buyLabel?: string;
 }) {
   const resolvedBuyHref = buyHref ?? catalogBuyUnitsPath(releaseId);
-  const resolvedBuyLabel = buyLabel ?? "Купить units";
+  const resolvedBuyLabel = buyLabel ?? "Купить UNT";
   const uid = React.useId().replace(/:/g, "");
   const glowId = `release-detail-line-glow-${uid}`;
   const clipId = `release-detail-chart-clip-${uid}`;

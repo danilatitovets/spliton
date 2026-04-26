@@ -60,18 +60,18 @@ export function MarketOverviewFilters({
               aria-controls={isOpen ? `filter-list-${group.id}` : undefined}
               onClick={() => setOpenId((id) => (id === group.id ? null : group.id))}
               className={cn(
-                "flex min-w-29 flex-col items-stretch gap-0.5 rounded-xl bg-white/4 px-3 py-2 text-left transition-colors",
+                "flex min-w-32 flex-col items-stretch gap-0.5 rounded-xl bg-white/4 px-3.5 py-2.5 text-left transition-colors",
                 "hover:bg-white/7",
                 isOpen && "bg-white/9",
               )}
             >
-              <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 {group.label}
               </span>
               <span className="inline-flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-[12px] font-medium text-zinc-100">{current.label}</span>
+                <span className="min-w-0 truncate text-[13px] font-medium text-zinc-100">{current.label}</span>
                 <ChevronDown
-                  className={cn("size-3.5 shrink-0 text-zinc-500 transition-transform", isOpen && "rotate-180")}
+                  className={cn("size-4 shrink-0 text-zinc-500 transition-transform", isOpen && "rotate-180")}
                   aria-hidden
                 />
               </span>
@@ -97,7 +97,7 @@ export function MarketOverviewFilters({
                           setOpenId(null);
                         }}
                         className={cn(
-                          "flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors",
+                          "flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] transition-colors",
                           active
                             ? "bg-white/8 font-medium text-white"
                             : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",

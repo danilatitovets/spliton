@@ -179,7 +179,7 @@ export const activityItems: ActivityItem[] = [
   {
     id: "ac-1",
     date: "18 Apr 2026",
-    type: "Покупка units",
+    type: "Покупка UNT",
     target: "Northline Signal",
     amount: "+420 units",
     status: "completed",

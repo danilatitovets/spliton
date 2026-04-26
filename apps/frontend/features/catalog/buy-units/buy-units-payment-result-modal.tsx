@@ -103,14 +103,14 @@ function downloadReceiptPdf(receipt: BuyUnitsPaymentReceipt) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
   doc.text(`Status: ${statusLabel}`, margin + 16, sectionTop + 46);
-  doc.text(`Network: TRC20`, margin + 16, sectionTop + 64);
-  doc.text(`Asset: USDT`, margin + 16, sectionTop + 82);
+  doc.text(`Settlement: in-platform`, margin + 16, sectionTop + 64);
+  doc.text(`Pricing: per release`, margin + 16, sectionTop + 82);
   doc.text(`Release ID: ${receipt.releaseId}`, margin + 16, sectionTop + 100);
 
   doc.text(`Release: ${receipt.releaseTitle}`, margin + contentWidth / 2 - 8, sectionTop + 46);
   doc.text(`Artist: ${receipt.artist}`, margin + contentWidth / 2 - 8, sectionTop + 64);
   doc.text(`Symbol: ${receipt.symbol}`, margin + contentWidth / 2 - 8, sectionTop + 82);
-  doc.text(`Units bought: ${receipt.units}`, margin + contentWidth / 2 - 8, sectionTop + 100);
+    doc.text(`UNT bought: ${receipt.units}`, margin + contentWidth / 2 - 8, sectionTop + 100);
 
   const tableTop = sectionTop + 146;
   doc.setFont("helvetica", "bold");
@@ -125,10 +125,10 @@ function downloadReceiptPdf(receipt: BuyUnitsPaymentReceipt) {
   doc.text("Value", valueColumnX, tY + 18, { align: "right" });
 
   const rows: Array<[string, string]> = [
-    ["Unit price", `${formatMoney(receipt.unitPriceUsdt)} USDT`],
-    ["Quantity", `${receipt.units} units`],
-    ["Subtotal", `${formatMoney(receipt.totalUsdt)} USDT`],
-    ["Platform fee", "0.00 USDT"],
+    ["Unit price", formatMoney(receipt.unitPriceUsdt)],
+    ["Quantity", `${receipt.units} UNT`],
+    ["Subtotal", formatMoney(receipt.totalUsdt)],
+    ["Platform fee", "0.00"],
   ];
 
   let rowY = tY + 42;
@@ -149,7 +149,7 @@ function downloadReceiptPdf(receipt: BuyUnitsPaymentReceipt) {
   doc.setFontSize(13);
   doc.setTextColor(24, 24, 27);
   doc.text("TOTAL", margin + 12, totalBoxY + 27);
-  doc.text(`${formatMoney(receipt.totalUsdt)} USDT`, valueColumnX - 8, totalBoxY + 27, {
+  doc.text(formatMoney(receipt.totalUsdt), valueColumnX - 8, totalBoxY + 27, {
     align: "right",
   });
 
@@ -157,7 +157,7 @@ function downloadReceiptPdf(receipt: BuyUnitsPaymentReceipt) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.text(
-    "This receipt confirms processing status for a revenue share units purchase on RevShare platform.",
+    "This receipt confirms processing status for a revenue share UNT purchase on RevShare platform.",
     margin,
     pageHeight - 34,
   );
@@ -200,7 +200,7 @@ export function BuyUnitsPaymentResultModal({ open, onOpenChange, receipt }: BuyU
               </Dialog.Title>
               <Dialog.Description className="mt-1 text-[13px] leading-relaxed text-zinc-600">
                 {isApproved
-                  ? "Покупка units успешно создана. Ниже доступен полный чек операции."
+                  ? "Покупка UNT успешно создана. Ниже доступен полный чек операции."
                   : "Платеж не прошел. Проверьте баланс/лимиты и попробуйте снова."}
               </Dialog.Description>
             </div>
@@ -210,9 +210,9 @@ export function BuyUnitsPaymentResultModal({ open, onOpenChange, receipt }: BuyU
             <SummaryRow label="Релиз" value={`${receipt.releaseTitle} · ${receipt.symbol}`} />
             <SummaryRow label="Артист" value={receipt.artist} />
             <SummaryRow label="ID релиза" value={receipt.releaseId} />
-            <SummaryRow label="Количество units" value={receipt.units} />
-            <SummaryRow label="Цена за unit" value={`${formatMoney(receipt.unitPriceUsdt)} USDT`} />
-            <SummaryRow label="Сумма" value={`${formatMoney(receipt.totalUsdt)} USDT`} />
+            <SummaryRow label="Количество UNT" value={receipt.units} />
+            <SummaryRow label="Цена за UNT" value={formatMoney(receipt.unitPriceUsdt)} />
+            <SummaryRow label="Сумма" value={formatMoney(receipt.totalUsdt)} />
             <SummaryRow label="Статус" value={isApproved ? "APPROVED" : "DECLINED"} />
             <SummaryRow label="Дата" value={formatDate(receipt.paidAtIso)} />
             <SummaryRow label="Transaction ID" value={receipt.transactionId} />

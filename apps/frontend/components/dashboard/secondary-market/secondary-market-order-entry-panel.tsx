@@ -148,8 +148,8 @@ export function SecondaryMarketOrderEntryPanel({
   };
 
   const validate = (): string | null => {
-    if (!unitsNum || unitsNum <= 0) return "Укажите количество units.";
-    if (orderMode === "limit" && (!priceNum || priceNum <= 0)) return "Укажите цену за unit.";
+    if (!unitsNum || unitsNum <= 0) return "Укажите количество UNT.";
+    if (orderMode === "limit" && (!priceNum || priceNum <= 0)) return "Укажите цену за UNT.";
     if (side === "buy") {
       if (unitsNum % 1 !== 0) return "Units должны быть целым числом.";
         if (buyDebit > usdtBalance + 1e-6)
@@ -253,7 +253,7 @@ export function SecondaryMarketOrderEntryPanel({
       </div>
 
       <div className="flex items-center justify-between border-b border-white/10 pb-2 font-mono text-[10px]">
-        <span className="text-zinc-600">{side === "buy" ? "Доступно USDT" : "Доступно units (free)"}</span>
+        <span className="text-zinc-600">{side === "buy" ? "Доступно USDT" : "Доступно UNT (free)"}</span>
         <span className="font-semibold text-zinc-200">
           {side === "buy" ? `${formatUsdt(usdtBalance)} USDT` : `${unitsAvailable} u`}
         </span>
@@ -446,7 +446,7 @@ export function SecondaryMarketOrderEntryPanel({
           isSubmitting && "cursor-wait opacity-70",
         )}
       >
-        {isSubmitting ? "Отправка…" : side === "buy" ? "Купить units" : "Продать units"}
+        {isSubmitting ? "Отправка…" : side === "buy" ? "Купить UNT" : "Продать UNT"}
       </button>
       <p className="text-center font-mono text-[9px] leading-relaxed text-zinc-600">{caption}</p>
     </div>

@@ -27,28 +27,36 @@ export function GuideInPageNav() {
   }, []);
 
   return (
-    <nav aria-label="Содержание гида" className="sticky top-28">
-      <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">On this page</div>
-      <ul className="mt-3 space-y-1">
-        {GUIDE_IN_PAGE_NAV.map((item) => {
+    <nav aria-label="На что смотреть по гиду" className="sticky top-24">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">На что смотреть</div>
+      <ol className="mt-2 list-none space-y-0 border-l border-white/10 pl-2.5">
+        {GUIDE_IN_PAGE_NAV.map((item, idx) => {
           const isActive = active === item.id;
           return (
             <li key={item.id}>
               <a
                 href={`#${item.id}`}
                 className={cn(
-                  "block rounded-lg px-2.5 py-1.5 text-[13px] transition-colors",
+                  "flex w-full gap-1.5 rounded-md py-1.5 pl-1.5 pr-1.5 text-left text-[11px] leading-snug transition-[background-color,color,opacity] duration-200 md:text-[12px]",
                   isActive
-                    ? "bg-[#B7F500]/14 font-medium text-[#d4f570]"
-                    : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-200",
+                    ? "bg-zinc-800/75 font-medium text-white"
+                    : "text-zinc-500 hover:bg-white/4 hover:text-zinc-200",
                 )}
               >
-                {item.label}
+                <span
+                  className={cn(
+                    "w-5 shrink-0 pt-px font-mono text-[10px] tabular-nums",
+                    isActive ? "text-white/75" : "text-zinc-600",
+                  )}
+                >
+                  {String(idx + 1).padStart(2, "0")}.
+                </span>
+                <span className="min-w-0">{item.label}</span>
               </a>
             </li>
           );
         })}
-      </ul>
+      </ol>
     </nav>
   );
 }

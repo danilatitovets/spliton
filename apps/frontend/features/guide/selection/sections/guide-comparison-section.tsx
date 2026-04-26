@@ -16,7 +16,7 @@ export function GuideComparisonSection() {
       subtitle="Одинаковый каркас метрик для любого актива каталога — компактная таблица в стиле market screen."
     >
       <div className="overflow-hidden rounded-xl bg-[#111111]">
-        <div className="bg-[#0a0a0a] px-4 py-3 md:px-5">
+        <div className="bg-[#0a0a0a] px-3 py-2 md:px-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-lg bg-[#161616] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
               Market compare
@@ -31,16 +31,16 @@ export function GuideComparisonSection() {
           <table className="w-full min-w-[760px] text-left text-[13px]">
             <thead>
               <tr className="bg-[#0a0a0a] text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                <th className="w-[28%] px-4 py-3 md:px-5">Метрика</th>
-                <th className="w-[24%] px-4 py-3 md:px-5">Midnight Run</th>
-                <th className="w-[24%] px-4 py-3 md:px-5">Glassline</th>
-                <th className="w-[24%] px-4 py-3 md:px-5">Signal / Noise</th>
+                <th className="w-[28%] px-3 py-2 md:px-4">Метрика</th>
+                <th className="w-[24%] px-3 py-2 md:px-4">Midnight Run</th>
+                <th className="w-[24%] px-3 py-2 md:px-4">Glassline</th>
+                <th className="w-[24%] px-3 py-2 md:px-4">Signal / Noise</th>
               </tr>
             </thead>
             <tbody>
               {COMPARISON_ROWS.map(([metric, a, b, c], idx) => (
                 <tr key={metric} className="text-zinc-300 transition-colors hover:bg-white/[0.04]">
-                  <td className="px-4 py-3 text-zinc-500 md:px-5">
+                  <td className="px-3 py-2 text-zinc-500 md:px-4">
                     <div className="flex items-center gap-2">
                       <span className="inline-flex size-5 items-center justify-center rounded-full bg-[#0a0a0a] text-[10px] text-zinc-500">
                         {idx + 1}
@@ -48,9 +48,9 @@ export function GuideComparisonSection() {
                       <span>{metric}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-medium text-zinc-200 md:px-5">{a}</td>
-                  <td className="px-4 py-3 font-medium text-zinc-200 md:px-5">{b}</td>
-                  <td className="px-4 py-3 font-medium text-[#B7F500] md:px-5">{c}</td>
+                  <td className="px-3 py-2 font-medium text-zinc-200 md:px-4">{a}</td>
+                  <td className="px-3 py-2 font-medium text-zinc-200 md:px-4">{b}</td>
+                  <td className="px-3 py-2 font-medium text-[#B7F500] md:px-4">{c}</td>
                 </tr>
               ))}
             </tbody>

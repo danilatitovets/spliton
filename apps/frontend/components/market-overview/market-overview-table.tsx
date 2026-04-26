@@ -68,7 +68,7 @@ export function MarketOverviewTable({
               </th>
               <th className="px-3 py-2.5">
                 <SortHeader
-                  label="Avail. units"
+                  label="Avail. UNT"
                   active={sort === "units"}
                   dir={sort === "units" ? sortDir : "desc"}
                   onClick={() => onSort("units")}

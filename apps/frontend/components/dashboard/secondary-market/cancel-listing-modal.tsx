@@ -28,7 +28,7 @@ function formatUsdt(n: number) {
 }
 
 function sideLabel(side: "buy" | "sell") {
-  return side === "sell" ? "Продажа units" : "Покупка units";
+  return side === "sell" ? "Продажа UNT" : "Покупка UNT";
 }
 
 function modeLabel(mode: "limit" | "market") {
@@ -135,10 +135,10 @@ export function CancelListingModal({ open, onOpenChange, listing, onConfirm }: C
               }
             />
             <SummaryRow
-              label="Цена за unit"
+              label="Цена за UNT"
               value={listing.pricePerUnit != null ? `${formatUsdt(listing.pricePerUnit)} USDT` : "—"}
             />
-            <SummaryRow label="Выставлено units" value={listing.unitsListed} />
+            <SummaryRow label="Выставлено UNT" value={listing.unitsListed} />
             <SummaryRow label="Исполнено" value={listing.unitsFilled} />
             <SummaryRow label="К отмене" value={listing.unitsRemaining} />
             <SummaryRow label="Статус" value={<span className="text-zinc-300">{listing.status}</span>} />

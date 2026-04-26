@@ -12,9 +12,9 @@ type PageProps = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const row = getMarketOverviewRowByCatalogId(id);
-  if (!row) return { title: "Продажа units" };
+  if (!row) return { title: "Продажа UNT" };
   return {
-    title: `${row.symbol} · Продать units`,
+    title: `${row.symbol} · Продать UNT`,
     description: `Выставление units по релизу «${row.title}» с лимитной ценой. Макет кабинета RevShare.`,
     alternates: { canonical: assetsSellUnitsPath(id) },
   };

@@ -20,9 +20,9 @@ export function GuideSectionShell({
   className?: string;
 }) {
   return (
-    <section id={id} data-guide-section className={cn("scroll-mt-28", className)}>
+    <section id={id} data-guide-section className={cn("scroll-mt-24", className)}>
       <GuideSectionHeader title={title} subtitle={subtitle} align={headerAlign} />
-      <div className="mt-8 md:mt-10">{children}</div>
+      <div className="mt-3 md:mt-4">{children}</div>
     </section>
   );
 }

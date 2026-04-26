@@ -10,7 +10,7 @@ export function ReleaseParametersHero() {
 
       <div className="mt-6 max-w-3xl space-y-4 text-sm leading-relaxed text-zinc-400 md:text-base">
         <p>
-          Как читать карточку актива в каталоге: какие поля важны, что означают units и investor share, как понимать
+          Как читать карточку актива в каталоге: какие поля важны, что означают UNT и investor share, как понимать
           raise target, payout model и статус. Это не гид по выбору и не аналитика — только язык карточки релиза.
         </p>
         <p className="text-zinc-500">
@@ -18,7 +18,7 @@ export function ReleaseParametersHero() {
           в каталоге.
         </p>
         <p className="text-xs leading-relaxed text-zinc-600">
-          По модели продукта вы получаете revenue share rights и units в USDT (TRC20): это не ценные бумаги, не
+          По модели продукта вы получаете revenue share rights и UNT в USDT (TRC20): это не ценные бумаги, не
           брокерские инструменты и не гарантированная доходность.
         </p>
       </div>

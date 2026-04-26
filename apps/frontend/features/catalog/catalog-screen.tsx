@@ -42,7 +42,12 @@ export function CatalogScreen() {
         totalCount={totalCount}
         onReset={resetFilters}
       />
-      <CatalogMainArea catalogView={catalogView} onCatalogView={setCatalogView} filtered={filtered} />
+      <CatalogMainArea
+        catalogView={catalogView}
+        onCatalogView={setCatalogView}
+        filtered={filtered}
+        totalCount={totalCount}
+      />
     </div>
   );
 }

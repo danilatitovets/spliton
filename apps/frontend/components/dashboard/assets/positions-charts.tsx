@@ -147,7 +147,7 @@ export function PositionsUnitsTrajectoryChart({ totalUnits }: { totalUnits: numb
           <h3 className="text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">Units в портфеле</h3>
           <p className="text-sm text-neutral-500">Совокупный объём units в текущей выборке</p>
           <p className="font-mono text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 sm:text-[2.25rem]">
-            {headline} <span className="text-base font-sans font-medium text-neutral-400">units</span>
+            {headline} <span className="text-base font-sans font-medium text-neutral-400">UNT</span>
           </p>
         </div>
         <div className="flex rounded-xl bg-neutral-100 p-1" role="tablist" aria-label="Интервал графика">

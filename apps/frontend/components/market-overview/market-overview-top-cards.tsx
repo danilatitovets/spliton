@@ -45,20 +45,20 @@ function CardMetricBlock({
 }) {
   const neg = delta.trim().startsWith("-");
   const deltaSlim = neg
-    ? "font-mono text-[10px] tabular-nums text-fuchsia-400 xl:text-[9px]"
-    : "font-mono text-[10px] tabular-nums text-[#B7F500]/90 xl:text-[9px]";
+    ? "font-mono text-[11px] tabular-nums text-fuchsia-400 xl:text-[10px]"
+    : "font-mono text-[11px] tabular-nums text-[#B7F500]/90 xl:text-[10px]";
   const deltaFull = neg
-    ? "font-mono text-[11px] tabular-nums text-fuchsia-400"
-    : "font-mono text-[11px] tabular-nums text-[#B7F500]/90";
+    ? "font-mono text-[12px] tabular-nums text-fuchsia-400"
+    : "font-mono text-[12px] tabular-nums text-[#B7F500]/90";
   const usdt = splitUsdtMetric(metric);
 
   if (slim && usdt) {
     return (
       <div className="min-w-0 space-y-1">
-        <p className="break-words font-mono text-[12px] font-semibold tabular-nums leading-[1.15] tracking-tight text-white xl:text-[11px]">
+        <p className="break-words font-mono text-[13px] font-semibold tabular-nums leading-[1.15] tracking-tight text-white xl:text-[12px]">
           {usdt.value}
         </p>
-        <p className="font-mono text-[9px] font-medium uppercase tracking-wide text-zinc-500">{usdt.unit}</p>
+        <p className="font-mono text-[10px] font-medium uppercase tracking-wide text-zinc-500">{usdt.unit}</p>
         <p className={deltaSlim}>{delta}</p>
       </div>
     );
@@ -67,7 +67,7 @@ function CardMetricBlock({
   if (slim) {
     return (
       <div className="min-w-0 space-y-1">
-        <p className="break-words font-mono text-[12px] font-semibold tabular-nums leading-[1.15] tracking-tight text-white xl:text-[11px]">
+        <p className="break-words font-mono text-[13px] font-semibold tabular-nums leading-[1.15] tracking-tight text-white xl:text-[12px]">
           {metric}
         </p>
         <p className={deltaSlim}>{delta}</p>
@@ -84,12 +84,12 @@ function CardMetricBlock({
           <p
             className={cn(
               "break-words font-mono font-semibold tabular-nums tracking-tight text-white",
-              expanded ? "text-2xl leading-[1.1] sm:text-[1.7rem]" : "text-lg leading-tight md:text-xl",
+              expanded ? "text-[2.1rem] leading-[1.08] sm:text-[2.2rem]" : "text-xl leading-tight md:text-2xl",
             )}
           >
             {usdtWide.value}
           </p>
-          <span className="shrink-0 font-mono text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+          <span className="shrink-0 font-mono text-[12px] font-medium uppercase tracking-wide text-zinc-500">
             {usdtWide.unit}
           </span>
         </div>
@@ -97,13 +97,13 @@ function CardMetricBlock({
         <p
           className={cn(
             "break-words font-mono font-semibold tabular-nums tracking-tight text-white",
-            expanded ? "text-2xl leading-[1.1] sm:text-[1.7rem]" : "text-lg leading-tight md:text-xl",
+            expanded ? "text-[2.1rem] leading-[1.08] sm:text-[2.2rem]" : "text-xl leading-tight md:text-2xl",
           )}
         >
           {metric}
         </p>
       )}
-      <p className={cn(deltaFull, expanded && "text-[12px]")}>{delta}</p>
+      <p className={cn(deltaFull, expanded && "text-[13px]")}>{delta}</p>
     </div>
   );
 }
@@ -147,7 +147,7 @@ export function MarketOverviewTopCards({ period }: { period: MarketOverviewPerio
               data-expanded={expanded ? "" : undefined}
               onClick={() => toggleCard(def.id)}
               className={cn(
-                "flex min-h-[132px] min-w-0 cursor-pointer flex-col rounded-xl bg-[#111111] px-3 py-3 text-left outline-none transition-[flex-grow,flex-basis,width,max-width,padding,box-shadow] duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]",
+                "flex min-h-[142px] min-w-0 cursor-pointer flex-col rounded-xl bg-[#111111] px-3.5 py-3.5 text-left outline-none transition-[flex-grow,flex-basis,width,max-width,padding,box-shadow] duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]",
                 "hover:bg-white/[0.03] focus-visible:ring-2 focus-visible:ring-[#B7F500]/35",
                 expanded && "ring-1 ring-white/10 xl:min-w-0 xl:flex-1 xl:basis-0 xl:max-w-none",
                 slim && "xl:w-[168px] xl:flex-none xl:shrink-0 xl:px-2.5 xl:py-2.5",
@@ -157,13 +157,13 @@ export function MarketOverviewTopCards({ period }: { period: MarketOverviewPerio
                 <div className="min-w-0 flex-1">
                   <h2
                     className={cn(
-                      "text-[12px] font-semibold leading-tight text-white",
-                      slim && "xl:line-clamp-3 xl:text-[11px] xl:leading-snug",
+                      "text-[14px] font-semibold leading-tight text-white",
+                      slim && "xl:line-clamp-3 xl:text-[12px] xl:leading-snug",
                     )}
                   >
                     {def.title}
                   </h2>
-                  {!slim ? <p className="mt-1 text-[11px] leading-snug text-zinc-500">{def.subtitle}</p> : null}
+                  {!slim ? <p className="mt-1 text-[12px] leading-snug text-zinc-500">{def.subtitle}</p> : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {expanded ? (
@@ -178,7 +178,7 @@ export function MarketOverviewTopCards({ period }: { period: MarketOverviewPerio
                       </button>
                     </span>
                   ) : null}
-                  <span className="font-mono text-[10px] tabular-nums text-zinc-600">{period}</span>
+                  <span className="font-mono text-[11px] tabular-nums text-zinc-600">{period}</span>
                 </div>
               </div>
 
@@ -201,7 +201,7 @@ export function MarketOverviewTopCards({ period }: { period: MarketOverviewPerio
                       href={href}
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
-                      className="pointer-events-auto mt-3 inline-flex items-center gap-0.5 text-[11px] font-medium text-zinc-500 transition-colors hover:text-[#c4f570] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[#B7F500]/35"
+                      className="pointer-events-auto mt-3 inline-flex items-center gap-0.5 text-[12px] font-medium text-zinc-500 transition-colors hover:text-[#c4f570] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[#B7F500]/35"
                     >
                       Подробнее
                       <ChevronRight className="size-3" strokeWidth={2} aria-hidden />

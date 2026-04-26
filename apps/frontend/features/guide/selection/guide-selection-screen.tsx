@@ -15,9 +15,9 @@ import { GuideInPageNav } from "./ui/guide-in-page-nav";
 export function GuideSelectionScreen() {
   return (
     <div className="h-full min-h-0 overflow-auto scroll-smooth bg-black font-sans tabular-nums">
-      <div className="mx-auto w-full max-w-[1400px] px-4 pb-20 pt-2 md:px-6 lg:px-8">
-        <div className="flex gap-10 lg:gap-14 xl:gap-16">
-          <div className="min-w-0 flex-1 space-y-16 md:space-y-20 lg:space-y-24">
+      <div className="mx-auto w-full max-w-[1400px] px-4 pb-12 pt-2 md:px-6 lg:px-8">
+        <div className="flex gap-4 lg:gap-5 xl:gap-6">
+          <div className="min-w-0 flex-1 space-y-5 md:space-y-6 lg:space-y-7">
             <GuideHeroSection />
             <GuideTopicGridSection />
             <GuideChecklistSection />
@@ -30,7 +30,7 @@ export function GuideSelectionScreen() {
             <GuideFaqSection />
           </div>
 
-          <aside className="hidden w-52 shrink-0 xl:block">
+          <aside className="hidden w-[min(17rem,22vw)] shrink-0 xl:block">
             <GuideInPageNav />
           </aside>
         </div>

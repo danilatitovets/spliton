@@ -79,7 +79,7 @@ export const MARKET_FILTER_GROUPS: {
   },
   {
     id: "availability",
-    label: "Units",
+    label: "UNT",
     options: [
       { value: "all", label: "Все" },
       { value: "tight", label: "Мало доступно" },
@@ -117,7 +117,7 @@ export const MARKET_TOP_CARD_DEFS = [
   {
     id: "secondary",
     title: "Активность secondary",
-    subtitle: "Оборот перепродаж units",
+    subtitle: "Оборот перепродаж UNT",
     metricKey: "secondaryVol" as const,
     deltaKey: "secondaryDelta" as const,
     barsKey: "secondaryBars" as const,

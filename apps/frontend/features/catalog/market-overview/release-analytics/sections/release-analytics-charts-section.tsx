@@ -23,7 +23,7 @@ export function ReleaseAnalyticsChartsSection({
           href={catalogBuyUnitsPath(releaseId)}
           className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[#B7F500] px-4 text-[12px] font-semibold text-black transition hover:bg-[#c9ff52] sm:h-10 sm:px-5 sm:text-[13px]"
         >
-          Купить units
+          Купить UNT
         </Link>
       </div>
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">

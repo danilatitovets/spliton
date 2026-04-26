@@ -28,7 +28,7 @@ function formatKRub(v: number) {
 
 function PayoutTrendChart() {
   const w = 440;
-  const h = 220;
+  const h = 180;
   const pad = { t: 18, r: 14, b: 42, l: 46 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
@@ -59,7 +59,7 @@ function PayoutTrendChart() {
     <div className="relative">
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        className="h-[220px] w-full max-w-full"
+        className="h-[180px] w-full max-w-full"
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label="Условный график выплат по месяцам: рост с просадкой в феврале и последняя точка в статусе accrued"
@@ -141,8 +141,8 @@ export function GuidePayoutsSection() {
       title="Как оценивать выплаты"
       subtitle="Тренд по периодам нагляднее таблицы: смотрите ритм, просадки и последнюю точку в статусе accrued vs released."
     >
-      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <div className="rounded-xl bg-[#111111] p-5 md:p-6">
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+        <div className="rounded-xl bg-[#111111] p-4 md:p-5">
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Payout trend · mock</div>
           <PayoutTrendChart />
           <div className="mt-4 overflow-hidden rounded-lg bg-[#0a0a0a]">
@@ -159,8 +159,8 @@ export function GuidePayoutsSection() {
           </div>
         </div>
 
-        <div className="rounded-xl bg-[#111111] px-5 py-5 md:px-6 md:py-6">
-          <div className="space-y-8">
+        <div className="rounded-xl bg-[#111111] px-4 py-4 md:px-5 md:py-5">
+          <div className="space-y-4">
             {CONTEXT.map(([title, body]) => (
               <div key={title}>
                 <div className="text-sm font-semibold text-white">{title}</div>

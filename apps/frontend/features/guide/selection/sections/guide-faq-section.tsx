@@ -19,13 +19,13 @@ export function GuideFaqSection() {
   );
 
   return (
-    <section id="faq" data-guide-section className="scroll-mt-28">
-      <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">FAQ</h2>
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-500 md:text-base">
+    <section id="faq" data-guide-section className="scroll-mt-24">
+      <h2 className="text-xl font-semibold tracking-tight text-white md:text-2xl">FAQ</h2>
+      <p className="mt-2 max-w-2xl text-xs leading-relaxed text-zinc-500 md:text-sm">
         Короткие ответы по выбору релиза и метрикам платформы. Фильтруйте по теме или откройте вопрос строкой ниже.
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {GUIDE_FAQ_FILTERS.map((chip) => {
           const isActive = filter === chip.id;
           return (
@@ -46,16 +46,16 @@ export function GuideFaqSection() {
         })}
       </div>
 
-      <div className="mt-6 space-y-2">
+      <div className="mt-4 space-y-2">
         {visible.length === 0 ? (
-          <p className="rounded-xl bg-[#111111] py-10 text-center text-sm text-zinc-500">В этой категории пока нет вопросов.</p>
+          <p className="rounded-xl bg-[#111111] py-6 text-center text-sm text-zinc-500">В этой категории пока нет вопросов.</p>
         ) : (
           visible.map((item) => (
             <details
               key={`${item.category}-${item.q}`}
               className="group overflow-hidden rounded-xl bg-[#111111] [&_summary::-webkit-details-marker]:hidden"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 transition-colors hover:bg-white/[0.04] md:px-5 md:py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 transition-colors hover:bg-white/4 md:px-4 md:py-3.5">
                 <span className="text-left text-[15px] font-medium leading-snug text-white md:text-base">{item.q}</span>
                 <span
                   className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a] text-white transition-colors group-open:bg-[#B7F500]/14 group-open:text-[#d4f570]"
@@ -65,7 +65,7 @@ export function GuideFaqSection() {
                   <Minus className="hidden size-4 group-open:block" strokeWidth={1.75} />
                 </span>
               </summary>
-              <div className="bg-[#0a0a0a] px-4 pb-4 pt-0 text-sm leading-relaxed text-zinc-500 md:px-5 md:pb-5 md:text-[15px]">
+              <div className="bg-[#0a0a0a] px-3 pb-3 pt-0 text-sm leading-relaxed text-zinc-500 md:px-4 md:pb-4 md:text-[15px]">
                 {item.a}
               </div>
             </details>

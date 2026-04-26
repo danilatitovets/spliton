@@ -11,11 +11,11 @@ const METRIC_GROUPS: { label: string; rows: { k: string; v: string }[] }[] = [
     ],
   },
   {
-    label: "Units и сбор",
+    label: "UNT и сбор",
     rows: [
-      { k: "Total units", v: RELEASE_PARAMETERS_EXAMPLE.totalUnits },
-      { k: "Sold units", v: RELEASE_PARAMETERS_EXAMPLE.soldUnits },
-      { k: "Available units", v: RELEASE_PARAMETERS_EXAMPLE.availableUnits },
+      { k: "Total UNT", v: RELEASE_PARAMETERS_EXAMPLE.totalUnits },
+      { k: "Sold UNT", v: RELEASE_PARAMETERS_EXAMPLE.soldUnits },
+      { k: "Available UNT", v: RELEASE_PARAMETERS_EXAMPLE.availableUnits },
       { k: "Raise target", v: RELEASE_PARAMETERS_EXAMPLE.raiseTarget },
       { k: "Hard cap", v: RELEASE_PARAMETERS_EXAMPLE.hardCap },
     ],

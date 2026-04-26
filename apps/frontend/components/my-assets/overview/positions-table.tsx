@@ -23,13 +23,13 @@ export function PositionsTable() {
     <section className="rounded-md border border-neutral-200 bg-white">
       <header className="border-b border-neutral-200 px-4 py-3 sm:px-5">
         <h2 className="text-base font-semibold text-neutral-900">Мои позиции</h2>
-        <p className="mt-1 text-xs text-neutral-500">Релизы, units и актуальные начисления по вашим rights.</p>
+        <p className="mt-1 text-xs text-neutral-500">Релизы, UNT и актуальные начисления по вашим rights.</p>
       </header>
 
       <div className="hidden xl:block">
         <div className="grid grid-cols-[minmax(220px,1.4fr)_minmax(130px,0.9fr)_minmax(120px,0.7fr)_minmax(140px,0.8fr)_minmax(150px,0.9fr)_96px] gap-3 border-b border-neutral-200 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-500">
           <span>Релиз</span>
-          <span>Units</span>
+          <span>UNT</span>
           <span>Доля pool</span>
           <span>Начислено</span>
           <span>К выводу</span>
@@ -59,7 +59,7 @@ export function PositionsTable() {
             </div>
 
             <div className="text-sm text-neutral-900 xl:text-[13px]">
-              <span className="text-xs text-neutral-500 xl:hidden">Units: </span>
+              <span className="text-xs text-neutral-500 xl:hidden">UNT: </span>
               <span className="tabular-nums">{item.units}</span>
             </div>
 

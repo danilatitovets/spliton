@@ -6,7 +6,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 export const metadata: Metadata = {
   title: "Каталог релизов",
   description:
-    "Каталог revenue share релизов RevShare: units, раунды, USDT (TRC20), вторичный рынок передачи rights — ориентиры по карточке, не гарантии.",
+    "Каталог revenue share релизов RevShare: UNT, раунды, вторичный рынок передачи прав — ориентиры по карточке, не гарантии.",
 };
 
 export default function CatalogRoutePage() {

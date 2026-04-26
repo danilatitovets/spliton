@@ -24,7 +24,7 @@ export function MarketOverviewFiltersToolbar({
 }) {
   return (
     <div className="sticky top-0 z-60 shrink-0 border-b border-white/8 bg-black/90 backdrop-blur-sm">
-      <div className="mx-auto w-full max-w-[1400px] space-y-2 px-4 py-2 md:space-y-3 md:px-6 md:py-3 lg:px-8">
+      <div className="mx-auto w-full max-w-[1400px] space-y-2.5 px-4 py-3 md:space-y-3 md:px-6 md:py-3.5 lg:px-8">
         <MarketOverviewTabs value={categoryTab} onChange={onCategoryTab} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div className="min-w-0 flex-1">
@@ -32,8 +32,8 @@ export function MarketOverviewFiltersToolbar({
           </div>
           <Link
             href={ROUTES.dashboardCatalog}
-            title="Открыть каталог релизов: выбор актива и покупка units"
-            className="inline-flex w-full shrink-0 items-center justify-center rounded-xl bg-white px-4 py-2 text-[12px] font-semibold text-black transition-opacity hover:opacity-90 sm:w-auto"
+            title="Открыть каталог релизов: выбор актива и покупка UNT"
+            className="inline-flex w-full shrink-0 items-center justify-center rounded-xl bg-white px-5 py-2.5 text-[13px] font-semibold text-black transition-opacity hover:opacity-90 sm:w-auto"
           >
             Купить релиз
           </Link>

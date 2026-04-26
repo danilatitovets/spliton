@@ -12,7 +12,7 @@ export const ROUTES = {
   /** Кабинет: профиль, верификация, безопасность (макет в стиле exchange account). */
   dashboardProfile: "/dashboard/profile",
   myAssetsOverview: "/assets/overview",
-  /** Сегмент продажи units из кабинета (динамический `[id]` каталожного релиза). */
+  /** Сегмент продажи UNT из кабинета (динамический `[id]` каталожного релиза). */
   myAssetsSellUnits: "/assets/sell",
   myAssetsPositionsStructure: "/assets/positions",
   myAssetsMetrics: "/assets/metrics",
@@ -31,6 +31,8 @@ export const ROUTES = {
   /** Центр поддержки и база знаний (отдельная страница из хедера). */
   support: "/support",
   /** Раздел «Сервисы» в хедере: вспомогательные страницы */
+  /** Объяснение внутренней единицы UNT (Spliton). */
+  assetsUnt: "/assets/unt",
   calculator: "/assets/calculator",
   fees: "/fees",
   systemStatus: "/system-status",
@@ -81,12 +83,12 @@ export function catalogMarketOverviewReleaseTablePath(id: string): string {
   return `${ROUTES.catalogMarketOverview}?release=${encodeURIComponent(id)}`;
 }
 
-/** Покупка units по релизу (макет оформления; id — каталожный id mock-строки). */
+/** Покупка UNT по релизу (макет оформления; id — каталожный id mock-строки). */
 export function catalogBuyUnitsPath(id: string): string {
   return `${ROUTES.dashboardCatalog}/buy/${encodeURIComponent(id)}`;
 }
 
-/** Продажа units из кабинета (лимитная цена; id — каталожный id mock-строки). */
+/** Продажа UNT из кабинета (лимитная цена; id — каталожный id mock-строки). */
 export function assetsSellUnitsPath(id: string): string {
   return `${ROUTES.myAssetsSellUnits}/${encodeURIComponent(id)}`;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -292,17 +293,15 @@ export function CatalogFiltersAside({
             </FilterSection>
           </div>
         </div>
-
         <div className="px-4 pb-4 pt-2 sm:px-5">
-          <div className="rounded-2xl bg-white/3 px-4 py-3 text-center">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600">
-              Результат
-            </p>
-            <p className="mt-1 text-[13px] text-zinc-300">
-              Показано{" "}
-              <span className="font-semibold text-white">{filteredCount}</span> из{" "}
-              <span className="font-semibold text-white">{totalCount}</span>
-            </p>
+          <div className="text-center">
+            <Link
+              href="/assets/unt"
+              className="inline-flex items-center justify-center font-sans text-[11px] font-medium text-zinc-500 transition hover:text-zinc-200"
+              aria-label="Что такое UNT"
+            >
+              Что такое UNT?
+            </Link>
           </div>
         </div>
       </div>

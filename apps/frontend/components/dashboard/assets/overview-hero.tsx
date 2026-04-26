@@ -39,7 +39,7 @@ export function OverviewHero() {
             href={assetsSellUnitsPath("1")}
             className="inline-flex h-10 items-center rounded-full border border-neutral-200/90 bg-neutral-50/80 px-4 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100"
           >
-            Продать units
+            Продать UNT
           </Link>
           <Link
             href={ROUTES.dashboardSecondaryMarket}

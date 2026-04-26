@@ -64,7 +64,7 @@ export function PayoutHistoryTable({ rows = payoutHistory, showCaption = true }:
               <th className="w-[14%] px-3 py-3 pl-4">Дата · ref</th>
               <th className="w-[18%] px-3 py-3">Релиз</th>
               <th className="w-[11%] px-3 py-3">Тип</th>
-              <th className="w-[13%] px-3 py-3">Units</th>
+              <th className="w-[13%] px-3 py-3">UNT</th>
               <th className="w-[13%] px-3 py-3">Сумма</th>
               <th className="w-[13%] px-3 py-3">Статус</th>
               <th className="w-[18%] px-3 py-3 pr-4">Действие</th>

@@ -9,9 +9,11 @@ import {
   ChevronDown,
   CircleHelp,
   Globe,
+  Menu,
   MessageCircle,
   Search,
   User,
+  X,
 } from "lucide-react";
 
 import {
@@ -126,7 +128,7 @@ function NavTrigger({
 
   const shellDesktop =
     "flex shrink-0 items-center rounded-md text-[11px] font-semibold uppercase tracking-[0.1em] leading-none transition-colors lg:px-0";
-  const shellMobile = "flex shrink-0 items-center whitespace-nowrap rounded-md text-xs font-medium";
+  const shellMobile = "flex w-full min-w-0 items-center rounded-md text-[11px] font-medium";
   const shell = size === "desktop" ? shellDesktop : shellMobile;
   const activeShell = isActive
     ? "bg-white/[0.08] text-white ring-1 ring-white/10"
@@ -134,7 +136,7 @@ function NavTrigger({
   const linkPad =
     size === "desktop"
       ? "flex items-center rounded-l-md px-2.5 py-2 lg:pl-3 lg:pr-1.5"
-      : "flex items-center rounded-l-md px-2.5 py-1.5 pr-1";
+      : "flex min-w-0 flex-1 items-center justify-center rounded-l-md px-2 py-1.5 pr-1";
   const btnPad =
     size === "desktop" ? "flex items-center justify-center rounded-r-md py-2 pr-2 pl-0.5" : "flex items-center rounded-r-md py-1.5 pr-2 pl-0.5";
 
@@ -145,11 +147,11 @@ function NavTrigger({
         className={cn(
           size === "desktop"
             ? "flex shrink-0 items-center gap-1 rounded-md px-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] leading-none text-zinc-500 transition-colors lg:px-3"
-            : "flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-500",
+            : "flex min-w-0 w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-zinc-500",
           isActive ? "bg-white/[0.08] text-white ring-1 ring-white/10" : "hover:bg-white/[0.05] hover:text-zinc-100",
         )}
       >
-        <span>{item.label}</span>
+        <span className="truncate">{item.label}</span>
       </Link>
     );
   }
@@ -217,10 +219,14 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
   const [expandedKey, setExpandedKey] = React.useState<string | null>(null);
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobileHeaderVisible, setMobileHeaderVisible] = React.useState(true);
+  const [headerElevated, setHeaderElevated] = React.useState(false);
   const [isDesktop, setIsDesktop] = React.useState(false);
   const [portalReady, setPortalReady] = React.useState(false);
   const headerRef = React.useRef<HTMLElement>(null);
   const closeMenuTimerRef = React.useRef<number | null>(null);
+  const lastScrollYRef = React.useRef(0);
 
   React.useEffect(() => {
     const t = window.requestAnimationFrame(() => setPortalReady(true));
@@ -263,6 +269,7 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
       setExpandedKey(null);
       setProfileOpen(false);
       setSearchOpen(false);
+      setMobileMenuOpen(false);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -285,9 +292,12 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
     setExpandedKey(null);
     setProfileOpen(false);
     setSearchOpen(false);
+    setMobileMenuOpen(false);
   }, [cancelCloseMenuTimer]);
 
   const closeSearch = React.useCallback(() => setSearchOpen(false), []);
+
+  const closeMobileMenu = React.useCallback(() => setMobileMenuOpen(false), []);
 
   const openSearch = React.useCallback(() => {
     cancelCloseMenuTimer();
@@ -310,6 +320,7 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
         setExpandedKey(null);
         setProfileOpen(false);
         setSearchOpen(false);
+        setMobileMenuOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -351,6 +362,53 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
     };
   }, []);
 
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setHeaderElevated(y > 8);
+
+      // Mobile only: hide on down scroll, show on up scroll.
+      if (window.innerWidth >= 640) {
+        setMobileHeaderVisible(true);
+        lastScrollYRef.current = y;
+        return;
+      }
+
+      if (mobileMenuOpen || searchOpen || profileOpen) {
+        setMobileHeaderVisible(true);
+        lastScrollYRef.current = y;
+        return;
+      }
+
+      const delta = y - lastScrollYRef.current;
+      if (y < 16) {
+        setMobileHeaderVisible(true);
+      } else if (delta > 8) {
+        setMobileHeaderVisible(false);
+      } else if (delta < -8) {
+        setMobileHeaderVisible(true);
+      }
+      lastScrollYRef.current = y;
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [mobileMenuOpen, profileOpen, searchOpen]);
+
   const openItem = dashboardNavItems.find((i) => i.id === expandedKey);
 
   /** Портальный фон: как под mega-menu разделов (blur 40px + darken). */
@@ -375,8 +433,10 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
       <header
         ref={headerRef}
         className={cn(
-          "border-b border-white/6 bg-[#070707]",
+          "border-b border-white/6 bg-[#070707] transition-transform duration-300 ease-out will-change-transform",
           sticky ? "sticky top-0 z-[110]" : "relative z-[110] shrink-0",
+          headerElevated && "shadow-[0_8px_30px_rgba(0,0,0,0.38)] backdrop-blur-[2px]",
+          mobileHeaderVisible ? "translate-y-0" : "-translate-y-full sm:translate-y-0",
         )}
         onMouseEnter={cancelCloseMenuTimer}
         onMouseLeave={scheduleCloseMenu}
@@ -479,6 +539,28 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
             </div>
           </details>
 
+          <div className="h-4 w-px bg-white/10 sm:hidden" aria-hidden />
+
+          <button
+            type="button"
+            className={cn(
+              headerIconShellClass,
+              "sm:hidden",
+              mobileMenuOpen && "bg-white/6 text-white ring-1 ring-white/12",
+            )}
+            aria-label={mobileMenuOpen ? "Закрыть мобильное меню" : "Открыть мобильное меню"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-dashboard-menu"
+            onClick={() => {
+              setExpandedKey(null);
+              setProfileOpen(false);
+              setSearchOpen(false);
+              setMobileMenuOpen((prev) => !prev);
+            }}
+          >
+            {mobileMenuOpen ? <X className="size-[18px]" strokeWidth={1.75} aria-hidden /> : <Menu className="size-[18px]" strokeWidth={1.75} aria-hidden />}
+          </button>
+
           <button
             type="button"
             className={cn(
@@ -529,43 +611,11 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
       {profileOpen ? <DashboardProfileMegamenuPanel onNavigate={closeSubnav} /> : null}
       </div>
 
-      {/* Mobile: nav scroll + compact row */}
+      {/* Mobile: compact actions row */}
       <div className="border-t border-white/6 sm:hidden">
-        <nav
-          className="flex gap-0.5 overflow-x-auto px-3 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Основная навигация"
-        >
-          {dashboardNavItems.map((item) => (
-            <NavTrigger
-              key={item.id}
-              item={item}
-              pathname={pathname}
-              hash={hash}
-              expandedKey={expandedKey}
-              onToggle={onToggle}
-              onHoverOpen={onHoverOpen}
-              onNavigate={closeSubnav}
-              isDesktop={false}
-              size="mobile"
-            />
-          ))}
-        </nav>
         <div className="flex items-center justify-between gap-2 border-t border-white/5 px-3 py-2">
           <span className="tabular-nums text-xs font-medium text-zinc-500">1&nbsp;240,58 USDT</span>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              className={cn(
-                headerIconShellClass,
-                searchOpen && "bg-white/6 text-white ring-1 ring-white/12",
-              )}
-              aria-label="Поиск по платформе"
-              aria-expanded={searchOpen}
-              aria-haspopup="dialog"
-              onClick={toggleSearch}
-            >
-              <Search className="size-[17px]" strokeWidth={1.75} aria-hidden />
-            </button>
             <IconToolButton label="Уведомления">
               <Bell className="size-[17px]" strokeWidth={1.75} />
             </IconToolButton>
@@ -577,6 +627,74 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
               className="flex h-8 items-center rounded-lg border border-white/12 bg-white/[0.04] px-3 text-[10px] font-semibold uppercase tracking-wide text-zinc-100"
             >
               Пополнить
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "fixed inset-0 z-[130] bg-[#070707] transition duration-300 sm:hidden",
+          mobileMenuOpen
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-2 opacity-0",
+        )}
+      >
+        <div
+          className={cn(
+            "flex h-full flex-col overflow-y-auto px-5 pb-6 pt-4 transition-transform duration-300",
+            mobileMenuOpen ? "translate-y-0" : "-translate-y-1",
+          )}
+          id="mobile-dashboard-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Мобильное меню"
+        >
+          <div className="flex items-center justify-between">
+            <RevShareLogo className="max-w-[10rem]" />
+            <button
+              type="button"
+              className={cn(headerIconShellClass, "text-zinc-300")}
+              onClick={closeMobileMenu}
+              aria-label="Закрыть мобильное меню"
+            >
+              <X className="size-[18px]" strokeWidth={1.75} aria-hidden />
+            </button>
+          </div>
+
+          <nav className="mt-6 flex flex-col gap-1.5" aria-label="Мобильная навигация">
+            {dashboardNavItems.map((item) => {
+              const isActive = navItemActive(item, pathname, hash);
+              return (
+                <Link
+                  key={`mobile-menu-${item.id}`}
+                  href={item.href}
+                  onClick={closeMobileMenu}
+                  className={cn(
+                    "rounded-xl px-3 py-3 text-base font-semibold text-zinc-300 transition-colors",
+                    isActive ? "bg-white/8 text-white" : "hover:bg-white/5 hover:text-white",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="mt-auto space-y-2 border-t border-white/10 pt-4">
+            <Link
+              href={ROUTES.dashboardProfile}
+              onClick={closeMobileMenu}
+              className="flex h-11 items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white"
+            >
+              Профиль
+            </Link>
+            <Link
+              href={`${ROUTES.dashboard}#deposit`}
+              onClick={closeMobileMenu}
+              className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-black"
+            >
+              Внести криптовалюту
             </Link>
           </div>
         </div>

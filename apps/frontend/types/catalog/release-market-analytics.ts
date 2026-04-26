@@ -1,7 +1,7 @@
 export type ReleaseMarketAnalyticsStatusKey = "active" | "payouts" | "closed" | "new";
 
 export type ReleaseMarketAnalyticsHeader = {
-  /** Id строки в mock каталога / обзора рынка — для ссылок (покупка units, и т.п.). */
+  /** Id строки в mock каталога / обзора рынка — для ссылок (покупка UNT, и т.п.). */
   catalogReleaseId: string;
   releaseTitle: string;
   artist: string;
@@ -12,16 +12,25 @@ export type ReleaseMarketAnalyticsHeader = {
   genre: string;
 };
 
+/** Окраска строки «vs прошлый период» в hero-сетке. */
+export type ReleaseMarketHeroVsTone = "positive" | "negative" | "neutral" | "warning";
+
+export type ReleaseMarketHeroMetric = {
+  value: string;
+  /** Короткое сравнение с прошлым периодом (уже со знаком / формулировкой). */
+  vsPrevious?: string;
+  vsTone?: ReleaseMarketHeroVsTone;
+};
+
 export type ReleaseMarketAnalyticsHero = {
-  yieldPct: string;
-  totalPayouts: string;
-  activeHolders: string;
-  availableUnits: string;
-  liquidityLabel: string;
-  secondaryStatus: string;
-  trend7d: string;
-  trend30d: string;
-  phase: string;
+  yieldPct: ReleaseMarketHeroMetric;
+  totalPayouts: ReleaseMarketHeroMetric;
+  activeHolders: ReleaseMarketHeroMetric;
+  availableUnits: ReleaseMarketHeroMetric;
+  liquidity: ReleaseMarketHeroMetric;
+  secondary: ReleaseMarketHeroMetric;
+  trend7d: ReleaseMarketHeroMetric;
+  trend30d: ReleaseMarketHeroMetric;
 };
 
 export type ReleaseMarketAnalyticsChartBlock = {
@@ -41,29 +50,39 @@ export type ReleaseMarketAnalyticsPeriodRow = {
   interestChange: string;
 };
 
-/** Семантика для окраски значений (ликвидность / риск). */
-export type ReleaseMarketLiquiditySignal = "positive" | "negative" | "neutral";
+/** Карточка метрики в блоке ликвидности: значение, подсказка, сравнение с прошлым окном. */
+export type ReleaseMarketLiquidityCard = {
+  value: string;
+  hint: string;
+  vsPrevious?: string;
+  vsTone?: ReleaseMarketHeroVsTone;
+};
+
+export type ReleaseMarketLiquidityListings = {
+  hasActive: boolean;
+  summary: string;
+  vsPrevious?: string;
+  vsTone?: ReleaseMarketHeroVsTone;
+};
+
+export type ReleaseMarketLiquidityDepth = {
+  title: string;
+  body: string;
+  foot: string;
+  vsPrevious?: string;
+  vsTone?: ReleaseMarketHeroVsTone;
+};
 
 export type ReleaseMarketAnalyticsLiquidity = {
-  hasSecondaryListings: boolean;
-  avgUnitPrice: string;
-  spread: string;
-  priceRange: string;
-  volume24h: string;
-  volume7d: string;
-  trades24h: string;
-  trades7d: string;
-  depthNote: string;
-  /** Выводится из mock-логики (жанр, тренд, ликвидность строки). */
-  signals: {
-    listings: ReleaseMarketLiquiditySignal;
-    spread: ReleaseMarketLiquiditySignal;
-    depth: ReleaseMarketLiquiditySignal;
-    /** Оборот/сделки vs тренд релиза */
-    flow: ReleaseMarketLiquiditySignal;
-    /** Положение средней к диапазону (mock) */
-    avgPrice: ReleaseMarketLiquiditySignal;
-  };
+  listings: ReleaseMarketLiquidityListings;
+  avgUnitPrice: ReleaseMarketLiquidityCard;
+  spread: ReleaseMarketLiquidityCard;
+  priceRange: ReleaseMarketLiquidityCard;
+  volume24h: ReleaseMarketLiquidityCard;
+  volume7d: ReleaseMarketLiquidityCard;
+  trades24h: ReleaseMarketLiquidityCard;
+  trades7d: ReleaseMarketLiquidityCard;
+  depth: ReleaseMarketLiquidityDepth;
 };
 
 export type ReleaseMarketAnalyticsParamRow = {

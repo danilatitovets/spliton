@@ -194,7 +194,7 @@ export function TopPositionCardsGrid({ rows }: { rows: PositionPreviewItem[] }) 
 
             <div className="mt-4 grid grid-cols-2 gap-2">
               <div className="rounded-xl bg-white px-2.5 py-2 ring-1 ring-neutral-100">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-400">Units</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-400">UNT</p>
                 <p className="mt-0.5 font-mono text-sm font-semibold tabular-nums text-neutral-900">{row.units}</p>
               </div>
               <div className="rounded-xl bg-white px-2.5 py-2 ring-1 ring-neutral-100">

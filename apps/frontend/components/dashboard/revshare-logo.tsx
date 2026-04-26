@@ -15,11 +15,11 @@ export function RevShareLogo({ className }: { className?: string }) {
       aria-label="RevShare"
     >
       <Image
-        src="/images/LOGO/FULL-LOGO.png"
+        src="/images/LOGO/black-logo.png"
         alt="RevShare"
-        width={320}
-        height={76}
-        className="h-10 w-auto origin-left scale-155 object-contain sm:h-11 sm:scale-165 lg:h-12 lg:scale-175"
+        width={204}
+        height={42}
+        className="h-7 w-auto object-contain sm:h-8 lg:h-9"
         priority
       />
     </Link>

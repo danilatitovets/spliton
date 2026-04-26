@@ -65,15 +65,15 @@ function termLabelRu(rawKey: string): string {
   if (k.includes("platform_fee")) return "Комиссия платформы";
   if (k.includes("raise_target")) return "Цель сбора";
   if (k.includes("hard_cap")) return "Верхний предел (cap)";
-  if (k.includes("total_units")) return "Всего units";
+  if (k.includes("total_units")) return "Всего UNT";
   if (k.includes("текущий статус")) return "Статус раунда";
   return rawKey.replace(/\s*\(.*?\)\s*/g, "").trim();
 }
 
 const LEDGER_EVENTS: { title: string; date: string; detail: string; tone: "buy" | "order" | "fill" | "cancel" | "payout" }[] = [
-  { title: "Покупка units", date: "12.03.2026", detail: "320 units", tone: "buy" },
-  { title: "Выставление заявки", date: "21.04.2026", detail: "80 units · лимит", tone: "order" },
-  { title: "Частичное исполнение", date: "21.04.2026", detail: "32 units", tone: "fill" },
+  { title: "Покупка UNT", date: "12.03.2026", detail: "320 UNT", tone: "buy" },
+  { title: "Выставление заявки", date: "21.04.2026", detail: "80 UNT · лимит", tone: "order" },
+  { title: "Частичное исполнение", date: "21.04.2026", detail: "32 UNT", tone: "fill" },
   { title: "Отмена заявки", date: "—", detail: "Нет записей", tone: "cancel" },
   { title: "Получение выплат", date: "14.04.2026", detail: "+24,80 USDT", tone: "payout" },
 ];
@@ -159,8 +159,8 @@ export function ReleaseDetailSecondaryOrderPage({
             <div className="mt-3">
               <KVPairs
                 rows={[
-                  { label: "Всего units", value: mockPosition.totalUnits },
-                  { label: "Доступно units", value: mockPosition.availableUnits },
+                  { label: "Всего UNT", value: mockPosition.totalUnits },
+                  { label: "Доступно UNT", value: mockPosition.availableUnits },
                   { label: "Заблокировано в заявках", value: mockPosition.lockedUnits },
                   { label: "Средняя цена входа", value: `${fmt(mockPosition.avgEntry)} USDT` },
                   { label: "Текущая ориентирная цена", value: `${fmt(mockPosition.markPrice)} USDT` },
@@ -197,8 +197,8 @@ export function ReleaseDetailSecondaryOrderPage({
             rows={[
               { label: "Тип заявки", value: mockOrder.side },
               { label: "Тип исполнения", value: mockOrder.mode },
-              { label: "Цена за unit", value: `${fmt(mockOrder.price)} USDT` },
-              { label: "Всего units", value: mockOrder.totalUnits },
+              { label: "Цена за UNT", value: `${fmt(mockOrder.price)} USDT` },
+              { label: "Всего UNT", value: mockOrder.totalUnits },
               { label: "Исполнено", value: mockOrder.filled },
               { label: "Остаток", value: mockOrder.remain },
               { label: "Сумма", value: `${fmt(mockOrder.amount)} USDT` },
@@ -380,11 +380,11 @@ export function ReleaseDetailSecondaryOrderPage({
                       value: t.val,
                     })),
                     {
-                      label: "Всего units (эмиссия)",
+                      label: "Всего UNT (эмиссия)",
                       value: data.terms.rows.find((t) => t.key.toLowerCase().includes("total_units"))?.val ?? "—",
                     },
                     {
-                      label: "Доступно units (каталог)",
+                      label: "Доступно UNT (каталог)",
                       value: marketRow
                         ? `${Math.round(marketRow.availableUnits).toLocaleString("ru-RU")} u.`
                         : row.units,
@@ -400,7 +400,7 @@ export function ReleaseDetailSecondaryOrderPage({
         <DetailSection
           eyebrow="My Ledger"
           title="Моя история по релизу"
-          description="Лента персональных действий по unit-позиции: вход, заявка, исполнение, выплаты."
+          description="Лента персональных действий по позиции в UNT: вход, заявка, исполнение, выплаты."
         >
           <ul className="overflow-hidden rounded-2xl border border-white/8 bg-[#111111] ring-1 ring-white/6">
             {LEDGER_EVENTS.map((ev) => (

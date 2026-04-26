@@ -311,10 +311,10 @@ export function SecondaryMarketReleaseAnalyticsTab({
       <section className="space-y-3">
         <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">Ключевые метрики</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
-          <Stat label="Лучший bid" value={`${formatUsdt(a.bestBid)}`} sub="USDT / unit" />
-          <Stat label="Лучший ask" value={`${formatUsdt(a.bestAsk)}`} sub="USDT / unit" />
-          <Stat label="Last" value={`${formatUsdt(a.lastTradedPrice)}`} sub="USDT / unit" />
-          <Stat label="Mid" value={`${formatUsdt(mid)}`} sub="USDT / unit" />
+          <Stat label="Лучший bid" value={`${formatUsdt(a.bestBid)}`} sub="USDT / UNT" />
+          <Stat label="Лучший ask" value={`${formatUsdt(a.bestAsk)}`} sub="USDT / UNT" />
+          <Stat label="Last" value={`${formatUsdt(a.lastTradedPrice)}`} sub="USDT / UNT" />
+          <Stat label="Mid" value={`${formatUsdt(mid)}`} sub="USDT / UNT" />
           <Stat label="Спред" value={formatUsdt(a.spread)} sub="USDT" />
           <Stat label="Спред %" value={`${a.spreadPct.toFixed(2)}%`} sub="к last" />
           <Stat label="Сделок 24ч" value={String(a.trades24h)} />

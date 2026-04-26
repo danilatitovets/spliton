@@ -12,7 +12,7 @@ export function PositionsSummaryCards({
   const cards = [
     { label: "Всего позиций", value: total },
     { label: "Активных релизов", value: activeReleases },
-    { label: "Всего units", value: totalUnits },
+    { label: "Всего UNT", value: totalUnits },
     { label: "Средняя доля позиции", value: averageShare },
   ];
 

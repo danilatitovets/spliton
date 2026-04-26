@@ -43,7 +43,7 @@ export type PositionStructureItem = {
 export const assetsStats: AssetsStat[] = [
   { label: "Активных релизов", value: "6" },
   { label: "Всего позиций", value: "9" },
-  { label: "Всего units", value: "14 280" },
+  { label: "Всего UNT", value: "14 280" },
   { label: "Крупнейшая позиция", value: "24%" },
 ];
 

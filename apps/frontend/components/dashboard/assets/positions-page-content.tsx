@@ -14,7 +14,7 @@ import { ROUTES } from "@/constants/routes";
 const statuses = ["Все статусы", "Active", "Open round", "Secondary", "Closed"] as const;
 const sorts = [
   "Сортировка: по стоимости",
-  "Сортировка: по количеству units",
+  "Сортировка: по количеству UNT",
   "Сортировка: по дате входа",
   "Сортировка: по доле в портфеле",
 ] as const;
@@ -38,7 +38,7 @@ export function PositionsPageContent() {
     });
     const sorted = [...rows];
     if (sort === "Сортировка: по стоимости") sorted.sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
-    if (sort === "Сортировка: по количеству units") {
+    if (sort === "Сортировка: по количеству UNT") {
       sorted.sort((a, b) => parseFloat(b.units.replace(/\s/g, "")) - parseFloat(a.units.replace(/\s/g, "")));
     }
     if (sort === "Сортировка: по дате входа") sorted.sort((a, b) => b.dateEntered.localeCompare(a.dateEntered));
@@ -77,7 +77,7 @@ export function PositionsPageContent() {
       <section className="rounded-3xl bg-white px-5 py-12 text-center sm:px-8 sm:py-14">
         <p className="text-xl font-semibold tracking-tight text-neutral-900">У вас пока нет позиций</p>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-neutral-500">
-          Позиции появятся после входа в релизы и покупки units.
+          Позиции появятся после входа в релизы и покупки UNT.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link

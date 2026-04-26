@@ -273,10 +273,10 @@ export function CalculatorPageContent() {
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Калькулятор · Покупка</p>
               <h2 id="calc-buy-title" className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
-                Покупка units
+                Покупка UNT
               </h2>
               <p className="max-w-2xl text-sm text-neutral-500">
-                Оцените платёж в USDT (TRC20), комиссию платформы и объём units при вашей цене за unit.
+                Оцените платёж в USDT (TRC20), комиссию платформы и объём UNT при вашей цене за UNT.
               </p>
             </div>
 
@@ -286,7 +286,7 @@ export function CalculatorPageContent() {
                 onChange={(v) => setBuyMode(v as "usdt" | "units")}
                 options={[
                   { id: "usdt", label: "Сумма USDT" },
-                  { id: "units", label: "Кол-во units" },
+                  { id: "units", label: "Кол-во UNT" },
                 ]}
               />
             </div>
@@ -294,7 +294,7 @@ export function CalculatorPageContent() {
             <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
               <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
                 <Label htmlFor="buy-primary" className="text-xs font-medium text-neutral-500">
-                  {buyMode === "usdt" ? "Сумма к оплате" : "Units к покупке"}
+                  {buyMode === "usdt" ? "Сумма к оплате" : "UNT к покупке"}
                 </Label>
                 <Input
                   id="buy-primary"
@@ -307,7 +307,7 @@ export function CalculatorPageContent() {
                 {buyMode === "usdt" ? (
                   <p className="mt-2 text-xs text-neutral-500">USDT · вводите сумму с учётом желаемого объёма покупки</p>
                 ) : (
-                  <p className="mt-2 text-xs text-neutral-500">Количество units к зачислению после комиссии</p>
+                  <p className="mt-2 text-xs text-neutral-500">Количество UNT к зачислению после комиссии</p>
                 )}
               </div>
 
@@ -319,7 +319,7 @@ export function CalculatorPageContent() {
 
               <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
                 <Label htmlFor="buy-price" className="text-xs font-medium text-neutral-500">
-                  Цена за unit, USDT
+                  Цена за UNT, USDT
                 </Label>
                 <Input
                   id="buy-price"
@@ -334,7 +334,7 @@ export function CalculatorPageContent() {
 
             {buyCalc ? (
               <p className="mt-6 text-center text-sm text-neutral-500">
-                <span className="font-mono text-neutral-700">1 unit</span> ≈{" "}
+                <span className="font-mono text-neutral-700">1 UNT</span> ≈{" "}
                 <CalcDisplay value={USDT_FMT.format(buyCalc.pricePerUnit)} tone="neutral" size="lg" /> USDT
               </p>
             ) : null}
@@ -348,10 +348,10 @@ export function CalculatorPageContent() {
             {buyCalc ? (
               <>
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <StatTile label="Цена за unit">
+                  <StatTile label="Цена за UNT">
                     <CalcDisplay value={USDT_FMT.format(buyCalc.pricePerUnit)} suffix=" USDT" tone="neutral" />
                   </StatTile>
-                  <StatTile label="Количество units" className="bg-gradient-to-br from-neutral-50 to-blue-50/70">
+                  <StatTile label="Количество UNT" className="bg-gradient-to-br from-neutral-50 to-blue-50/70">
                     <CalcDisplay value={NUM_FMT.format(buyCalc.units)} tone="units" />
                   </StatTile>
                 </div>
@@ -360,7 +360,7 @@ export function CalculatorPageContent() {
                   <div className="border-t border-neutral-100/80" />
                   <FeeLine label="Итого к оплате" value={`${USDT_FMT.format(buyCalc.total)} USDT`} />
                   <div className="border-t border-neutral-100/80" />
-                  <FeeLine label="Эффективная сумма (к units)" value={`${USDT_FMT.format(buyCalc.effective)} USDT`} />
+                  <FeeLine label="Эффективная сумма (к UNT)" value={`${USDT_FMT.format(buyCalc.effective)} USDT`} />
                 </div>
                 <div className="mt-6 rounded-2xl bg-neutral-50 px-5 py-5 sm:px-6">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">К оплате</p>
@@ -391,7 +391,7 @@ export function CalculatorPageContent() {
             <div className="mt-8 grid gap-5 lg:grid-cols-2">
               <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
                 <Label htmlFor="sell-units" className="text-xs font-medium text-neutral-500">
-                  Units к продаже
+                  UNT к продаже
                 </Label>
                 <Input
                   id="sell-units"
@@ -403,7 +403,7 @@ export function CalculatorPageContent() {
               </div>
               <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
                 <Label htmlFor="sell-price" className="text-xs font-medium text-neutral-500">
-                  Цена за unit, USDT
+                  Цена за UNT, USDT
                 </Label>
                 <Input
                   id="sell-price"
@@ -432,7 +432,7 @@ export function CalculatorPageContent() {
               </>
             ) : (
               <p className="mt-8 rounded-2xl bg-neutral-50 px-5 py-8 text-center text-sm text-neutral-500">
-                Укажите units и цену за unit.
+                Укажите UNT и цену за UNT.
               </p>
             )}
             <p className="mt-5 text-xs text-neutral-500">Иллюстрация; на стакане могут быть дополнительные правила.</p>
@@ -502,7 +502,7 @@ export function CalculatorPageContent() {
             <div className="mt-8 grid gap-5 sm:grid-cols-2">
               <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
                 <Label htmlFor="payout-u" className="text-xs font-medium text-neutral-500">
-                  Ваши units
+                  Ваши UNT
                 </Label>
                 <Input
                   id="payout-u"
@@ -526,7 +526,7 @@ export function CalculatorPageContent() {
               </div>
               <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6 sm:col-span-2">
                 <Label htmlFor="payout-total" className="text-xs font-medium text-neutral-500">
-                  Условный объём units по релизу
+                  Условный объём UNT по релизу
                 </Label>
                 <Input
                   id="payout-total"

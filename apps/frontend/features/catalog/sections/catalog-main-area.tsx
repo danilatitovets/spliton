@@ -14,10 +14,12 @@ export function CatalogMainArea({
   catalogView,
   onCatalogView,
   filtered,
+  totalCount,
 }: {
   catalogView: CatalogGridView;
   onCatalogView: (v: CatalogGridView) => void;
   filtered: CatalogItem[];
+  totalCount: number;
 }) {
   const isList = catalogView === "list";
   const cardSize = isList ? "default" : "large";
@@ -33,7 +35,12 @@ export function CatalogMainArea({
       <CatalogPageHero />
       <div className="sticky top-0 z-20 border-b border-white/8 bg-black/90 px-4 py-3 backdrop-blur-md supports-backdrop-filter:bg-black/80 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-[1600px]">
-          <CatalogMainSubheader view={catalogView} onViewChange={onCatalogView} resultCount={filtered.length} />
+          <CatalogMainSubheader
+            view={catalogView}
+            onViewChange={onCatalogView}
+            resultCount={filtered.length}
+            totalCount={totalCount}
+          />
         </div>
       </div>
       <div className="mx-auto max-w-[1600px] px-4 pb-12 pt-6 sm:px-5 lg:px-8 lg:pb-16 lg:pt-8">

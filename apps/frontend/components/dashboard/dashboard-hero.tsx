@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -16,12 +15,7 @@ export function DashboardHero({ className }: { className?: string }) {
     >
       <div className="mx-auto flex w-full max-w-[1400px] flex-col items-center px-4 text-center sm:px-6 lg:px-8">
         <div className="w-full max-w-[1120px]">
-          <div className="inline-flex items-center gap-2 rounded-md border border-[#3a3164] bg-[#161224] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#b99cff]">
-            <span className="inline-block size-1.5 rounded-full bg-[#b99cff]" aria-hidden />
-            <span>RevShare Platform</span>
-          </div>
-
-          <h1 className="mx-auto mt-6 max-w-[920px] text-balance text-[2rem] font-semibold leading-[0.98] tracking-[-0.03em] text-white sm:text-[2.6rem] lg:text-[3.35rem]">
+          <h1 className="mx-auto max-w-[920px] text-balance text-[2rem] font-semibold leading-[0.98] tracking-[-0.03em] text-white sm:text-[2.6rem] lg:text-[3.35rem]">
             Инвестируйте в музыкальные релизы и получайте доход в одном продукте
           </h1>
 
@@ -39,10 +33,9 @@ export function DashboardHero({ className }: { className?: string }) {
             </Link>
             <Link
               href={ROUTES.dashboardOverview}
-              className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-[13px] font-medium text-zinc-200 transition hover:text-white"
+              className="inline-flex h-10 items-center rounded-lg bg-zinc-700 px-5 text-[13px] font-semibold text-white transition hover:bg-zinc-600"
             >
               Как это работает
-              <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
             </Link>
           </div>
 

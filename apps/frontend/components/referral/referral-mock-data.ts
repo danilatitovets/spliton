@@ -41,7 +41,7 @@ export const referralRewardsHistory: ReferralRewardRow[] = [
     id: "rw-2",
     date: "2026-04-12",
     inviteeMasked: "user_••••91c0",
-    rewardType: "Покупка units",
+    rewardType: "Покупка UNT",
     status: "available",
     amountUsdt: 48.75,
     note: "Secondary · исполнен ордер",
@@ -59,7 +59,7 @@ export const referralRewardsHistory: ReferralRewardRow[] = [
     id: "rw-4",
     date: "2026-03-28",
     inviteeMasked: "user_••••44de",
-    rewardType: "Покупка units",
+    rewardType: "Покупка UNT",
     status: "paid",
     amountUsdt: 120,
     note: "Первичный раунд",
@@ -104,7 +104,7 @@ export const referralFaqItems: ReferralFaqItem[] = [
     id: "faq-2",
     question: "Когда начисляется награда?",
     answer:
-      "Начисление привязано к событиям в продукте: регистрация, первое пополнение баланса USDT (TRC20), покупка units и другие сценарии, указанные в актуальных условиях. До выполнения условий статус остаётся «В ожидании».",
+      "Начисление привязано к событиям в продукте: регистрация, первое пополнение баланса USDT (TRC20), покупка UNT и другие сценарии, указанные в актуальных условиях. До выполнения условий статус остаётся «В ожидании».",
   },
   {
     id: "faq-3",

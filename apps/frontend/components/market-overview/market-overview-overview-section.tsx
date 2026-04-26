@@ -17,20 +17,20 @@ export function MarketOverviewOverviewSection({
   return (
     <section>
       <div className="sticky top-0 z-[55] shrink-0 bg-black/90 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-4 md:flex-row md:items-end md:justify-between md:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-5 md:flex-row md:items-end md:justify-between md:px-6 lg:px-8">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">Market</span>
-              <span className="rounded-lg bg-[#0a0a0a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">Market</span>
+              <span className="rounded-lg bg-[#0a0a0a] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
                 snapshot
               </span>
             </div>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-white md:text-2xl">Обзор рынка</h1>
-            <p className="mt-2 font-mono text-[11px] tabular-nums text-zinc-600">Обновлено: {lastUpdated} · mock feed</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white md:text-3xl">Обзор рынка</h1>
+            <p className="mt-2 font-mono text-[12px] tabular-nums text-zinc-500">Обновлено: {lastUpdated} · mock feed</p>
           </div>
           <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">Период</span>
+              <span className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500">Период</span>
               <div className="flex flex-wrap gap-1.5">
                 {MARKET_OVERVIEW_PERIODS.map((p) => (
                   <PeriodButton key={p.id} tone="neutral" active={period === p.id} onClick={() => onPeriodChange(p.id)}>

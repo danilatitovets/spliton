@@ -3,33 +3,30 @@ import { ROUTES } from "@/constants/routes";
 /** Ссылка на разбор карточки в каталоге (якорь на mock-карточку). */
 export const GUIDE_CATALOG_CARD_HREF = `${ROUTES.catalogReleaseParameters}#rp-card` as const;
 
+/** Правая колонка: порядок как на странице, подписи = названия разделов. */
 export const GUIDE_IN_PAGE_NAV = [
-  { id: "guide-top", label: "Старт" },
-  { id: "topics", label: "Разделы" },
-  { id: "checklist", label: "Чеклист" },
-  { id: "release-card", label: "Каталог" },
-  { id: "factors", label: "Факторы" },
-  { id: "deal", label: "Сделка" },
-  { id: "payouts", label: "Выплаты" },
-  { id: "risks", label: "Риски" },
-  { id: "compare", label: "Сравнение" },
+  { id: "guide-top", label: "Гид по выбору релиза" },
+  { id: "topics", label: "Выберите раздел" },
+  { id: "checklist", label: "На что смотреть перед входом" },
+  { id: "release-card", label: "Язык карточки в каталоге" },
+  { id: "factors", label: "Пять факторов выбора релиза" },
+  { id: "deal", label: "Как устроена сделка" },
+  { id: "payouts", label: "Как оценивать выплаты" },
+  { id: "risks", label: "Какие риски учитывать" },
+  { id: "compare", label: "Как сравнивать релизы между собой" },
   { id: "faq", label: "FAQ" },
 ] as const;
 
-/** Имя файла в `public/images/Select_section/` (кодируется в URL при сборке ссылки). */
+/** Иконка раздела в сетке «Выберите раздел» — сопоставляется с Lucide в `GuideExchangeCard`. */
+export type GuideTopicIconId = "checklist" | "release" | "factors" | "deal" | "payouts" | "risks";
+
 export type GuideTopicCardEntry = {
   anchor: string;
   href?: string;
   title: string;
   description: string;
-  topicImageFile: string;
+  icon: GuideTopicIconId;
 };
-
-const GUIDE_TOPIC_IMAGE_DIR = "/images/Select_section";
-
-export function guideTopicImageSrc(fileName: string): string {
-  return `${GUIDE_TOPIC_IMAGE_DIR}/${encodeURIComponent(fileName)}`;
-}
 
 export const GUIDE_TOPIC_CARDS = [
   {
@@ -37,7 +34,7 @@ export const GUIDE_TOPIC_CARDS = [
     title: "Чеклист перед входом",
     description:
       "Шесть быстрых фильтров: доходность, история выплат, доля пользователей (investor_share), deal, secondary и прозрачность.",
-    topicImageFile: "Checklist_before_entering.png",
+    icon: "checklist",
   },
   {
     anchor: "release-card",
@@ -45,106 +42,33 @@ export const GUIDE_TOPIC_CARDS = [
     title: "Параметры релиза",
     description:
       "Полный разбор полей карточки и mock UI — на странице каталога; в гиде только отбор и сравнение релизов.",
-    topicImageFile: "Release parameters.png",
+    icon: "release",
   },
   {
     anchor: "factors",
     title: "Пять факторов оценки",
     description: "Единая модель: доходность, структура, история, спрос и ликвидность — в одном каркасе.",
-    topicImageFile: "Five evaluation factors.png",
+    icon: "factors",
   },
   {
     anchor: "deal",
     title: "Структура сделки",
     description: "От raise target до net payout: где теряется и где концентрируется ваша доля.",
-    topicImageFile: "Transaction_structure.png",
+    icon: "deal",
   },
   {
     anchor: "payouts",
     title: "Выплаты и история",
     description: "Стабильность периодов, accrued vs released и сравнение cashflow между релизами.",
-    topicImageFile: "Payments_and_history.png",
+    icon: "payouts",
   },
   {
     anchor: "risks",
     title: "Риски и оговорки",
     description: "Честный перечень ограничений: волатильность, ликвидность и несовпадение ожиданий.",
-    topicImageFile: "Risks_and_Disclaimers.png",
+    icon: "risks",
   },
 ] satisfies readonly GuideTopicCardEntry[];
-
-/** In-page hash targets on /guide/selection for checklist cross-links */
-export type GuideChecklistCrosslinkSection =
-  | "factors"
-  | "deal"
-  | "payouts"
-  | "risks"
-  | "compare"
-  | "faq";
-
-export type GuideChecklistAssociation = {
-  label: string;
-  section?: GuideChecklistCrosslinkSection;
-  /** Внешняя страница (например разбор карточки в каталоге) */
-  href?: string;
-};
-
-export type GuideChecklistRow = {
-  title: string;
-  associations: readonly GuideChecklistAssociation[];
-};
-
-export const GUIDE_SELECTION_CHECKLIST = [
-  {
-    title: "Доходность релиза",
-    associations: [
-      { label: "Expected yield", href: GUIDE_CATALOG_CARD_HREF },
-      { label: "Payout history", section: "payouts" },
-      { label: "Волатильность 30/90 дн." },
-      { label: "Фактор 1 · доходность", section: "factors" },
-    ],
-  },
-  {
-    title: "История выплат",
-    associations: [
-      { label: "Payout history · UI", href: GUIDE_CATALOG_CARD_HREF },
-      { label: "Выплаты и периоды", section: "payouts" },
-      { label: "Фактор 3 · история", section: "factors" },
-    ],
-  },
-  {
-    title: "Доля пользователей (investor_share)",
-    associations: [
-      { label: "Структура сделки", section: "deal" },
-      { label: "Фактор 2 · split", section: "factors" },
-      { label: "FAQ · investor share", section: "faq" },
-    ],
-  },
-  {
-    title: "Условия сделки",
-    associations: [
-      { label: "Deal · блок гида", section: "deal" },
-      { label: "Фактор 2 · структура", section: "factors" },
-      { label: "Сравнение релизов", section: "compare" },
-    ],
-  },
-  {
-    title: "Потенциал secondary market",
-    associations: [
-      { label: "Фактор 5 · ликвидность", section: "factors" },
-      { label: "Риски ликвидности", section: "risks" },
-      { label: "FAQ · secondary", section: "faq" },
-    ],
-  },
-  {
-    title: "Прозрачность структуры",
-    associations: [
-      { label: "Структура сделки", section: "deal" },
-      { label: "Таблица сравнения", section: "compare" },
-      { label: "FAQ · прозрачность", section: "faq" },
-    ],
-  },
-] as const satisfies readonly GuideChecklistRow[];
 
 export const GUIDE_SELECTION_FACTORS = [
   {
@@ -155,7 +79,7 @@ export const GUIDE_SELECTION_FACTORS = [
   },
   {
     title: "2. Структура сделки",
-    desc: "Оценивайте, как делится revenue между пользователями (пул units), артистом и платформой.",
+    desc: "Оценивайте, как делится revenue между пользователями (пул UNT), артистом и платформой.",
     note: "Чем прозрачнее split и комиссии, тем точнее прогноз payout.",
     watch: "Investor share, platform fee, условия распределения дохода",
   },
@@ -168,7 +92,7 @@ export const GUIDE_SELECTION_FACTORS = [
   {
     title: "4. Спрос и активность",
     desc: "Активность по релизу влияет на velocity доходов и интерес рынка.",
-    note: "Смотрите тренд по units и общую вовлеченность актива.",
+    note: "Смотрите тренд по UNT и общую вовлеченность актива.",
     watch: "Filled round %, динамика спроса, повторные входы пользователей",
   },
   {
@@ -223,6 +147,6 @@ export const GUIDE_SELECTION_FAQ = [
   {
     category: "general" satisfies GuideFaqCategoryId,
     q: "На что смотреть новичку в первую очередь?",
-    a: "Начните с 4 пунктов: payout history, investor share, структура сделки и динамика спроса по units.",
+    a: "Начните с 4 пунктов: payout history, investor share, структура сделки и динамика спроса по UNT.",
   },
 ] as const;

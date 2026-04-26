@@ -10,8 +10,8 @@ export type ActivityFilterTab = "all" | "deposits" | "buys" | "sells" | "transfe
 const tabs: { id: ActivityFilterTab; label: string }[] = [
   { id: "all", label: "Все" },
   { id: "deposits", label: "Пополнения" },
-  { id: "buys", label: "Покупки units" },
-  { id: "sells", label: "Продажи units" },
+  { id: "buys", label: "Покупки UNT" },
+  { id: "sells", label: "Продажи UNT" },
   { id: "transfers", label: "Переводы" },
   { id: "withdrawals", label: "Выводы" },
 ];

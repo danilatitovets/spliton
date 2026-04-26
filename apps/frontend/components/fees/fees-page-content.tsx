@@ -143,7 +143,7 @@ export function FeesPageContent() {
         </h2>
         <p className="mt-1 text-sm text-neutral-500">Основные типы удержаний в кабинете RevShare.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryTile title="Platform fee" hint="Покупка units / rights">
+          <SummaryTile title="Platform fee" hint="Покупка UNT / rights">
             <FeeDisplay value={pct(FEES_RATES.platformBuy)} tone="primary" />
           </SummaryTile>
           <SummaryTile title="Secondary fee" hint="Исполнение на secondary">
@@ -210,7 +210,7 @@ export function FeesPageContent() {
                 label: `Platform fee (${pct(FEES_RATES.platformBuy)})`,
                 value: `− ${usdt.format(examples.buy.buyFee)} USDT`,
               },
-              { label: "К зачёту в units (net)", value: `${usdt.format(examples.buy.buyNet)} USDT`, dim: true },
+              { label: "К зачёту в UNT (net)", value: `${usdt.format(examples.buy.buyNet)} USDT`, dim: true },
             ]}
             highlight={{
               label: "Итого удержано комиссией",
@@ -220,7 +220,7 @@ export function FeesPageContent() {
           />
           <ExampleCard
             subtitle="Secondary market"
-            title={`Продажа ${examples.sell.sellUnits} units × ${usdt.format(examples.sell.sellPrice)} USDT`}
+            title={`Продажа ${examples.sell.sellUnits} UNT × ${usdt.format(examples.sell.sellPrice)} USDT`}
             rows={[
               { label: "Сумма сделки (gross)", value: `${usdt.format(examples.sell.sellGross)} USDT` },
               {

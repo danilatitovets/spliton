@@ -12,7 +12,7 @@ export default function CatalogReleaseAnalyticsNotFound() {
       
           <h1 className="text-center text-2xl font-semibold tracking-tight md:text-3xl">Релиз не найден</h1>
           <p className="max-w-md text-center text-sm leading-relaxed text-zinc-500 md:text-[15px]">
-            Нет mock-данных для этого id. Вернитесь к обзору рынка и выберите строку из таблицы.
+            Данные для этого id не найдены. Вернитесь к обзору рынка и выберите строку из таблицы.
           </p>
           <Link
             href={ROUTES.catalogMarketOverview}

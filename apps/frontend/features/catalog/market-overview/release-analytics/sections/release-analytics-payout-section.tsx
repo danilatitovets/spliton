@@ -23,7 +23,7 @@ const ITEMS: {
   {
     key: "cumulativePayouts",
     title: "Совокупно выплачено",
-    hint: "За всё время по mock-данным",
+    hint: "За всё время по данным релиза",
   },
   {
     key: "payoutStatus",
@@ -39,7 +39,7 @@ export function ReleaseAnalyticsPayoutSection({ payout }: { payout: ReleaseMarke
         <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">Выплаты</p>
         <h2 className="mt-1 text-lg font-semibold tracking-tight text-white">Сводка по начислениям</h2>
         <p className="mt-1.5 max-w-[62ch] text-[12px] leading-relaxed text-zinc-600">
-          Ключевые цифры по выплатам инвесторам — для быстрой оценки динамики (mock).
+          Ключевые цифры по выплатам инвесторам — для быстрой оценки динамики.
         </p>
       </div>
 

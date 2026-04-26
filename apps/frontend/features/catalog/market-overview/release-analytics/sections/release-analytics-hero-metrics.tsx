@@ -1,10 +1,26 @@
-import type { ReleaseMarketAnalyticsHero } from "@/types/catalog/release-market-analytics";
+import type {
+  ReleaseMarketAnalyticsHero,
+  ReleaseMarketHeroMetric,
+  ReleaseMarketHeroVsTone,
+} from "@/types/catalog/release-market-analytics";
+import { cn } from "@/lib/utils";
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+const VS_TONE: Record<ReleaseMarketHeroVsTone, string> = {
+  positive: "text-emerald-400",
+  negative: "text-rose-400",
+  neutral: "text-zinc-500",
+  warning: "text-amber-400/95",
+};
+
+function Stat({ label, metric, sub }: { label: string; metric: ReleaseMarketHeroMetric; sub?: string }) {
+  const tone = metric.vsTone ?? "neutral";
   return (
     <div className="rounded-xl bg-[#111111] px-3 py-3 transition-colors hover:bg-white/[0.03]">
       <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">{label}</p>
-      <p className="mt-2 font-mono text-[15px] font-semibold tabular-nums tracking-tight text-white">{value}</p>
+      <p className="mt-2 font-mono text-[15px] font-semibold tabular-nums tracking-tight text-white">{metric.value}</p>
+      {metric.vsPrevious ? (
+        <p className={cn("mt-1 text-[11px] font-medium leading-snug", VS_TONE[tone])}>{metric.vsPrevious}</p>
+      ) : null}
       {sub ? <p className="mt-1 text-[11px] leading-snug text-zinc-500">{sub}</p> : null}
     </div>
   );
@@ -18,26 +34,38 @@ export function ReleaseAnalyticsHeroMetrics({ hero }: { hero: ReleaseMarketAnaly
           <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">Key metrics</h2>
           <p className="mt-1 text-sm font-semibold text-white">Сводка по релизу</p>
         </div>
-        <span className="rounded-md bg-[#0a0a0a] px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-zinc-600 ring-1 ring-white/8">
-          mock
-        </span>
       </div>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-7">
-        <Stat label="Доходность" value={hero.yieldPct} />
-        <Stat label="Total payouts" value={hero.totalPayouts} />
-        <Stat label="Active holders" value={hero.activeHolders} />
-        <Stat label="Available units" value={hero.availableUnits} />
-        <Stat label="Ликвидность" value={hero.liquidityLabel} sub="стакан" />
-        <Stat label="Secondary" value={hero.secondaryStatus} sub="активность" />
+        <Stat label="Доходность" metric={hero.yieldPct} />
+        <Stat label="Total payouts" metric={hero.totalPayouts} />
+        <Stat label="Active holders" metric={hero.activeHolders} />
+        <Stat label="Available UNT" metric={hero.availableUnits} />
+        <Stat label="Ликвидность" metric={hero.liquidity} sub="стакан" />
+        <Stat label="Secondary" metric={hero.secondary} sub="активность" />
         <div className="col-span-2 rounded-xl bg-[#111111] px-3 py-3 transition-colors hover:bg-white/[0.03] lg:col-span-2 xl:col-span-1">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">Тренд / фаза</p>
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">Тренд</p>
           <p className="mt-2 text-[12px] font-medium text-zinc-200">
-            7D: <span className="font-mono text-[#B7F500]/90">{hero.trend7d}</span>
+            7D:{" "}
+            <span className={cn("font-mono tabular-nums", VS_TONE[hero.trend7d.vsTone ?? "neutral"])}>
+              {hero.trend7d.value}
+            </span>
           </p>
-          <p className="mt-1 text-[12px] font-medium text-zinc-200">
-            30D: <span className="font-mono text-zinc-400">{hero.trend30d}</span>
+          {hero.trend7d.vsPrevious ? (
+            <p className={cn("mt-0.5 text-[11px] leading-snug", VS_TONE[hero.trend7d.vsTone ?? "neutral"])}>
+              {hero.trend7d.vsPrevious}
+            </p>
+          ) : null}
+          <p className="mt-2 text-[12px] font-medium text-zinc-200">
+            30D:{" "}
+            <span className={cn("font-mono tabular-nums", VS_TONE[hero.trend30d.vsTone ?? "neutral"])}>
+              {hero.trend30d.value}
+            </span>
           </p>
-          <p className="mt-3 text-[11px] leading-snug text-zinc-500">Фаза: {hero.phase}</p>
+          {hero.trend30d.vsPrevious ? (
+            <p className={cn("mt-0.5 text-[11px] leading-snug", VS_TONE[hero.trend30d.vsTone ?? "neutral"])}>
+              {hero.trend30d.vsPrevious}
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

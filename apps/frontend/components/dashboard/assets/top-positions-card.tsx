@@ -79,7 +79,7 @@ export function TopPositionsCard() {
                       href={assetsSellUnitsPath(row.catalogReleaseId)}
                       className="inline-flex rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 transition hover:bg-neutral-50"
                     >
-                      Продать units
+                      Продать UNT
                     </Link>
                   ) : (
                     <button

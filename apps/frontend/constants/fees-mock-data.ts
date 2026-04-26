@@ -20,14 +20,14 @@ export type MainFeeRow = {
 
 export const mainFeeRows: MainFeeRow[] = [
   {
-    operation: "Покупка rights / units (первичный рынок)",
+    operation: "Покупка rights / UNT (первичный рынок)",
     feeType: "Platform fee",
     rateLabel: `${(FEES_RATES.platformBuy * 100).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} %`,
     calculation: "Процент от суммы платежа в USDT до подтверждения сделки.",
     note: "Отображается в превью ордера и в итоговой строке перед оплатой.",
   },
   {
-    operation: "Продажа units на secondary market",
+    operation: "Продажа UNT на secondary market",
     feeType: "Secondary market fee",
     rateLabel: `${(FEES_RATES.secondary * 100).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} %`,
     calculation: "Процент от суммы исполненной сделки (gross) в USDT.",
@@ -77,7 +77,7 @@ export const feeSectionBlocks: FeeSectionBlock[] = [
   {
     id: "market",
     title: "Market & Trading",
-    subtitle: "Первичный и вторичный рынок units",
+    subtitle: "Первичный и вторичный рынок UNT",
     bullets: [
       `Первичная покупка: platform fee ${(FEES_RATES.platformBuy * 100).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} % от платежа.`,
       `Secondary: secondary fee ${(FEES_RATES.secondary * 100).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} % от суммы сделки при исполнении.`,

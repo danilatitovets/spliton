@@ -24,11 +24,11 @@ export function GuideRisksSection() {
           </span>
         </div>
 
-        <ul className="space-y-1 px-3 py-3 md:px-4 md:py-4">
+        <ul className="space-y-1 px-2.5 py-2 md:px-3 md:py-3">
           {GUIDE_SELECTION_RISKS.map((risk, idx) => (
             <li
               key={risk}
-              className="flex gap-4 rounded-lg bg-black/30 px-3 py-3.5 transition-colors hover:bg-white/4 md:px-4 md:py-4"
+              className="flex gap-3 rounded-lg bg-black/30 px-2.5 py-2.5 transition-colors hover:bg-white/4 md:px-3 md:py-3"
             >
               <span className="w-10 shrink-0 pt-0.5 text-right font-mono text-[11px] font-semibold tabular-nums text-amber-600/80">
                 R{String(idx + 1).padStart(2, "0")}

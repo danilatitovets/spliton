@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Play } from "lucide-react";
 
-import { ExchangeNeonSparkline } from "@/components/shared/charts/exchange-neon-sparkline";
 import { MediaPlaceholder } from "@/components/dashboard/dashboard-media-placeholder";
 import { analyticsReleaseDetailPath, catalogBuyUnitsPath } from "@/constants/routes";
 import { catalogAccent } from "@/features/catalog/catalog-accent";
@@ -91,7 +90,7 @@ function CardKindStrip({ item }: { item: CatalogItem }) {
         </span>
       ) : (
         <span className="shrink-0 rounded-md bg-fuchsia-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-fuchsia-200/80">
-          Units
+          UNT
         </span>
       )}
     </div>
@@ -122,7 +121,7 @@ function RowKindLine({ item }: { item: CatalogItem }) {
         </span>
       ) : (
         <span className="rounded bg-fuchsia-500/12 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-fuchsia-200/85">
-          Units
+          UNT
         </span>
       )}
     </div>
@@ -144,7 +143,7 @@ function RowThumb({ title, large }: { title: string; large: boolean }) {
 }
 
 const cardShellBase =
-  "group relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-[#111111] font-mono text-[13px] tabular-nums tracking-tight shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition-colors duration-200 hover:bg-white/[0.04]";
+  "group relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-[#111111] font-mono text-[13px] tabular-nums tracking-tight shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition-colors duration-200 hover:bg-[#171717]";
 
 const rowShell =
   "group flex w-full gap-3 rounded-2xl bg-[#0a0a0a] p-3.5 font-mono text-[13px] tabular-nums tracking-tight shadow-[0_14px_34px_rgba(0,0,0,0.35)] transition-colors duration-200 hover:bg-[#101010] sm:gap-4 sm:p-4";
@@ -153,18 +152,57 @@ const btnGhost =
   "inline-flex h-9 shrink-0 items-center justify-center rounded-xl bg-[#131313] px-4 text-[12px] font-semibold text-zinc-200 transition-colors hover:bg-[#1b1b1b] hover:text-white sm:h-10";
 
 const btnBuyUnits =
-  "inline-flex h-9 shrink-0 items-center justify-center rounded-xl bg-[#B7F500]/14 px-4 text-[12px] font-semibold text-[#c9ff52] transition-colors hover:bg-[#B7F500]/22 hover:text-white sm:h-10";
+  "inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-emerald-500 sm:h-11";
+
+const cardActionBtnSizeClass = "h-9 w-[122px] px-0 text-[12px]";
+const rowActionBtnSizeClass = "h-10 w-[128px] px-0 text-[12px]";
+
+const cardTitleRowClass = "flex min-h-[48px] items-center";
+const cardMetaRowClass = "mt-5 space-y-2.5 text-[12px]";
 
 function CatalogTrackSparkline({ tone }: { tone: "up" | "down" | "neutral" }) {
-  const values =
+  const uid = `${tone}-mini`;
+  const points =
     tone === "up"
-      ? [18, 17, 19, 18, 21, 22, 21, 24, 26, 28]
+      ? "2,26 12,24 22,25 32,20 42,18 54,19 66,14 78,12 90,10 102,8"
       : tone === "down"
-        ? [28, 27, 26, 27, 24, 23, 22, 21, 20, 18]
-        : [20, 21, 20, 22, 21, 20, 21, 20, 22, 21];
-  const trend = tone === "neutral" ? "flat" : tone;
+        ? "2,8 12,9 22,10 32,13 42,14 54,16 66,18 78,20 90,23 102,25"
+        : "2,18 12,16 22,17 32,15 42,16 54,14 66,16 78,15 90,16 102,15";
+  const stroke =
+    tone === "up" ? "#5eead4" : tone === "down" ? "#fb7185" : "#e4e4e7";
+  const glowId = `catalog-spark-glow-${uid}`;
   return (
-    <ExchangeNeonSparkline values={values} trend={trend} width={118} height={36} detailSegments={5} />
+    <div className="h-12 w-full overflow-hidden">
+      <svg viewBox="0 0 104 30" className="h-full w-full" aria-hidden>
+        <defs>
+          <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="1.6" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <polyline
+          points={points}
+          fill="none"
+          stroke={stroke}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.14"
+        />
+        <polyline
+          points={points}
+          fill="none"
+          stroke={stroke}
+          strokeWidth="2.1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter={`url(#${glowId})`}
+        />
+      </svg>
+    </div>
   );
 }
 
@@ -216,10 +254,10 @@ export function CatalogTrackCard({
                 <p className={cn("truncate font-sans text-zinc-500", L ? "text-sm" : "text-xs")}>{item.artist}</p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2 self-start sm:mt-0">
-                <Link href={buyHref} className={btnBuyUnits}>
-                  Купить units
+                <Link href={buyHref} className={cn(btnBuyUnits, rowActionBtnSizeClass)}>
+                  Купить UNT
                 </Link>
-                <Link href={detailHref} className={btnGhost}>
+                <Link href={detailHref} className={cn(btnGhost, rowActionBtnSizeClass)}>
                   Подробнее
                 </Link>
               </div>
@@ -230,7 +268,7 @@ export function CatalogTrackCard({
               </div>
               <p className={cn("mt-1.5 font-sans text-zinc-500", L ? "text-xs" : "text-[11px]")}>
                 <span className="font-semibold tabular-nums text-zinc-200">{item.raised}</span>
-                <span className="text-zinc-600"> / {item.goal} USDT</span>
+                <span className="text-zinc-600"> / {item.goal}</span>
               </p>
             </div>
           </div>
@@ -239,8 +277,9 @@ export function CatalogTrackCard({
     }
 
     return (
-      <article className={cn(shell, "p-4 sm:p-5")}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <article className={cn(shell, "h-[382px] p-4 sm:p-5")}>
+        <div className="mb-4 h-px w-full bg-white/8" aria-hidden />
+        <div className={cardTitleRowClass}>
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="relative size-10 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a]">
               <MediaPlaceholder label="Аватар" aspectClassName="absolute inset-0 h-full w-full min-h-0" />
@@ -250,35 +289,49 @@ export function CatalogTrackCard({
               <p className="mt-1 truncate text-xs text-zinc-500">{item.artist}</p>
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap justify-end gap-2">
-            <Link href={buyHref} className={cn(btnBuyUnits, "h-8 px-3.5 text-[11px]")}>
-              Купить units
-            </Link>
-            <Link href={detailHref} className={cn(btnGhost, "h-8 px-3.5 text-[11px]")}>
-              Подробнее
-            </Link>
-          </div>
         </div>
 
-        <div className="mt-3 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[11px] text-zinc-500">Доходность (ориентир)</p>
+        <div className="mt-1 mb-2 h-px w-full bg-white/20" aria-hidden />
+        <div className="mt-4 mb-4 flex h-9 w-full items-center justify-between gap-2">
+            <Link href={buyHref} className={cn(btnBuyUnits, cardActionBtnSizeClass)}>
+              Купить UNT
+          </Link>
+            <Link href={detailHref} className={cn(btnGhost, cardActionBtnSizeClass)}>
+            Подробнее
+          </Link>
+        </div>
+
+        <div className="mt-5">
+          <div className="min-h-[98px]">
+            <p className="truncate text-[11px] text-zinc-500">Доходность (ориентир)</p>
             <p className={cn("mt-0.5 text-[36px] font-semibold leading-none tabular-nums", toneValueClass(tone))}>
               {item.forecastYield}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">Собрано {item.raised} / {item.goal} USDT</p>
+            <p className="mt-1 truncate text-xs text-zinc-500">Собрано {item.raised} / {item.goal}</p>
           </div>
-          <CatalogTrackSparkline tone={tone} />
+          <div className="mt-2 flex justify-center">
+            <div className="w-[136px]">
+              <CatalogTrackSparkline tone={tone} />
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 space-y-2.5 text-[12px]">
-          <div className="flex items-center justify-between text-zinc-500">
-            <span>Копитрейдеров</span>
-            <span className="font-semibold tabular-nums text-zinc-300">{item.availablePct}</span>
+        <div className={cardMetaRowClass}>
+          <div className="flex h-5 items-center justify-between text-zinc-500">
+            <span>Цена за 1 UNT</span>
+            <span className="inline-block min-w-[64px] text-right font-semibold tabular-nums text-zinc-300">—</span>
           </div>
-          <div className="flex items-center justify-between text-zinc-500">
+          <div className="flex h-5 items-center justify-between text-zinc-500">
+            <span>Копитрейдеров</span>
+          <span className="inline-block min-w-[64px] text-right font-semibold tabular-nums text-zinc-300">{item.availablePct}</span>
+          </div>
+          <div className="flex h-5 items-center justify-between text-zinc-500">
             <span>Актив под управлением</span>
-            <span className={cn("font-semibold tabular-nums", accentSoft)}>{item.forecastYield}</span>
+          <span className={cn("inline-block min-w-[64px] text-right font-semibold tabular-nums", accentSoft)}>{item.forecastYield}</span>
+          </div>
+          <div className="flex h-5 items-center justify-between text-zinc-500">
+            <span>Ликвидность</span>
+          <span className="inline-block min-w-[64px] text-right font-semibold tabular-nums text-zinc-200">{item.availablePct}</span>
           </div>
           <div className="overflow-hidden rounded-full bg-zinc-900 h-1.5">
             <div className={cn("h-full rounded-full", toneBarClass(tone))} style={{ width: `${item.pct}%` }} />
@@ -303,17 +356,17 @@ export function CatalogTrackCard({
               <p className={cn("truncate font-sans text-zinc-500", L ? "text-sm" : "text-xs")}>{item.artist}</p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2 self-start sm:mt-0">
-              <Link href={buyHref} className={btnBuyUnits}>
-                Купить units
+              <Link href={buyHref} className={cn(btnBuyUnits, rowActionBtnSizeClass)}>
+                Купить UNT
               </Link>
-              <Link href={detailHref} className={btnGhost}>
+              <Link href={detailHref} className={cn(btnGhost, rowActionBtnSizeClass)}>
                 Подробнее
               </Link>
             </div>
           </div>
           <div className="flex flex-col gap-1 pt-2.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-0">
             <div>
-              <p className={cn("font-sans text-zinc-600", L ? "text-[11px]" : "text-[10px]")}>Ориентир входа (mock)</p>
+              <p className={cn("font-sans text-zinc-600", L ? "text-[11px]" : "text-[10px]")}>Ориентир входа</p>
               <p className={cn("mt-1 font-semibold tabular-nums text-white", L ? "text-base" : "text-sm")}>
                 {item.sharePrice}{" "}
                 <span className={cn("font-semibold", shareDeltaClass(item.sharePriceChange), L ? "text-sm" : "text-xs")}>
@@ -323,7 +376,7 @@ export function CatalogTrackCard({
             </div>
             <p className={cn("font-sans text-zinc-600 sm:text-right", L ? "text-[11px]" : "text-[10px]")}>
               Выплаты:{" "}
-              <span className="font-medium tabular-nums text-zinc-400">{item.lastMonthPayout} USDT</span>
+              <span className="font-medium tabular-nums text-zinc-400">{item.lastMonthPayout}</span>
             </p>
           </div>
         </div>
@@ -332,8 +385,9 @@ export function CatalogTrackCard({
   }
 
   return (
-    <article className={cn(shell, "p-4 sm:p-5")}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <article className={cn(shell, "h-[382px] p-4 sm:p-5")}>
+      <div className="mb-4 h-px w-full bg-white/8" aria-hidden />
+      <div className={cardTitleRowClass}>
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="relative size-10 shrink-0 overflow-hidden rounded-full bg-[#0a0a0a]">
             <MediaPlaceholder label="Аватар" aspectClassName="absolute inset-0 h-full w-full min-h-0" />
@@ -343,36 +397,48 @@ export function CatalogTrackCard({
             <p className="mt-1 truncate text-xs text-zinc-500">{item.artist}</p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2">
-          <Link href={buyHref} className={cn(btnBuyUnits, "h-8 px-3.5 text-[11px]")}>
-            Купить units
-          </Link>
-          <Link href={detailHref} className={cn(btnGhost, "h-8 px-3.5 text-[11px]")}>
-            Подробнее
-          </Link>
+      </div>
+
+      <div className="mt-1 mb-2 h-px w-full bg-white/20" aria-hidden />
+      <div className="mt-4 mb-4 flex h-9 w-full items-center justify-between gap-2">
+        <Link href={buyHref} className={cn(btnBuyUnits, cardActionBtnSizeClass)}>
+          Купить UNT
+        </Link>
+        <Link href={detailHref} className={cn(btnGhost, cardActionBtnSizeClass)}>
+          Подробнее
+        </Link>
+      </div>
+
+      <div className="mt-5">
+        <div className="min-h-[98px]">
+          <p className="truncate text-[11px] text-zinc-500">Ориентир входа (вторичка)</p>
+          <div className="mt-0.5 flex items-baseline gap-2">
+            <span className="text-[34px] font-semibold leading-none tabular-nums text-white">{item.sharePrice}</span>
+            <span className={cn("inline-block min-w-[86px] text-[28px] leading-none tabular-nums", toneValueClass(tone))}>
+              {item.sharePriceChange}
+            </span>
+          </div>
+          <p className="mt-1 truncate text-xs text-zinc-500">Выплаты за прошлый период {item.lastMonthPayout}</p>
+        </div>
+        <div className="mt-2 flex justify-center">
+          <div className="w-[136px]">
+            <CatalogTrackSparkline tone={tone} />
+          </div>
         </div>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[11px] text-zinc-500">Ориентир входа (вторичка)</p>
-          <p className="mt-0.5 text-[34px] font-semibold leading-none tabular-nums text-white">
-            {item.sharePrice}{" "}
-            <span className={cn("text-[28px]", toneValueClass(tone))}>{item.sharePriceChange}</span>
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">Выплаты за прошлый период {item.lastMonthPayout} USDT</p>
+      <div className={cardMetaRowClass}>
+        <div className="flex h-5 items-center justify-between text-zinc-500">
+          <span>Цена за 1 UNT</span>
+          <span className="inline-block min-w-[84px] text-right font-semibold tabular-nums text-zinc-200">{item.sharePrice}</span>
         </div>
-        <CatalogTrackSparkline tone={tone} />
-      </div>
-
-      <div className="mt-4 space-y-2.5 text-[12px]">
-        <div className="flex items-center justify-between text-zinc-500">
+        <div className="flex h-5 items-center justify-between text-zinc-500">
           <span>Копитрейдеров</span>
-          <span className="font-semibold tabular-nums text-zinc-300">-- / --</span>
+          <span className="inline-block min-w-[84px] text-right font-semibold tabular-nums text-zinc-300">-- / --</span>
         </div>
-        <div className="flex items-center justify-between text-zinc-500">
+        <div className="flex h-5 items-center justify-between text-zinc-500">
           <span>Актив под управлением</span>
-          <span className="font-semibold tabular-nums text-zinc-200">{item.lastMonthPayout} USDT</span>
+          <span className="inline-block min-w-[84px] text-right font-semibold tabular-nums text-zinc-200">{item.lastMonthPayout}</span>
         </div>
       </div>
     </article>

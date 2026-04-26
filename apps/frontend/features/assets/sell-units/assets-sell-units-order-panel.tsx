@@ -50,11 +50,11 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
           <span className="mx-2 text-neutral-300" aria-hidden>
             ·
           </span>
-          <span className="text-neutral-500">В кабинете</span> {formatUnitsCompact(heldUnits)} units
+          <span className="text-neutral-500">В кабинете</span> {formatUnitsCompact(heldUnits)} UNT
         </p>
         <p className="mt-1.5 text-[11px] leading-snug text-neutral-500">
           Ориентир по первичному прайсу релиза:{" "}
-          <span className="font-mono text-neutral-700">{formatUsdtFixedRu(primaryRef)} USDT</span> / unit. Лимит на
+          <span className="font-mono text-neutral-700">{formatUsdtFixedRu(primaryRef)} USDT</span> / UNT. Лимит на
           secondary вы задаёте сами (мок).
         </p>
       </div>
@@ -65,12 +65,12 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
           onClick={() => setUnitPrice(suggestedAsk)}
           className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-neutral-800 transition hover:bg-neutral-50"
         >
-          Подставить ориентир {formatUsdtFixedRu(suggestedAsk)} USDT/unit
+          Подставить ориентир {formatUsdtFixedRu(suggestedAsk)} USDT/UNT
         </button>
       </div>
 
       <div className={FIELD_BOX}>
-        <p className="text-[12px] font-medium text-neutral-500">Цена (USDT за 1 unit, лимит)</p>
+        <p className="text-[12px] font-medium text-neutral-500">Цена (USDT за 1 UNT, лимит)</p>
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <input
             type="number"
@@ -84,7 +84,7 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
               setUnitPrice(roundUsdt2(n));
             }}
             className={BIG_INPUT}
-            aria-label="Цена в USDT за один unit"
+            aria-label="Цена в USDT за один UNT"
           />
           <span className="shrink-0 rounded-xl bg-neutral-100/90 px-2.5 py-1.5 text-[12px] font-semibold text-neutral-800">
             USDT
@@ -97,7 +97,7 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
       </div>
 
       <div className={FIELD_BOX}>
-        <p className="text-[12px] font-medium text-neutral-500">Количество (units к продаже)</p>
+        <p className="text-[12px] font-medium text-neutral-500">Количество (UNT к продаже)</p>
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <input
             type="number"
@@ -117,15 +117,15 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
               BIG_INPUT,
               "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
             )}
-            aria-label="Количество units к продаже"
+            aria-label="Количество UNT к продаже"
           />
           <span className="shrink-0 rounded-xl bg-neutral-100/90 px-2.5 py-1.5 text-[12px] font-semibold text-neutral-800">
-            units
+            UNT
           </span>
         </div>
         <p className="mt-2 text-[11px] text-neutral-500">
           Максимум по позиции: <span className="font-mono text-neutral-700">{formatUnitsCompact(heldUnits)}</span>{" "}
-          units.
+          UNT.
         </p>
       </div>
 
@@ -134,11 +134,11 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
         <dl className="mt-3 space-y-2.5 font-mono text-[13px] tabular-nums">
           <div className="flex items-baseline justify-between gap-3 border-b border-neutral-100 pb-2">
             <dt className="text-[12px] font-sans font-medium text-neutral-600">Цена</dt>
-            <dd className="text-right text-neutral-950">{formatUsdtFixedRu(unitPrice)} USDT / unit</dd>
+            <dd className="text-right text-neutral-950">{formatUsdtFixedRu(unitPrice)} USDT / UNT</dd>
           </div>
           <div className="flex items-baseline justify-between gap-3 border-b border-neutral-100 pb-2">
             <dt className="text-[12px] font-sans font-medium text-neutral-600">Количество</dt>
-            <dd className="text-right text-neutral-950">{clampedQty.toLocaleString("ru-RU")} units</dd>
+            <dd className="text-right text-neutral-950">{clampedQty.toLocaleString("ru-RU")} UNT</dd>
           </div>
           <div className="flex items-baseline justify-between gap-3 border-b border-neutral-100 pb-2">
             <dt className="text-[12px] font-sans font-medium text-neutral-600">Итого</dt>
@@ -241,7 +241,7 @@ export function AssetsSellUnitsOrderPanel({ row, heldUnits, secondaryTradeHref }
                 </div>
                 <div className="flex items-baseline justify-between gap-3">
                   <dt className="font-sans text-[12px] text-zinc-500">Количество</dt>
-                  <dd className="text-right text-zinc-900">{clampedQty.toLocaleString("ru-RU")} units</dd>
+                  <dd className="text-right text-zinc-900">{clampedQty.toLocaleString("ru-RU")} UNT</dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-3">
                   <dt className="font-sans text-[12px] text-zinc-500">Цена</dt>

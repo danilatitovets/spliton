@@ -76,7 +76,7 @@ export function PositionActionsModal({ row }: PositionActionsModalProps) {
                   href={assetsSellUnitsPath(catalogId)}
                   className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-neutral-900 px-4 text-[13px] font-semibold text-white transition hover:bg-neutral-800"
                 >
-                  Продать units
+                  Продать UNT
                 </Link>
                 <Link
                   href={catalogBuyUnitsPath(catalogId)}
