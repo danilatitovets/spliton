@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, Quote } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -29,7 +30,7 @@ function PartnerVoicesBlock() {
   return (
     <div className="relative">
       <div className="text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Trust</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Trust</p>
         <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-500">
           Истории из комьюнити — без лишнего пафоса, в тоне продукта.
         </p>
@@ -52,11 +53,11 @@ function PartnerVoicesBlock() {
               className={cn(
                 "inline-flex items-center gap-2 rounded-full px-3 py-2 text-left text-xs font-medium transition-all ring-1 sm:text-[13px]",
                 on
-                  ? "bg-[#B7F500]/10 text-[#d4f570] ring-[#B7F500]/35"
-                  : "bg-[#0a0a0a] text-zinc-400 ring-white/10 hover:bg-white/5 hover:text-zinc-200",
+                  ? "bg-white/14 text-white ring-white/22"
+                  : "bg-black/45 text-zinc-400 ring-white/10 hover:bg-white/7 hover:text-zinc-200",
               )}
             >
-              <span className="flex size-7 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-zinc-200 ring-1 ring-white/10">
+              <span className="flex size-7 items-center justify-center rounded-full bg-black/80 text-[11px] font-semibold text-zinc-200 ring-1 ring-white/10">
                 {v.avatarLetter}
               </span>
               {v.tabLabel}
@@ -80,7 +81,8 @@ function PartnerVoicesBlock() {
           ))}
         </div>
 
-        <article className={cn("relative z-10 overflow-hidden px-6 py-8 sm:px-9 sm:py-10", surfaceCard)}>
+        <article className="relative z-10 overflow-hidden rounded-3xl bg-[#141414]/95 px-6 py-8 ring-1 ring-white/12 backdrop-blur-[2px] sm:px-9 sm:py-10">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_60%_at_80%_0%,rgba(255,255,255,0.1),transparent_55%)]" aria-hidden />
           <Quote className="absolute right-5 top-5 size-16 text-white/6 sm:right-8 sm:top-8 sm:size-20" aria-hidden />
           <div className="relative space-y-4">
             {voice.quote.map((p, idx) => (
@@ -90,7 +92,7 @@ function PartnerVoicesBlock() {
             ))}
           </div>
           <footer className="relative mt-8 flex items-center gap-3 border-t border-white/8 pt-6">
-            <span className="flex size-10 items-center justify-center rounded-full bg-[#B7F500]/15 text-sm font-semibold text-[#d4f570] ring-1 ring-[#B7F500]/25">
+            <span className="flex size-10 items-center justify-center rounded-full bg-white/14 text-sm font-semibold text-white ring-1 ring-white/20">
               {voice.avatarLetter}
             </span>
             <div>
@@ -113,129 +115,231 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
     <div className="space-y-10 pb-8 md:space-y-12">
       {activeTab === "about" ? (
         <div className="space-y-10">
-          <section className={cn("relative overflow-hidden px-6 py-8 sm:px-8 sm:py-9", surfaceCard)}>
-            <div className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-[#B7F500]/10 blur-3xl" aria-hidden />
-            <div className="pointer-events-none absolute -bottom-28 -left-16 size-72 rounded-full bg-violet-500/10 blur-3xl" aria-hidden />
-            <p className="relative max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
-              Развивайтесь вместе с платформой revenue share по музыкальным трекам. Партнёрка — для профессионального и
-              медийного сотрудничества;{" "}
-              <Link href={ROUTES.referralProgram} className="text-[#d4f570] underline-offset-4 hover:underline">
-                реферальная программа
-              </Link>{" "}
-              остаётся в кабинете для личных приглашений.
-            </p>
-            <div className="relative mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a
-                href={partnerApplyMailto("Заявка: партнёрская программа RevShare")}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "h-11 border-0 bg-[#B7F500] px-6 text-sm font-semibold text-black hover:bg-[#c8ff3d]",
-                )}
-              >
-                Подать заявку
-                <ArrowRight className="ml-2 size-4" aria-hidden />
-              </a>
-              <Link
-                href={ROUTES.referralProgram}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "h-11 border-white/12 bg-[#0a0a0a] text-zinc-100 ring-1 ring-white/10 hover:bg-white/5",
-                )}
-              >
-                Реферальная программа для пользователей
-              </Link>
-            </div>
-          </section>
+          <section
+            className={cn(
+              "relative overflow-hidden rounded-3xl px-6 py-8 ring-1 ring-white/12 sm:px-8 sm:py-10",
+              "bg-linear-to-br from-[#181818] via-[#141414] to-[#101010]",
+            )}
+          >
+            <Image
+              src="/images/partner-programtab=about/back.jpg"
+              alt=""
+              fill
+              className="object-cover object-center opacity-55"
+              sizes="(max-width: 1200px) 100vw, 1200px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/28" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_80%_0%,rgba(255,255,255,0.15),transparent_55%)]" aria-hidden />
 
-          <section className="grid gap-8 lg:grid-cols-[1fr_1.05fr] lg:items-start" aria-labelledby="what-title">
-            <div>
-              <h2 id="what-title" className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                Что это за программа
-              </h2>
-              <p className="mt-2 text-sm text-zinc-500 sm:text-base">Имиджевый, но продуктовый контур RevShare.</p>
-            </div>
-            <div className={cn("space-y-4 p-6 sm:p-8", surfaceCard)}>
-              <p className="text-sm leading-relaxed text-zinc-300 sm:text-base">
-                Партнёрская программа соединяет платформу с теми, кто усиливает доверие и охват: медиа, комьюнити-лидеры,
-                rights-экосистема и стратегические игроки. Это не замена реферальной механики — разные цели и договорённости.
-              </p>
-              <p className="text-sm leading-relaxed text-zinc-500">
-                Ценность — в прозрачных условиях, доступе к материалам и совместном росте вокруг музыкальных rights и USDT
-                (TRC20) в продукте.
-              </p>
-            </div>
-          </section>
-
-          <section aria-labelledby="formats-title">
-            <h2 id="formats-title" className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
-              Форматы партнёрства
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm text-zinc-500 sm:text-base">
-              Выберите ближайший тип — на этапе заявки можно уточнить гибрид или кастомный сценарий.
-            </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {partnerFormats.map((f) => (
-                <div
-                  key={f.id}
-                  className={cn(
-                    "group p-6 transition-colors hover:ring-[#B7F500]/22",
-                    surfaceCard,
-                  )}
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d4f570]/90">{f.subtitle}</p>
-                  <h3 className="mt-2 text-lg font-semibold text-white">{f.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-500">{f.body}</p>
+            <div className="relative grid gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+              <div>
+                <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+                  Монетизируйте своё влияние с Spliton
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-relaxed text-zinc-200">
+                  Развивайтесь вместе с платформой revenue share по музыкальным трекам. Партнёрка - для профессионального и
+                  медийного сотрудничества;{" "}
+                  <Link href={ROUTES.referralProgram} className="text-[#d4f570] underline-offset-4 hover:underline">
+                    реферальная программа
+                  </Link>{" "}
+                  остаётся в кабинете для личных приглашений.
+                </p>
+                <div className="relative mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <a
+                    href={partnerApplyMailto("Заявка: партнёрская программа RevShare")}
+                    className={cn(
+                      buttonVariants({ size: "lg" }),
+                      "h-11 border-0 bg-[#B7F500] px-6 text-sm font-semibold text-black hover:bg-[#c8ff3d]",
+                    )}
+                  >
+                    Подать заявку
+                    <ArrowRight className="ml-2 size-4" aria-hidden />
+                  </a>
+                  <Link
+                    href={ROUTES.referralProgram}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "lg" }),
+                      "h-11 border-white/12 bg-[#0a0a0a]/80 text-zinc-100 ring-1 ring-white/15 hover:bg-white/8",
+                    )}
+                  >
+                    Реферальная программа для пользователей
+                  </Link>
                 </div>
-              ))}
+              </div>
+
+              <div className="rounded-2xl bg-black/45 p-4 text-right ring-1 ring-white/15 backdrop-blur-sm">
+                <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-zinc-400">Расч. месячная выплата</p>
+                <p className="mt-3 text-7xl font-semibold leading-none tracking-tight text-white md:text-8xl">7 388</p>
+                <p className="mt-2 text-base font-medium text-zinc-200">USDT</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8" aria-labelledby="what-title">
+            <Image
+              src="/images/partner-programtab=about/back.jpg"
+              alt=""
+              fill
+              className="object-cover object-center opacity-65"
+              sizes="(max-width: 1200px) 100vw, 1200px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/55" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_14%_12%,rgba(255,255,255,0.16),transparent_58%)]" aria-hidden />
+
+            <div className="relative space-y-8">
+              <div className="max-w-3xl rounded-3xl bg-black/55 p-6 backdrop-blur-[1px] sm:p-8">
+                <h2 id="what-title" className="text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+                  Что это за программа
+                </h2>
+                <p className="mt-2 text-xl font-medium leading-snug text-zinc-200 sm:text-2xl">Имиджевый, но продуктовый контур RevShare.</p>
+                <p className="mt-5 text-sm leading-relaxed text-zinc-200 sm:text-base">
+                  Партнёрская программа соединяет платформу с теми, кто усиливает доверие и охват: медиа, комьюнити-лидеры,
+                  rights-экосистема и стратегические игроки. Это не замена реферальной механики — разные цели и договорённости.
+                </p>
+                <p className="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
+                  Ценность — в прозрачных условиях, доступе к материалам и совместном росте вокруг музыкальных rights и USDT
+                  (TRC20) в продукте.
+                </p>
+              </div>
+
+              <section aria-labelledby="formats-title">
+                <h3 id="formats-title" className="text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  Форматы партнёрства
+                </h3>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  {partnerFormats.map((f, index) => (
+                    <article
+                      key={f.id}
+                      className={cn(
+                        "group relative overflow-hidden rounded-2xl bg-zinc-900/48 p-5 backdrop-blur-[2px] sm:p-6",
+                        index > 1 && "sm:col-span-2",
+                      )}
+                    >
+                      <div
+                        className="pointer-events-none absolute inset-0 transition-opacity duration-300 group-hover:opacity-80"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.08) 100%)",
+                        }}
+                        aria-hidden
+                      />
+                      <div className="relative">
+                        <h4 className="text-2xl font-semibold tracking-tight text-white sm:text-[30px]">{f.title}</h4>
+                        <p className="mt-1 text-xl leading-snug text-zinc-200 sm:text-2xl">({f.subtitle})</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             </div>
           </section>
 
           <section aria-labelledby="benefits-title">
             <h2 id="benefits-title" className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
-              Зачем вступать
+              Наши преимущества
             </h2>
-            <p className="mt-2 text-sm text-zinc-500 sm:text-base">Преимущества партнёрского контура RevShare.</p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {partnerBenefits.map((b) => (
-                <div key={b.id} className={cn("p-6", surfaceCard)}>
-                  <h3 className="font-semibold text-white">{b.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-500">{b.description}</p>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {[
+                { id: "a1", title: "До 50% комиссии в USDT", img: "/images/partner-programtab=about/2.jpg" },
+                { id: "a2", title: "Прозрачная аналитика и выделенная поддержка", img: "/images/partner-programtab=about/3.jpg" },
+                { id: "a3", title: "Co-marketing и ранний доступ", img: "/images/partner-programtab=about/4.jpg" },
+              ].map((b) => (
+                <div key={b.id} className={cn("relative overflow-hidden p-6", surfaceCard)}>
+                  <Image src={b.img} alt="" fill className="object-cover object-center opacity-25" sizes="(max-width: 1200px) 33vw, 360px" />
+                  <div className="pointer-events-none absolute inset-0 bg-black/55" aria-hidden />
+                  <h3 className="relative font-semibold text-white">{b.title}</h3>
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className={cn("relative overflow-hidden p-6 sm:p-8", surfaceCard)} aria-label="Ключевые показатели">
+            <Image
+              src="/images/partner-programtab=about/back.jpg"
+              alt=""
+              fill
+              className="object-cover object-center opacity-20"
+              sizes="(max-width: 1200px) 100vw, 1200px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
+            <div className="relative grid gap-5 md:grid-cols-3">
+              <div>
+                <p className="text-sm text-[#d4f570]">Более</p>
+                <p className="mt-1 text-5xl font-semibold text-white">15 000</p>
+                <p className="text-xl text-zinc-300">партнёров</p>
+              </div>
+              <div>
+                <p className="text-sm text-[#d4f570]">Более</p>
+                <p className="mt-1 text-5xl font-semibold text-white">120</p>
+                <p className="text-xl text-zinc-300">сообществ</p>
+              </div>
+              <div>
+                <p className="text-sm text-[#d4f570]">Более</p>
+                <p className="mt-1 text-5xl font-semibold text-white">20 000</p>
+                <p className="text-xl text-zinc-300">USDT средний доход</p>
+              </div>
+            </div>
+          </section>
+
+          <section aria-labelledby="how-work-title">
+            <h2 id="how-work-title" className="text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              Как это работает
+            </h2>
+            <ol className="mt-8 grid gap-4 md:grid-cols-3">
+              {partnerHowSteps.slice(0, 3).map((s, i) => (
+                <li key={s.id} className={cn("relative p-6 pt-9", surfaceCard)}>
+                  <span className="absolute -top-3 left-6 flex size-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-zinc-200 ring-1 ring-white/20">
+                    {i + 1}
+                  </span>
+                  <h3 className="font-semibold text-white">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-500">{s.text}</p>
+                </li>
+              ))}
+            </ol>
           </section>
         </div>
       ) : null}
 
       {activeTab === "process" ? (
         <div className="space-y-10">
-          <section aria-labelledby="how-title">
-            <h2 id="how-title" className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+          <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8" aria-labelledby="how-title">
+            <Image
+              src="/images/partner-programtab=about/back.jpg"
+              alt=""
+              fill
+              className="object-cover object-center opacity-45"
+              sizes="(max-width: 1200px) 100vw, 1200px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/52" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_15%_10%,rgba(255,255,255,0.12),transparent_58%)]" aria-hidden />
+            <div className="relative">
+              <h2 id="how-title" className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               Как это устроено
-            </h2>
-            <p className="mt-2 text-sm text-zinc-500">Пять шагов от заявки до регулярной отчётности.</p>
-            <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-              {partnerHowSteps.map((s, i) => (
-                <li key={s.id} className={cn("relative p-5 pt-8", surfaceCard)}>
-                  <span className="absolute -top-3 left-5 flex size-8 items-center justify-center rounded-full bg-[#B7F500]/15 text-xs font-bold text-[#d4f570] ring-1 ring-[#B7F500]/30">
-                    {i + 1}
-                  </span>
-                  <h3 className="font-semibold text-white">{s.title}</h3>
-                  <p className="mt-2 text-xs leading-relaxed text-zinc-500 sm:text-sm">{s.text}</p>
-                </li>
-              ))}
-            </ol>
+              </h2>
+              <p className="mt-2 text-sm text-zinc-300 sm:text-base">Пять шагов от заявки до регулярной отчётности.</p>
+              <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                {partnerHowSteps.map((s, i) => (
+                  <li key={s.id} className="relative rounded-2xl bg-zinc-900/52 p-5 pt-8 backdrop-blur-[2px]">
+                    <span className="absolute -top-3 left-5 flex size-8 items-center justify-center rounded-full bg-zinc-950 text-xs font-bold text-zinc-100">
+                      {i + 1}
+                    </span>
+                    <h3 className="font-semibold text-white">{s.title}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-zinc-300 sm:text-sm">{s.text}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </section>
 
-          <section aria-labelledby="req-title">
-            <h2 id="req-title" className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+          <section className="rounded-3xl bg-[#121212] p-6 sm:p-8" aria-labelledby="req-title">
+            <h2 id="req-title" className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
               Кого мы рассматриваем
             </h2>
-            <p className="mt-2 text-sm text-zinc-500 sm:text-base">Критерии отбора и качество взаимодействия с аудиторией.</p>
-            <ul className={cn("mt-8 space-y-4 p-6 sm:p-8", surfaceCard)}>
+            <p className="mt-2 text-sm text-zinc-400 sm:text-base">Критерии отбора и качество взаимодействия с аудиторией.</p>
+            <ul className="mt-7 space-y-4">
               {partnerRequirements.map((r) => (
-                <li key={r} className="flex gap-3 text-sm leading-relaxed text-zinc-300 sm:text-base">
-                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#B7F500]/80" aria-hidden />
+                <li key={r} className="flex gap-3 rounded-xl bg-zinc-900/45 px-4 py-3 text-sm leading-relaxed text-zinc-200 sm:text-base">
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-zinc-200" aria-hidden />
                   {r}
                 </li>
               ))}
@@ -244,66 +348,97 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
 
           <section
             id="apply"
-            className={cn(
-              "relative overflow-hidden px-6 py-12 text-center sm:px-10 sm:py-14",
-              surfaceCard,
-            )}
+            className="relative overflow-hidden rounded-3xl px-6 py-12 text-center sm:px-10 sm:py-14"
             aria-labelledby="apply-title"
           >
-            <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-[#B7F500]/12 blur-3xl" aria-hidden />
-            <h2 id="apply-title" className="relative text-xl font-semibold tracking-tight text-white sm:text-2xl">
-              Присоединяйтесь к росту RevShare
-            </h2>
-            <p className="relative mx-auto mt-4 max-w-xl text-sm text-zinc-400 sm:text-base">
+            <Image
+              src="/images/partner-programtab=about/back.jpg"
+              alt=""
+              fill
+              className="object-cover object-center opacity-35"
+              sizes="(max-width: 1200px) 100vw, 1200px"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
+            <div className="relative">
+              <h2 id="apply-title" className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                Присоединяйтесь к росту RevShare
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-sm text-zinc-300 sm:text-base">
               Напишите на{" "}
-              <a href={`mailto:${PARTNER_CONTACT_EMAIL}`} className="font-mono text-[#d4f570] hover:underline">
+              <a href={`mailto:${PARTNER_CONTACT_EMAIL}`} className="font-mono text-white hover:underline">
                 {PARTNER_CONTACT_EMAIL}
               </a>{" "}
-              или отправьте заявку одним кликом — в письме укажите ссылку на площадку и желаемый формат партнёрства.
-            </p>
-            <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <a
-                href={partnerApplyMailto("Партнёрская программа RevShare — заявка")}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "h-11 min-w-[220px] border-0 bg-[#B7F500] px-8 text-sm font-semibold text-black hover:bg-[#c8ff3d]",
-                )}
-              >
-                Отправить заявку
-              </a>
-              <Link
-                href={ROUTES.support}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "h-11 border-white/12 bg-black text-zinc-100 ring-1 ring-white/10 hover:bg-white/5",
-                )}
-              >
-                Вопросы в поддержку
-              </Link>
+              или отправьте заявку одним кликом - в письме укажите ссылку на площадку и желаемый формат партнёрства.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <a
+                  href={partnerApplyMailto("Партнёрская программа RevShare — заявка")}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "h-11 min-w-[220px] border-0 bg-white px-8 text-sm font-semibold text-black hover:bg-zinc-200",
+                  )}
+                >
+                  Отправить заявку
+                </a>
+                <Link
+                  href={ROUTES.support}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "h-11 border-white/20 bg-black/65 text-zinc-100 hover:bg-white/10",
+                  )}
+                >
+                  Вопросы в поддержку
+                </Link>
+              </div>
+              <p className="mt-6 text-xs text-zinc-400">
+                Онлайн-форма в кабинете подключится позже - сейчас точка входа через почту партнёрской команды.
+              </p>
             </div>
-            <p className="relative mt-6 text-xs text-zinc-600">
-              Онлайн-форма в кабинете подключится позже — сейчас точка входа через почту партнёрской команды.
-            </p>
           </section>
         </div>
       ) : null}
 
       {activeTab === "community" ? (
-        <section className={cn("px-4 py-12 sm:px-8 sm:py-14", surfaceCard)} aria-labelledby="voices-title">
+        <section className="relative overflow-hidden rounded-3xl px-4 py-12 sm:px-8 sm:py-14" aria-labelledby="voices-title">
+          <Image
+            src="/images/partner-programtab=about/back.jpg"
+            alt=""
+            fill
+            className="object-cover object-center opacity-42"
+            sizes="(max-width: 1200px) 100vw, 1200px"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-black/58" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_65%_at_18%_8%,rgba(255,255,255,0.13),transparent_60%)]" aria-hidden />
           <h2 id="voices-title" className="sr-only">
             Отзывы партнёров
           </h2>
-          <PartnerVoicesBlock />
+          <div className="relative">
+            <PartnerVoicesBlock />
+          </div>
         </section>
       ) : null}
 
       {activeTab === "faq" ? (
-        <section className={cn("p-6 sm:p-8", surfaceCard)} aria-labelledby="faq-title">
-          <h2 id="faq-title" className="text-lg font-semibold text-white sm:text-xl">
-            Вопросы и ответы
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500">Партнёрский контур и отличия от реферальной программы.</p>
-          <PartnerFaqList items={partnerFaqItems} defaultOpenId={partnerFaqItems[0]?.id ?? null} />
+        <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8" aria-labelledby="faq-title">
+          <Image
+            src="/images/partner-programtab=about/back.jpg"
+            alt=""
+            fill
+            className="object-cover object-center opacity-36"
+            sizes="(max-width: 1200px) 100vw, 1200px"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(88%_62%_at_14%_8%,rgba(255,255,255,0.12),transparent_60%)]" aria-hidden />
+
+          <div className="relative">
+            <h2 id="faq-title" className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Вопросы и ответы
+            </h2>
+            <p className="mt-2 text-sm text-zinc-300 sm:text-base">Партнёрский контур и отличия от реферальной программы.</p>
+            <div className="mt-6 rounded-2xl bg-[#131313]/85 p-2 backdrop-blur-[2px] sm:p-3">
+              <PartnerFaqList items={partnerFaqItems} defaultOpenId={partnerFaqItems[0]?.id ?? null} />
+            </div>
+          </div>
         </section>
       ) : null}
     </div>

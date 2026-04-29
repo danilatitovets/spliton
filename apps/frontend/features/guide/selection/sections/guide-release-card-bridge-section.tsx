@@ -12,7 +12,7 @@ export function GuideReleaseCardBridgeSection() {
       subtitle="Разбор полей, mock UI и словарь терминов вынесены на страницу каталога — гид остаётся про выбор релиза, без повтора инструкции по UI."
       headerAlign="center"
     >
-      <div className="mx-auto max-w-2xl text-center">
+      <div className="w-full text-center">
         <p className="text-sm leading-relaxed text-zinc-400">
           Откройте «Параметры релиза»: зоны карточки, ключевые поля, порядок «сначала смотреть», пример и FAQ именно по
           карточке.

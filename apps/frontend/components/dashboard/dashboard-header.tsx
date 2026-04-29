@@ -42,7 +42,7 @@ function HeaderDivider({ className }: { className?: string }) {
 }
 
 const headerIconShellClass =
-  "flex size-9 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-100";
+  "flex size-9 shrink-0 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/8 hover:text-white";
 
 function IconToolButton({
   label,
@@ -131,8 +131,8 @@ function NavTrigger({
   const shellMobile = "flex w-full min-w-0 items-center rounded-md text-[11px] font-medium";
   const shell = size === "desktop" ? shellDesktop : shellMobile;
   const activeShell = isActive
-    ? "bg-white/[0.08] text-white ring-1 ring-white/10"
-    : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-100";
+    ? "bg-white/12 text-white"
+    : "text-white/80 hover:bg-white/8 hover:text-white";
   const linkPad =
     size === "desktop"
       ? "flex items-center rounded-l-md px-2.5 py-2 lg:pl-3 lg:pr-1.5"
@@ -146,9 +146,9 @@ function NavTrigger({
         href={item.href}
         className={cn(
           size === "desktop"
-            ? "flex shrink-0 items-center gap-1 rounded-md px-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] leading-none text-zinc-500 transition-colors lg:px-3"
-            : "flex min-w-0 w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-zinc-500",
-          isActive ? "bg-white/[0.08] text-white ring-1 ring-white/10" : "hover:bg-white/[0.05] hover:text-zinc-100",
+            ? "flex shrink-0 items-center gap-1 rounded-md px-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] leading-none text-white/80 transition-colors lg:px-3"
+            : "flex min-w-0 w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-white/80",
+          isActive ? "bg-white/12 text-white" : "hover:bg-white/8 hover:text-white",
         )}
       >
         <span className="truncate">{item.label}</span>
@@ -199,6 +199,11 @@ type DashboardHeaderProps = {
    * @default true
    */
   sticky?: boolean;
+  /**
+   * Enables scroll elevation (drop shadow + blur) after initial scroll.
+   * @default true
+   */
+  elevatedOnScroll?: boolean;
 };
 
 function HeaderHelpLink({ className }: { className?: string }) {
@@ -213,7 +218,7 @@ function HeaderHelpLink({ className }: { className?: string }) {
   );
 }
 
-export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
+export function DashboardHeader({ sticky = true, elevatedOnScroll = false }: DashboardHeaderProps = {}) {
   const pathname = usePathname();
   const [hash, setHash] = React.useState("");
   const [expandedKey, setExpandedKey] = React.useState<string | null>(null);
@@ -433,19 +438,19 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
       <header
         ref={headerRef}
         className={cn(
-          "border-b border-white/6 bg-[#070707] transition-transform duration-300 ease-out will-change-transform",
+          "border-b border-transparent !bg-black transition-transform duration-300 ease-out will-change-transform",
           sticky ? "sticky top-0 z-[110]" : "relative z-[110] shrink-0",
-          headerElevated && "shadow-[0_8px_30px_rgba(0,0,0,0.38)] backdrop-blur-[2px]",
+          elevatedOnScroll && headerElevated && "shadow-[0_8px_30px_rgba(0,0,0,0.38)] backdrop-blur-[2px]",
           mobileHeaderVisible ? "translate-y-0" : "-translate-y-full sm:translate-y-0",
         )}
         onMouseEnter={cancelCloseMenuTimer}
         onMouseLeave={scheduleCloseMenu}
       >
       <div className="w-full">
-      <div className="flex h-11 w-full items-center gap-2 px-3 sm:h-12 sm:gap-3 sm:px-4 lg:h-[52px] lg:px-5">
+      <div className="flex h-12 w-full items-center gap-2 px-3 sm:h-14 sm:gap-3 sm:px-4 lg:h-[64px] lg:px-5">
         {/* Brand + nav */}
         <div className="flex min-w-0 flex-1 items-center gap-0 sm:gap-1">
-          <div className="flex shrink-0 items-center pr-3 sm:pr-4">
+          <div className="flex shrink-0 items-center pr-0">
             <RevShareLogo />
           </div>
 
@@ -478,7 +483,7 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
             type="button"
             className={cn(
               headerIconShellClass,
-              searchOpen && "bg-white/6 text-white ring-1 ring-white/12",
+              searchOpen && "bg-white/12 text-white",
             )}
             aria-label="Поиск по платформе"
             aria-expanded={searchOpen}
@@ -490,17 +495,17 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
 
           <Link
             href={`${ROUTES.dashboard}#deposit`}
-            className="hidden h-9 shrink-0 items-center rounded-lg border border-white/12 bg-white/[0.04] px-3.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-100 transition hover:border-white/18 hover:bg-white/[0.07] active:scale-[0.98] sm:inline-flex"
+            className="hidden h-9 shrink-0 items-center rounded-lg bg-white/10 px-3.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-white/16 active:scale-[0.98] sm:inline-flex"
           >
             Пополнить USDT
           </Link>
 
           <details className="relative hidden sm:block">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-zinc-300 transition-colors marker:hidden hover:bg-white/[0.05] [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-white/85 transition-colors marker:hidden hover:bg-white/8 [&::-webkit-details-marker]:hidden">
               <span className="hidden tabular-nums lg:inline">1&nbsp;240,58</span>
               <span className="tabular-nums lg:hidden">1&nbsp;240</span>
-              <span className="text-zinc-500">USDT</span>
-              <ChevronDown className="size-3.5 text-zinc-500" strokeWidth={2} aria-hidden />
+              <span className="text-white/65">USDT</span>
+              <ChevronDown className="size-3.5 text-white/65" strokeWidth={2} aria-hidden />
             </summary>
             <div className="absolute right-0 z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-white/[0.1] bg-[#0a0a0a] py-1 shadow-2xl ring-1 ring-black/60">
               <div className="border-b border-white/[0.06] px-3 py-2.5">
@@ -546,7 +551,7 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
             className={cn(
               headerIconShellClass,
               "sm:hidden",
-              mobileMenuOpen && "bg-white/6 text-white ring-1 ring-white/12",
+              mobileMenuOpen && "bg-white/12 text-white",
             )}
             aria-label={mobileMenuOpen ? "Закрыть мобильное меню" : "Открыть мобильное меню"}
             aria-expanded={mobileMenuOpen}
@@ -565,7 +570,8 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
             type="button"
             className={cn(
               "relative z-[1] hidden size-9 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-100 sm:flex",
-              profileOpen && "bg-white/[0.07] text-white ring-1 ring-white/12",
+              "text-white/80 hover:bg-white/8 hover:text-white",
+              profileOpen && "bg-white/12 text-white",
             )}
             aria-label="Профиль и настройки аккаунта"
             aria-expanded={profileOpen}
@@ -600,7 +606,7 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
               <Bell className="size-[18px]" strokeWidth={1.75} />
             </IconToolButton>
             <HeaderHelpLink
-              className={pathname === ROUTES.support ? "text-white ring-1 ring-white/12 bg-white/[0.06]" : undefined}
+              className={pathname === ROUTES.support ? "text-white bg-white/12" : undefined}
             />
             <IconToolButton label="Язык и регион">
               <Globe className="size-[18px]" strokeWidth={1.75} />
@@ -612,19 +618,19 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
       </div>
 
       {/* Mobile: compact actions row */}
-      <div className="border-t border-white/6 sm:hidden">
-        <div className="flex items-center justify-between gap-2 border-t border-white/5 px-3 py-2">
-          <span className="tabular-nums text-xs font-medium text-zinc-500">1&nbsp;240,58 USDT</span>
+      <div className="sm:hidden">
+        <div className="flex items-center justify-between gap-2 px-3 py-2">
+          <span className="tabular-nums text-xs font-medium text-white/75">1&nbsp;240,58 USDT</span>
           <div className="flex items-center gap-1">
             <IconToolButton label="Уведомления">
               <Bell className="size-[17px]" strokeWidth={1.75} />
             </IconToolButton>
             <HeaderHelpLink
-              className={pathname === ROUTES.support ? "text-white ring-1 ring-white/12 bg-white/[0.06]" : undefined}
+              className={pathname === ROUTES.support ? "text-white bg-white/12" : undefined}
             />
             <Link
               href={`${ROUTES.dashboard}#deposit`}
-              className="flex h-8 items-center rounded-lg border border-white/12 bg-white/[0.04] px-3 text-[10px] font-semibold uppercase tracking-wide text-zinc-100"
+              className="flex h-8 items-center rounded-lg bg-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-white"
             >
               Пополнить
             </Link>
@@ -651,7 +657,7 @@ export function DashboardHeader({ sticky = true }: DashboardHeaderProps = {}) {
           aria-label="Мобильное меню"
         >
           <div className="flex items-center justify-between">
-            <RevShareLogo className="max-w-[10rem]" />
+            <RevShareLogo className="max-w-none" />
             <button
               type="button"
               className={cn(headerIconShellClass, "text-zinc-300")}

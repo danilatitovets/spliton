@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { PayoutsSubpageHero } from "@/components/dashboard/assets/payouts-subpage-hero";
 import { NewsPageContent } from "@/components/news/news-page-content";
 
 export const metadata: Metadata = {
@@ -11,19 +11,29 @@ export const metadata: Metadata = {
 
 export default function NewsPage() {
   return (
-    <div className="flex min-h-dvh flex-col bg-[#f6f7f9]">
+    <div className="relative min-h-dvh bg-[#f5f5f5]">
       <DashboardHeader />
-      <main className="scheme-light flex-1 text-neutral-900">
-        <div className="mx-auto w-full max-w-[1320px] px-4 pb-5 sm:px-6 lg:px-8">
-          <div className="space-y-8 pb-8 sm:space-y-10 sm:pb-10">
-            <PayoutsSubpageHero
-              eyebrow="RevShare · Product · Operations"
-              title="Новости"
-              description="Релизы интерфейса, выплаты и вторичный рынок — короткими заметками, в том же светлом макете, что профиль и раздел активов. Ниже мок-лента для превью страницы."
-            />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(46vh,430px)] overflow-hidden" aria-hidden>
+        <Image
+          src="/images/fees/back.png"
+          alt=""
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          quality={100}
+          priority
+        />
+      </div>
+
+      <main className="relative z-10">
+        <section className="mx-auto flex h-[min(46vh,430px)] w-full max-w-[1320px] items-center justify-center px-4 text-center sm:px-6 lg:px-8">
+          <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Новости</h1>
+        </section>
+        <section className="bg-[#f5f5f5]">
+          <div className="mx-auto w-full max-w-[1320px] px-4 pb-10 pt-6 sm:px-6 lg:px-8">
             <NewsPageContent />
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );

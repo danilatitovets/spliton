@@ -106,16 +106,16 @@ export function SupportChatWidget({ className }: SupportChatWidgetProps) {
     <section
       id="support-chat"
       className={cn(
-        "flex min-h-[min(480px,65dvh)] flex-col overflow-hidden rounded-3xl bg-white px-4 py-5 sm:min-h-[min(520px,68dvh)] sm:px-6 sm:py-6",
+        "flex min-h-[min(480px,65dvh)] flex-col overflow-hidden rounded-3xl bg-white px-4 py-5 shadow-[0_8px_30px_-14px_rgba(0,0,0,0.08)] ring-1 ring-neutral-200/70 sm:min-h-[min(520px,68dvh)] sm:px-6 sm:py-6",
         className,
       )}
       aria-labelledby="support-chat-title"
     >
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-neutral-100 pb-4">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-neutral-100/90 pb-4">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-400">Support</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Чат</p>
           <div className="mt-1 flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-neutral-100">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-neutral-100 ring-1 ring-neutral-200/60">
               <MessageCircle className="size-5 text-neutral-600" strokeWidth={1.75} aria-hidden />
             </div>
             <div className="min-w-0">
@@ -187,7 +187,7 @@ export function SupportChatWidget({ className }: SupportChatWidgetProps) {
           <>
             <div
               ref={listRef}
-              className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain rounded-2xl bg-neutral-50/80 px-3 py-4 sm:px-4"
+              className="revshare-scrollbar min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain rounded-2xl bg-neutral-50/90 px-3 py-4 ring-1 ring-neutral-100 sm:px-4"
             >
               {allMessages.map((m) => (
                 <div
@@ -219,13 +219,13 @@ export function SupportChatWidget({ className }: SupportChatWidgetProps) {
                     if (e.key === "Enter") send();
                   }}
                   placeholder="Сообщение оператору…"
-                  className="h-11 min-w-0 flex-1 rounded-2xl border-0 bg-neutral-50 px-4 text-sm text-neutral-900 outline-none ring-0 transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-blue-600/15"
+                  className="h-11 min-w-0 flex-1 rounded-2xl border-0 bg-neutral-50 px-4 text-sm text-neutral-900 outline-none ring-1 ring-neutral-200/60 transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-neutral-900/10"
                   aria-label="Текст сообщения"
                 />
                 <button
                   type="button"
                   onClick={send}
-                  className="grid size-11 shrink-0 place-items-center rounded-2xl bg-neutral-900 text-white transition hover:bg-neutral-800 disabled:opacity-40"
+                  className="grid size-11 shrink-0 place-items-center rounded-2xl bg-neutral-900 text-white shadow-sm transition hover:bg-neutral-800 disabled:opacity-40"
                   disabled={!input.trim()}
                   aria-label="Отправить"
                 >

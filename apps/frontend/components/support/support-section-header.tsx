@@ -13,10 +13,6 @@ const supportHeaderItems: Array<{
   supportRoot?: boolean;
 }> = [
   { href: ROUTES.support, label: "Поддержка", supportRoot: true },
-  { href: ROUTES.dashboardPayoutsHistory, label: "История" },
-  { href: `${ROUTES.dashboardPayouts}/deposit`, label: "Пополнить" },
-  { href: `${ROUTES.dashboardPayouts}/withdraw`, label: "Вывод" },
-  { href: ROUTES.guideSelection, label: "Гиды" },
 ];
 
 function isSupportNavActive(pathname: string, item: (typeof supportHeaderItems)[number]) {
@@ -34,7 +30,7 @@ export function SupportSectionHeader() {
 
   return (
     <div className="sticky top-[52px] z-85">
-      <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 border-b border-neutral-200 bg-white">
+      <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 border-b border-neutral-200/90 bg-[#f6f7f9]/92 backdrop-blur-md supports-backdrop-filter:bg-[#f6f7f9]/88">
         <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
           <nav
             aria-label="Поддержка и выплаты"

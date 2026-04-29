@@ -19,6 +19,14 @@ export function CatalogScreen() {
     genres,
     sort,
     setSort,
+    minPrice,
+    setMinPrice,
+    maxPrice,
+    setMaxPrice,
+    minProgress,
+    setMinProgress,
+    minYield,
+    setMinYield,
     filtered,
     totalCount,
     resetFilters,
@@ -38,6 +46,14 @@ export function CatalogScreen() {
         genres={genres}
         sort={sort}
         onSort={setSort}
+        minPrice={minPrice}
+        onMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        onMaxPrice={setMaxPrice}
+        minProgress={minProgress}
+        onMinProgress={setMinProgress}
+        minYield={minYield}
+        onMinYield={setMinYield}
         filteredCount={filtered.length}
         totalCount={totalCount}
         onReset={resetFilters}

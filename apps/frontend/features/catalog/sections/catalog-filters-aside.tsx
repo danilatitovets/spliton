@@ -32,7 +32,7 @@ const rowClass =
   "flex flex-wrap gap-2";
 
 const baseChip =
-  "inline-flex h-9 items-center justify-center rounded-xl px-3.5 text-[11px] font-medium tracking-[0.02em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20";
+  "inline-flex h-10 items-center justify-center rounded-xl px-4 text-[12px] font-medium tracking-[0.02em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20";
 
 const idleChip =
   "bg-white/[0.03] text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100";
@@ -41,7 +41,22 @@ const activeChip =
   "bg-white text-black shadow-[0_6px_20px_rgba(0,0,0,0.3)]";
 
 const ghostButton =
-  "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200";
+  "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200";
+
+function normalizeMarketNumber(value: string): string {
+  return value.replace(/[^\d,.\s]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function formatMarketNumber(value: string): string {
+  const normalized = normalizeMarketNumber(value).replace(/\s/g, "").replace(",", ".");
+  if (!normalized) return "";
+  const numeric = Number.parseFloat(normalized);
+  if (!Number.isFinite(numeric)) return "";
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(numeric);
+}
 
 function FilterSection({
   title,
@@ -77,6 +92,14 @@ export function CatalogFiltersAside({
   genres,
   sort,
   onSort,
+  minPrice,
+  onMinPrice,
+  maxPrice,
+  onMaxPrice,
+  minProgress,
+  onMinProgress,
+  minYield,
+  onMinYield,
   filteredCount,
   totalCount,
   onReset,
@@ -92,6 +115,14 @@ export function CatalogFiltersAside({
   genres: string[];
   sort: CatalogSortKey;
   onSort: (s: CatalogSortKey) => void;
+  minPrice: string;
+  onMinPrice: (value: string) => void;
+  maxPrice: string;
+  onMaxPrice: (value: string) => void;
+  minProgress: string;
+  onMinProgress: (value: string) => void;
+  minYield: string;
+  onMinYield: (value: string) => void;
   filteredCount: number;
   totalCount: number;
   onReset: () => void;
@@ -128,6 +159,34 @@ export function CatalogFiltersAside({
     });
   }
 
+  if (minPrice.trim()) {
+    activeFilters.push({
+      label: `Цена от: ${formatMarketNumber(minPrice) || minPrice.trim()}`,
+      onClear: () => onMinPrice(""),
+    });
+  }
+
+  if (maxPrice.trim()) {
+    activeFilters.push({
+      label: `Цена до: ${formatMarketNumber(maxPrice) || maxPrice.trim()}`,
+      onClear: () => onMaxPrice(""),
+    });
+  }
+
+  if (minProgress.trim()) {
+    activeFilters.push({
+      label: `Прогресс от: ${formatMarketNumber(minProgress) || minProgress.trim()}%`,
+      onClear: () => onMinProgress(""),
+    });
+  }
+
+  if (minYield.trim()) {
+    activeFilters.push({
+      label: `Доходность от: ${formatMarketNumber(minYield) || minYield.trim()}%`,
+      onClear: () => onMinYield(""),
+    });
+  }
+
   if (query.trim()) {
     activeFilters.push({
       label: `Поиск: ${query.trim()}`,
@@ -139,7 +198,7 @@ export function CatalogFiltersAside({
     <aside
       className={cn(
         "flex w-full shrink-0 flex-col bg-[#050505] text-[13px] text-white",
-        "lg:h-full lg:w-[340px] lg:min-w-[300px] lg:max-w-[360px]",
+        "lg:h-full lg:w-[430px] lg:min-w-[380px] lg:max-w-[460px]",
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col">
@@ -161,7 +220,7 @@ export function CatalogFiltersAside({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5">
+        <div className="revshare-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5">
           <div className="space-y-2">
             <section className="px-1 py-1">
               <div className="relative">
@@ -202,6 +261,29 @@ export function CatalogFiltersAside({
                 </p>
               )}
             </section>
+
+            <FilterSection title="Цена (вторичка)">
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={minPrice}
+                  onChange={(e) => onMinPrice(normalizeMarketNumber(e.target.value))}
+                  onBlur={(e) => onMinPrice(formatMarketNumber(e.target.value))}
+                  placeholder="От, напр. 1 000"
+                  className="h-11 rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={maxPrice}
+                  onChange={(e) => onMaxPrice(normalizeMarketNumber(e.target.value))}
+                  onBlur={(e) => onMaxPrice(formatMarketNumber(e.target.value))}
+                  placeholder="До, напр. 2 500"
+                  className="h-11 rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+                />
+              </div>
+            </FilterSection>
 
             <FilterSection title="Тип">
               <div className={rowClass}>
@@ -290,6 +372,30 @@ export function CatalogFiltersAside({
                   );
                 })}
               </div>
+            </FilterSection>
+
+            <FilterSection title="Прогресс раунда (funding)">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={minProgress}
+                onChange={(e) => onMinProgress(normalizeMarketNumber(e.target.value))}
+                onBlur={(e) => onMinProgress(formatMarketNumber(e.target.value))}
+                placeholder="Минимум, %, напр. 50"
+                className="h-11 w-full rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+              />
+            </FilterSection>
+
+            <FilterSection title="Доходность (funding)">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={minYield}
+                onChange={(e) => onMinYield(normalizeMarketNumber(e.target.value))}
+                onBlur={(e) => onMinYield(formatMarketNumber(e.target.value))}
+                placeholder="Минимум, %, напр. 8,5"
+                className="h-11 w-full rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+              />
             </FilterSection>
           </div>
         </div>

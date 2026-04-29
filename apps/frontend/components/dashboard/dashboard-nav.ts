@@ -127,14 +127,8 @@ export const dashboardNavItems: DashboardNavItem[] = [
     id: "misc",
     label: "Сервисы",
     href: ROUTES.support,
-    megaTeaser: "Сервисные разделы: поддержка, комиссии, статус и программы — без лишнего шума.",
+    megaTeaser: "Сервисные разделы: калькулятор, комиссии, статус и программы — без лишнего шума.",
     children: [
-      {
-        label: "Поддержка",
-        description: "Центр помощи, поиск и быстрые ссылки в кабинет.",
-        href: ROUTES.support,
-        iconHint: "?",
-      },
       {
         label: "Калькулятор",
         description: "Покупка и продажа units, вывод USDT и пример начислений по введённым данным.",

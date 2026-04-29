@@ -11,7 +11,7 @@ export function GuideRisksSection() {
       title="Какие риски учитывать"
       subtitle="Один risk disclosure-панель в духе DeFi: плотные строки, mono-индексы и спокойный янтарный акцент — без рамок и «защитных» карточек."
     >
-      <div className="mx-auto max-w-3xl overflow-hidden rounded-xl bg-[#0a0a0a]">
+      <div className="w-full overflow-hidden rounded-xl bg-[#0a0a0a]">
         <div className="flex items-center justify-between gap-3 bg-zinc-950/50 px-4 py-2.5 md:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
             <ShieldAlert className="size-3.5 shrink-0 text-amber-500/75" strokeWidth={1.5} aria-hidden />

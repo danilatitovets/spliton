@@ -9,7 +9,7 @@ export function GuideEvaluationFactorsSection() {
       title="Пять факторов выбора релиза"
       subtitle="Один список: фактор, короткая суть и метрики строкой — без карточек в карточках."
     >
-      <div className="mx-auto max-w-3xl rounded-xl bg-[#111111] px-4 py-4 md:px-6 md:py-5">
+      <div className="w-full rounded-xl bg-[#111111] px-4 py-4 md:px-6 md:py-5">
         {GUIDE_SELECTION_FACTORS.map((factor, fi) => (
           <div key={factor.title} className={fi > 0 ? "mt-6" : ""}>
             <h3 className="text-base font-semibold tracking-tight text-white md:text-lg">{factor.title}</h3>

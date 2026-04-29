@@ -18,6 +18,10 @@ export function useCatalogScreenState() {
   const [phase, setPhase] = useState<CatalogFundingPhase>("all");
   const [genre, setGenre] = useState("");
   const [sort, setSort] = useState<CatalogSortKey>("catalog_order");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minProgress, setMinProgress] = useState("");
+  const [minYield, setMinYield] = useState("");
 
   const catalogOrder = useMemo(() => new Map(catalogItems.map((it, i) => [it.id, i])), []);
 
@@ -29,10 +33,10 @@ export function useCatalogScreenState() {
 
   const filtered = useMemo(() => {
     const base = catalogItems.filter((item) =>
-      catalogMatchesFilters(item, { kind, phase, genre, query }),
+      catalogMatchesFilters(item, { kind, phase, genre, query, minPrice, maxPrice, minProgress, minYield }),
     );
     return sortCatalogItems(base, sort, catalogOrder);
-  }, [query, kind, phase, genre, sort, catalogOrder]);
+  }, [query, kind, phase, genre, sort, catalogOrder, minPrice, maxPrice, minProgress, minYield]);
 
   const resetFilters = () => {
     setQuery("");
@@ -40,6 +44,10 @@ export function useCatalogScreenState() {
     setPhase("all");
     setGenre("");
     setSort("catalog_order");
+    setMinPrice("");
+    setMaxPrice("");
+    setMinProgress("");
+    setMinYield("");
   };
 
   return {
@@ -56,6 +64,14 @@ export function useCatalogScreenState() {
     genres,
     sort,
     setSort,
+    minPrice,
+    setMinPrice,
+    maxPrice,
+    setMaxPrice,
+    minProgress,
+    setMinProgress,
+    minYield,
+    setMinYield,
     filtered,
     totalCount: catalogItems.length,
     resetFilters,

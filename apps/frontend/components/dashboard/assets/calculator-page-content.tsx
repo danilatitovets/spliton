@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ArrowLeftRight } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
@@ -80,7 +81,7 @@ function CalcDisplay({
   return (
     <span
       className={cn(
-        "font-mono font-semibold tabular-nums tracking-tight [font-feature-settings:'tnum','lnum']",
+        "font-mono font-semibold tabular-nums tracking-tight font-features-['tnum','lnum']",
         sizeCls,
         toneCls,
       )}
@@ -127,7 +128,7 @@ function Segment({
   options: { id: string; label: string }[];
 }) {
   return (
-    <div className="inline-flex rounded-xl bg-neutral-100/90 p-1">
+    <div className="inline-flex rounded-xl bg-[#f5f5f6] p-1">
       {options.map((o) => {
         const on = value === o.id;
         return (
@@ -137,7 +138,7 @@ function Segment({
             onClick={() => onChange(o.id)}
             className={cn(
               "rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-[13px]",
-              on ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-900",
+              on ? "bg-white text-neutral-900 shadow-[0_6px_18px_-10px_rgba(0,0,0,0.18)]" : "text-neutral-600 hover:text-neutral-900",
             )}
           >
             {o.label}
@@ -149,7 +150,34 @@ function Segment({
 }
 
 const inputClass =
-  "h-12 rounded-xl border-0 bg-white text-lg font-mono font-medium tabular-nums text-neutral-900 shadow-none ring-1 ring-neutral-200/80 transition-[box-shadow,ring-color] placeholder:text-neutral-400 placeholder:font-sans placeholder:text-sm focus-visible:ring-2 focus-visible:ring-blue-500/35 focus-visible:outline-none";
+  "h-12 rounded-xl border-0 bg-white text-lg font-mono font-medium tabular-nums text-neutral-900 shadow-none ring-1 ring-neutral-200/80 transition-[box-shadow,ring-color] placeholder:text-neutral-400 placeholder:font-sans placeholder:text-sm focus-visible:ring-2 focus-visible:ring-zinc-400/45 focus-visible:outline-none";
+
+function AssetPill({ icon, label }: { icon: ReactNode; label: string }) {
+  return (
+    <span className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#ebebeb] px-2.5 text-[13px] font-semibold tracking-tight text-zinc-900">
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+/** Иконка USDT (Tether) — как на странице покупки UNT в каталоге. */
+function UsdtMark() {
+  return (
+    <svg viewBox="0 0 28 28" className="size-7 shrink-0 overflow-hidden rounded-full" aria-hidden>
+      <circle cx="14" cy="14" r="14" fill="#26A17B" />
+      <path fill="#fff" d="M7.75 10.35h12.5v2.05H7.75v-2.05zm4.9 2.05h2.7v8.35h-2.7v-8.35z" />
+    </svg>
+  );
+}
+
+function UntMark() {
+  return (
+    <span className="relative flex size-7 shrink-0 overflow-hidden rounded-full bg-white">
+      <Image src="/images/urrency/units.png" alt="" fill className="object-contain p-0.5" sizes="28px" />
+    </span>
+  );
+}
 
 export function CalculatorPageContent() {
   const [tab, setTab] = useState<TabId>("buy");
@@ -243,10 +271,10 @@ export function CalculatorPageContent() {
   return (
     <div className="space-y-8 sm:space-y-10">
       {/* Tabs — как сегмент на метриках, без нижней границы панели */}
-      <div className="sticky top-[52px] z-40 -mx-4 bg-[#f6f7f9]/95 px-4 pb-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="relative z-10 pb-3">
         <nav
           aria-label="Разделы калькулятора"
-          className="mx-auto flex max-w-[1320px] flex-wrap gap-2 rounded-2xl bg-neutral-100/90 p-1.5"
+          className="flex w-full flex-wrap gap-2 rounded-2xl bg-[#f5f5f6] p-1.5"
         >
           {TABS.map((t) => {
             const active = tab === t.id;
@@ -257,7 +285,7 @@ export function CalculatorPageContent() {
                 onClick={() => setTab(t.id)}
                 className={cn(
                   "min-h-9 flex-1 rounded-xl px-3 py-2 text-center text-xs font-semibold transition-all sm:flex-none sm:px-4 sm:text-[13px]",
-                  active ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-900",
+                  active ? "bg-white text-neutral-900 shadow-[0_6px_18px_-10px_rgba(0,0,0,0.18)]" : "text-neutral-600 hover:text-neutral-900",
                 )}
               >
                 {t.label}
@@ -269,7 +297,7 @@ export function CalculatorPageContent() {
 
       {tab === "buy" ? (
         <section className="scroll-mt-28 space-y-6" aria-labelledby="calc-buy-title">
-          <div className="rounded-3xl bg-white px-5 py-7 sm:px-8 sm:py-9">
+          <div className="rounded-3xl bg-white px-5 py-7 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] sm:px-8 sm:py-9">
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Калькулятор · Покупка</p>
               <h2 id="calc-buy-title" className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
@@ -292,7 +320,7 @@ export function CalculatorPageContent() {
             </div>
 
             <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
                 <Label htmlFor="buy-primary" className="text-xs font-medium text-neutral-500">
                   {buyMode === "usdt" ? "Сумма к оплате" : "UNT к покупке"}
                 </Label>
@@ -304,11 +332,18 @@ export function CalculatorPageContent() {
                   className={cn(inputClass, "mt-3 w-full")}
                   placeholder={buyMode === "usdt" ? "0,00" : "0"}
                 />
-                {buyMode === "usdt" ? (
-                  <p className="mt-2 text-xs text-neutral-500">USDT · вводите сумму с учётом желаемого объёма покупки</p>
-                ) : (
-                  <p className="mt-2 text-xs text-neutral-500">Количество UNT к зачислению после комиссии</p>
-                )}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  {buyMode === "usdt" ? (
+                    <p className="text-xs text-neutral-500">USDT · вводите сумму с учётом желаемого объёма покупки</p>
+                  ) : (
+                    <p className="text-xs text-neutral-500">Количество UNT к зачислению после комиссии</p>
+                  )}
+                  {buyMode === "usdt" ? (
+                    <AssetPill icon={<UsdtMark />} label="USDT" />
+                  ) : (
+                    <AssetPill icon={<UntMark />} label="UNT" />
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center justify-center py-2 lg:min-h-[120px] lg:py-0">
@@ -317,7 +352,7 @@ export function CalculatorPageContent() {
                 </span>
               </div>
 
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
                 <Label htmlFor="buy-price" className="text-xs font-medium text-neutral-500">
                   Цена за UNT, USDT
                 </Label>
@@ -328,7 +363,10 @@ export function CalculatorPageContent() {
                   onChange={(e) => setBuyPrice(e.target.value)}
                   className={cn(inputClass, "mt-3 w-full")}
                 />
-                <p className="mt-2 text-xs text-neutral-500">Справочно для расчёта; в сделке подставится актуальная цена.</p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-neutral-500">Справочно для расчёта; в сделке подставится актуальная цена.</p>
+                  <AssetPill icon={<UntMark />} label="UNT" />
+                </div>
               </div>
             </div>
 
@@ -340,7 +378,7 @@ export function CalculatorPageContent() {
             ) : null}
 
             <div className="mt-8 flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={resetBuy} className="border-0 bg-neutral-100 hover:bg-neutral-200/80">
+              <Button type="button" variant="outline" size="sm" onClick={resetBuy} className="border-0 bg-[#f1f1f2] hover:bg-neutral-200/80">
                 Сбросить
               </Button>
             </div>
@@ -351,7 +389,7 @@ export function CalculatorPageContent() {
                   <StatTile label="Цена за UNT">
                     <CalcDisplay value={USDT_FMT.format(buyCalc.pricePerUnit)} suffix=" USDT" tone="neutral" />
                   </StatTile>
-                  <StatTile label="Количество UNT" className="bg-gradient-to-br from-neutral-50 to-blue-50/70">
+                  <StatTile label="Количество UNT" className="bg-linear-to-br from-neutral-50 to-blue-50/70">
                     <CalcDisplay value={NUM_FMT.format(buyCalc.units)} tone="units" />
                   </StatTile>
                 </div>
@@ -381,7 +419,7 @@ export function CalculatorPageContent() {
 
       {tab === "sell" ? (
         <section className="scroll-mt-28 space-y-6" aria-labelledby="calc-sell-title">
-          <div className="rounded-3xl bg-white px-5 py-7 sm:px-8 sm:py-9">
+          <div className="rounded-3xl bg-white px-5 py-7 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] sm:px-8 sm:py-9">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Калькулятор · Secondary</p>
             <h2 id="calc-sell-title" className="mt-1 text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
               Продажа на secondary
@@ -389,7 +427,7 @@ export function CalculatorPageContent() {
             <p className="mt-1 max-w-2xl text-sm text-neutral-500">Gross, комиссия вторичного рынка и сумма к получению.</p>
 
             <div className="mt-8 grid gap-5 lg:grid-cols-2">
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
                 <Label htmlFor="sell-units" className="text-xs font-medium text-neutral-500">
                   UNT к продаже
                 </Label>
@@ -401,7 +439,7 @@ export function CalculatorPageContent() {
                   className={cn(inputClass, "mt-3 w-full")}
                 />
               </div>
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
                 <Label htmlFor="sell-price" className="text-xs font-medium text-neutral-500">
                   Цена за UNT, USDT
                 </Label>
@@ -414,7 +452,7 @@ export function CalculatorPageContent() {
                 />
               </div>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={resetSell} className="mt-6 border-0 bg-neutral-100 hover:bg-neutral-200/80">
+            <Button type="button" variant="outline" size="sm" onClick={resetSell} className="mt-6 border-0 bg-[#f1f1f2] hover:bg-neutral-200/80">
               Сбросить
             </Button>
 
@@ -442,14 +480,14 @@ export function CalculatorPageContent() {
 
       {tab === "withdraw" ? (
         <section className="scroll-mt-28 space-y-6" aria-labelledby="calc-wd-title">
-          <div className="rounded-3xl bg-white px-5 py-7 sm:px-8 sm:py-9">
+          <div className="rounded-3xl bg-white px-5 py-7 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] sm:px-8 sm:py-9">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Калькулятор · Вывод</p>
             <h2 id="calc-wd-title" className="mt-1 text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
               Вывод USDT
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-neutral-500">Удержание платформы и сумма к зачислению на адрес TRC20.</p>
 
-            <div className="mt-8 max-w-md rounded-2xl bg-neutral-50 p-5 sm:p-6">
+            <div className="mt-8 max-w-md rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
               <Label htmlFor="wd-amt" className="text-xs font-medium text-neutral-500">
                 Сумма вывода, USDT
               </Label>
@@ -461,7 +499,7 @@ export function CalculatorPageContent() {
                 className={cn(inputClass, "mt-3 w-full")}
               />
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={resetWithdraw} className="mt-6 border-0 bg-neutral-100 hover:bg-neutral-200/80">
+            <Button type="button" variant="outline" size="sm" onClick={resetWithdraw} className="mt-6 border-0 bg-[#f1f1f2] hover:bg-neutral-200/80">
               Сбросить
             </Button>
 
@@ -490,7 +528,7 @@ export function CalculatorPageContent() {
 
       {tab === "payout" ? (
         <section className="scroll-mt-28 space-y-6" aria-labelledby="calc-pay-title">
-          <div className="rounded-3xl bg-white px-5 py-7 sm:px-8 sm:py-9">
+          <div className="rounded-3xl bg-white px-5 py-7 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] sm:px-8 sm:py-9">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Калькулятор · Оценка</p>
             <h2 id="calc-pay-title" className="mt-1 text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
               Оценка начисления
@@ -500,7 +538,7 @@ export function CalculatorPageContent() {
             </p>
 
             <div className="mt-8 grid gap-5 sm:grid-cols-2">
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
                 <Label htmlFor="payout-u" className="text-xs font-medium text-neutral-500">
                   Ваши UNT
                 </Label>
@@ -512,7 +550,7 @@ export function CalculatorPageContent() {
                   className={cn(inputClass, "mt-3 w-full")}
                 />
               </div>
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6">
                 <Label htmlFor="payout-pool" className="text-xs font-medium text-neutral-500">
                   Пример объёма для распределения, USDT
                 </Label>
@@ -524,7 +562,7 @@ export function CalculatorPageContent() {
                   className={cn(inputClass, "mt-3 w-full")}
                 />
               </div>
-              <div className="rounded-2xl bg-neutral-50 p-5 sm:p-6 sm:col-span-2">
+              <div className="rounded-2xl bg-[#f5f5f6] p-5 sm:p-6 sm:col-span-2">
                 <Label htmlFor="payout-total" className="text-xs font-medium text-neutral-500">
                   Условный объём UNT по релизу
                 </Label>
@@ -537,7 +575,7 @@ export function CalculatorPageContent() {
                 />
               </div>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={resetPayout} className="mt-6 border-0 bg-neutral-100 hover:bg-neutral-200/80">
+            <Button type="button" variant="outline" size="sm" onClick={resetPayout} className="mt-6 border-0 bg-[#f1f1f2] hover:bg-neutral-200/80">
               Сбросить
             </Button>
 
@@ -565,7 +603,7 @@ export function CalculatorPageContent() {
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Полезное о калькуляторе">
         {BENEFIT_CARDS.map((b) => (
-          <article key={b.title} className="rounded-3xl bg-neutral-50/90 px-5 py-5 sm:px-6 sm:py-6">
+          <article key={b.title} className="rounded-3xl bg-white px-5 py-5 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.18)] sm:px-6 sm:py-6">
             <h3 className="text-sm font-semibold text-neutral-900">{b.title}</h3>
             <p className="mt-2 text-xs leading-relaxed text-neutral-500 sm:text-sm">{b.text}</p>
           </article>

@@ -22,9 +22,18 @@ function parseSharePrice(item: CatalogItem): number {
 
 export function catalogMatchesFilters(
   item: CatalogItem,
-  filters: { kind: CatalogKindFilter; phase: CatalogFundingPhase; genre: string; query: string },
+  filters: {
+    kind: CatalogKindFilter;
+    phase: CatalogFundingPhase;
+    genre: string;
+    query: string;
+    minPrice: string;
+    maxPrice: string;
+    minProgress: string;
+    minYield: string;
+  },
 ): boolean {
-  const { kind, phase, genre, query } = filters;
+  const { kind, phase, genre, query, minPrice, maxPrice, minProgress, minYield } = filters;
   if (kind === "funding" && item.kind !== "funding") return false;
   if (kind === "market" && item.kind !== "market") return false;
   if (item.kind === "funding" && (kind === "all" || kind === "funding")) {
@@ -33,9 +42,29 @@ export function catalogMatchesFilters(
   }
   if (genre && item.genre !== genre) return false;
   const q = query.trim().toLowerCase();
-  if (!q) return true;
-  const hay = `${item.title} ${item.artist}`.toLowerCase();
-  return hay.includes(q);
+  if (q) {
+    const hay = `${item.title} ${item.artist}`.toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+
+  const minPriceValue = parseFloat(minPrice.replace(/\s/g, "").replace(",", "."));
+  const maxPriceValue = parseFloat(maxPrice.replace(/\s/g, "").replace(",", "."));
+  const minProgressValue = parseFloat(minProgress.replace(/\s/g, "").replace(",", "."));
+  const minYieldValue = parseFloat(minYield.replace(/\s/g, "").replace(",", "."));
+
+  if (item.kind === "market") {
+    const price = parseSharePrice(item);
+    if (Number.isFinite(minPriceValue) && price < minPriceValue) return false;
+    if (Number.isFinite(maxPriceValue) && price > maxPriceValue) return false;
+  }
+
+  if (item.kind === "funding") {
+    if (Number.isFinite(minProgressValue) && item.pct < minProgressValue) return false;
+    const yieldPct = parseYieldPct(item);
+    if (Number.isFinite(minYieldValue) && yieldPct < minYieldValue) return false;
+  }
+
+  return true;
 }
 
 export function sortCatalogItems(items: CatalogItem[], sort: CatalogSortKey, catalogOrder: Map<string, number>): CatalogItem[] {
