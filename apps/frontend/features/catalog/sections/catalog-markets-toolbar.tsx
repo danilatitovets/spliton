@@ -73,8 +73,8 @@ export function CatalogMarketsToolbar({
         </button>
         <button
           type="button"
-          onClick={onOpenFilters}
-          className="relative flex size-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/[0.06] hover:text-white lg:hidden"
+          onClick={() => onOpenFilters?.()}
+          className="relative flex size-9 shrink-0 touch-manipulation items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/[0.06] hover:text-white lg:hidden"
           aria-label={t("catalog.filters.mobileButton")}
         >
           <SlidersHorizontal className="size-4" strokeWidth={1.75} />

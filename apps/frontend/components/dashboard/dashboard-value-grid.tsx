@@ -66,7 +66,7 @@ function InstrumentCandlestickBackdrop({ symbol, trend }: { symbol: string; tren
       >
         {candles.map((candle, index) => {
           const bullish = candle.close >= candle.open;
-          const color = bullish ? "#B7F500" : "#f472b6";
+          const color = bullish ? "#3fe280" : "#9b9b9b";
           const slotW = 120 / candles.length;
           const cx = index * slotW + slotW / 2;
           const bodyW = slotW * 0.42;
@@ -103,7 +103,7 @@ function InstrumentCandlestickBackdrop({ symbol, trend }: { symbol: string; tren
           );
         })}
       </svg>
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-[#0c0c0e]/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#171717] via-[#171717]/40 to-transparent" />
     </div>
   );
 }
@@ -119,11 +119,11 @@ function InstrumentPreviewCard({ symbol, price, change24hPct, href }: PreviewIns
   })}%`;
 
   return (
-    <div className="group relative min-h-[148px] overflow-hidden rounded-2xl bg-[#0c0c0e] ring-1 ring-white/[0.08] transition hover:bg-[#111114] hover:ring-white/12 sm:min-h-[156px]">
+    <div className="group relative min-h-[148px] overflow-hidden rounded-[12px] border border-[#222222] bg-[#171717] transition hover:border-[#3fe280]/50 sm:min-h-[156px]">
       <Link
         href={ROUTES.dashboardSecondaryMarket}
         aria-label={t("dashboard.openSecondaryMarket")}
-        className="absolute right-3 top-3 z-20 inline-flex size-7 items-center justify-center rounded-full bg-white text-black transition hover:bg-zinc-200 active:scale-[0.98]"
+        className="absolute right-3 top-3 z-20 inline-flex size-7 items-center justify-center rounded-[16px] bg-[#3fe280] text-[#0a0a0a] transition hover:bg-[#55e992] active:scale-[0.98]"
       >
         <span className="relative block size-3" aria-hidden>
           <span className="absolute left-1/2 top-0 h-full w-[1.5px] -translate-x-1/2 rounded-full bg-black" />
@@ -210,23 +210,23 @@ export function DashboardValueGrid({ className }: { className?: string }) {
   return (
     <section
       className={cn(
-        "scroll-mt-[5.5rem] rounded-t-[24px] bg-black pb-8 sm:scroll-mt-24 sm:rounded-t-[44px] sm:pb-12 md:pb-16 lg:pb-[4.5rem]",
+        "scroll-mt-[5.5rem] border-t border-[#222222] bg-black pb-10 sm:scroll-mt-24 sm:pb-14 md:pb-20 lg:pb-24",
         className,
       )}
       aria-labelledby="dash-value-heading"
     >
-      <div className="mx-auto w-full max-w-[1400px] px-4 pt-8 sm:px-6 sm:pt-12 md:pt-16 lg:px-8 lg:pt-[4.5rem]">
-        <div className="space-y-6 md:space-y-8">
+      <div className="mx-auto w-full max-w-[1200px] px-4 pt-12 sm:px-6 sm:pt-16 md:pt-20 lg:px-8 lg:pt-24">
+        <div className="space-y-8 md:space-y-10">
           <div className="mx-auto max-w-3xl text-center">
             <div className="flex items-start justify-between gap-3 sm:block">
               <h2
                 id="dash-value-heading"
-                className="min-w-0 flex-1 text-[1.65rem] font-semibold leading-[1.1] tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] lg:leading-[1.08]"
+                className="min-w-0 flex-1 text-[1.65rem] font-medium leading-[1.1] tracking-[-0.022em] text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] lg:leading-[1.08] [font-feature-settings:'cv01'_on,'ss03'_on,'zero'_on]"
               >
                 {t("dashboard.valueGrid.title")}
               </h2>
             </div>
-            <p className="mt-3 text-[15px] leading-relaxed text-zinc-400 sm:mt-4 sm:text-sm md:text-base md:leading-7">
+            <p className="mt-3 text-[15px] leading-relaxed tracking-[-0.011em] text-[#8a8f98] sm:mt-4 sm:text-sm md:text-base md:leading-7">
               {t("dashboard.valueGrid.description")}
               <span className="hidden sm:inline">{t("dashboard.valueGrid.descriptionDesktop")}</span>
             </p>

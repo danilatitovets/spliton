@@ -10,6 +10,7 @@ import { rootLayoutMetaAsync } from "@/lib/i18n/page-metadata";
 import { getPublicApiBaseUrl } from "@/lib/public-env";
 import { resolveServerLocale } from "@/lib/i18n/server-locale";
 
+/** Inter Variable — same family Linear uses (OpenType via globals.css). */
 const inter = Inter({
   variable: "--font-app-sans",
   subsets: ["latin", "cyrillic"],
@@ -52,7 +53,7 @@ export default async function RootLayout({
         <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />
       </head>
       <body
-        className="flex min-h-dvh flex-col bg-background text-foreground"
+        className={`${inter.className} flex min-h-dvh flex-col bg-black font-sans text-foreground antialiased`}
         suppressHydrationWarning
       >
         <AppProviders initialLocale={initialLocale}>

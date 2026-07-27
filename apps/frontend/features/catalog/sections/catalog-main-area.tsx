@@ -106,7 +106,7 @@ export function CatalogMainArea({
       )}
       aria-label={t("catalog.main.ariaLabel")}
     >
-      <div className="shrink-0 border-b border-white/[0.06] bg-black px-4 sm:px-5 lg:px-8">
+      <div className="relative z-30 shrink-0 border-b border-white/[0.06] bg-black px-4 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-[1600px]">
           <CatalogMarketsToolbar
             kind={kind}
@@ -185,7 +185,7 @@ export function CatalogMainArea({
             </div>
             {isList ? (
               <div className="lg:hidden">
-                <CatalogCardsSkeleton count={6} variant="grid" />
+                <CatalogCardsSkeleton count={8} variant="list" />
               </div>
             ) : null}
           </>
@@ -236,7 +236,17 @@ export function CatalogMainArea({
                   total: String(totalCount),
                 })}
               </p>
-              {catalogCardGrid}
+              <div>
+                {sortedForList.map((item) => (
+                  <CatalogMarketInstrumentRow
+                    key={item.id}
+                    item={item}
+                    href={catalogItemHref(item)}
+                    isFavorite={favorites.has(item.id)}
+                    onToggleFavorite={() => toggleFavorite(item.id)}
+                  />
+                ))}
+              </div>
             </div>
             {liveMode && totalPages > 1 ? (
               <PaginationBlock page={page} totalPages={totalPages} onPageChange={onPageChange} t={t} />

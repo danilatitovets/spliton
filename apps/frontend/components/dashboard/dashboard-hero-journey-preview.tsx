@@ -34,7 +34,12 @@ type JourneyPreviewLayout = "default" | "embedded" | "mobile";
 function useStageScale(
   viewportRef: RefObject<HTMLDivElement | null>,
   layout: JourneyPreviewLayout,
-  { capAtOne = false, fitMultiplier = 1 }: { capAtOne?: boolean; fitMultiplier?: number } = {},
+  {
+    capAtOne = false,
+    fitMultiplier = 1,
+    /** Fill the viewport completely (may crop edges) — for product stage. */
+    cover = false,
+  }: { capAtOne?: boolean; fitMultiplier?: number; cover?: boolean } = {},
 ) {
   const [scale, setScale] = useState(1);
 
@@ -44,14 +49,20 @@ function useStageScale(
 
     const update = () => {
       const { width, height } = node.getBoundingClientRect();
+      if (width <= 0 || height <= 0) return;
 
       if (layout === "mobile") {
-        if (width <= 0 || height <= 0) return;
-        setScale(Math.min(width / MOBILE_STAGE_W, height / MOBILE_STAGE_H));
+        const fit = cover
+          ? Math.max(width / MOBILE_STAGE_W, height / MOBILE_STAGE_H)
+          : Math.min(width / MOBILE_STAGE_W, height / MOBILE_STAGE_H);
+        setScale(fit);
         return;
       }
 
-      const fit = Math.min(width / STAGE_W, height / STAGE_H) * fitMultiplier;
+      const base = cover
+        ? Math.max(width / STAGE_W, height / STAGE_H)
+        : Math.min(width / STAGE_W, height / STAGE_H);
+      const fit = base * fitMultiplier;
       setScale(capAtOne ? Math.min(fit, 1) : fit);
     };
 
@@ -59,7 +70,7 @@ function useStageScale(
     const observer = new ResizeObserver(update);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [viewportRef, layout, capAtOne, fitMultiplier]);
+  }, [viewportRef, layout, capAtOne, fitMultiplier, cover]);
 
   return scale;
 }
@@ -174,25 +185,6 @@ function JourneySceneCursor({
   );
 }
 
-function PreviewAppShell({ path, light }: { path: string; light?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex h-11 shrink-0 items-center justify-between border-b px-5",
-        light ? "border-zinc-200 bg-white" : "border-white/10 bg-black",
-      )}
-    >
-      <div className="flex items-center gap-2.5">
-        <NextImage src="/images/LOGO/mini-logo.png" alt="" width={20} height={20} className="size-5 object-contain" unoptimized />
-        <span className={cn("text-[13px] font-semibold tracking-tight", light ? "text-zinc-950" : "text-white")}>
-          Spliton
-        </span>
-      </div>
-      <span className={cn("truncate font-mono text-[11px]", light ? "text-zinc-400" : "text-zinc-500")}>{path}</span>
-    </div>
-  );
-}
-
 function CatalogScene() {
   const { locale, t } = useI18n();
   const catalogItems = useMemo(
@@ -202,7 +194,6 @@ function CatalogScene() {
 
   return (
     <div className="hero-journey-scene hero-journey-scene--catalog absolute inset-0 flex flex-col bg-black text-white">
-      <PreviewAppShell path="spliton.io/catalog" />
 
       <div className="shrink-0 border-b border-white/[0.06] px-6 pt-2 pb-2">
         <div className="flex items-center gap-5">
@@ -308,8 +299,6 @@ function BuyScene() {
       className="hero-journey-scene hero-journey-scene--buy absolute inset-0 flex flex-col bg-white text-zinc-950"
       data-journey-root="buy"
     >
-      <PreviewAppShell path={`spliton.io/catalog/buy/${release.symbol}`} light />
-
       <div
         className="hero-journey-toast hero-journey-toast--buy"
         aria-hidden
@@ -325,8 +314,8 @@ function BuyScene() {
         </span>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,0.9fr)_minmax(420px,1.25fr)] gap-8 px-8 py-6">
-        <aside className="rounded-3xl bg-zinc-100/70 p-6 text-left">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,0.9fr)_minmax(380px,1.2fr)] gap-5 overflow-hidden px-6 py-4">
+        <aside className="min-h-0 overflow-hidden rounded-3xl bg-zinc-100/70 p-5 text-left">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
             {t("catalog.buy.screen.aboutRelease")}
           </p>
@@ -392,8 +381,6 @@ function SellScene() {
       className="hero-journey-scene hero-journey-scene--sell absolute inset-0 flex flex-col bg-[#f6f7f9] text-zinc-950"
       data-journey-root="sell"
     >
-      <PreviewAppShell path="spliton.io/assets/sell" light />
-
       <div
         className="hero-journey-toast hero-journey-toast--sell"
         aria-hidden
@@ -461,7 +448,6 @@ function BookScene() {
       className="hero-journey-scene hero-journey-scene--book absolute inset-0 flex flex-col bg-black text-white"
       data-journey-root="book"
     >
-      <PreviewAppShell path={`spliton.io/dashboard/secondary-market/book/${HERO_JOURNEY_RELEASE.symbol}`} />
       <HeroJourneyBookPreview />
       <JourneySceneCursor
         variant="book"
@@ -475,10 +461,13 @@ export function DashboardHeroJourneyPreview({
   className,
   embedded = false,
   layout,
+  cover = false,
 }: {
   className?: string;
   embedded?: boolean;
   layout?: JourneyPreviewLayout;
+  /** Scale to cover the frame (no side gaps). */
+  cover?: boolean;
 }) {
   const { t } = useI18n();
   const mounted = useClientMounted();
@@ -489,7 +478,7 @@ export function DashboardHeroJourneyPreview({
       return (
         <div
           className={cn(
-            "hero-journey-preview hero-journey-preview--mobile relative h-full w-full overflow-hidden rounded-2xl bg-zinc-950",
+            "hero-journey-preview hero-journey-preview--mobile relative h-full w-full overflow-hidden bg-black",
             className,
           )}
           role="img"
@@ -512,25 +501,35 @@ export function DashboardHeroJourneyPreview({
   }
 
   if (resolvedLayout === "mobile") {
-    return <DashboardHeroJourneyPreviewMobile className={className} />;
+    return <DashboardHeroJourneyPreviewMobile className={className} cover={cover} />;
   }
 
   return (
-    <DashboardHeroJourneyPreviewAnimated className={className} embedded={embedded || resolvedLayout === "embedded"} />
+    <DashboardHeroJourneyPreviewAnimated
+      className={className}
+      embedded={embedded || resolvedLayout === "embedded"}
+      cover={cover}
+    />
   );
 }
 
-function DashboardHeroJourneyPreviewMobile({ className }: { className?: string }) {
+function DashboardHeroJourneyPreviewMobile({
+  className,
+  cover = false,
+}: {
+  className?: string;
+  cover?: boolean;
+}) {
   const { t } = useI18n();
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const scale = useStageScale(viewportRef, "mobile");
+  const scale = useStageScale(viewportRef, "mobile", { cover });
   useJourneyAnimationVars(stageRef);
 
   return (
     <div
       className={cn(
-        "hero-journey-preview hero-journey-preview--mobile relative h-full w-full overflow-hidden rounded-2xl bg-zinc-950",
+        "hero-journey-preview hero-journey-preview--mobile relative h-full w-full overflow-hidden bg-black",
         className,
       )}
       role="img"
@@ -541,7 +540,7 @@ function DashboardHeroJourneyPreviewMobile({ className }: { className?: string }
         className="absolute inset-0 flex items-center justify-center overflow-hidden"
       >
         <div
-          className="relative shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10"
+          className="relative shrink-0 overflow-hidden bg-black"
           style={{
             width: MOBILE_STAGE_W * scale,
             height: MOBILE_STAGE_H * scale,
@@ -549,7 +548,7 @@ function DashboardHeroJourneyPreviewMobile({ className }: { className?: string }
         >
           <div
             ref={stageRef}
-            className="hero-journey-stage absolute top-0 left-0 overflow-hidden rounded-xl bg-black"
+            className="hero-journey-stage absolute top-0 left-0 overflow-hidden bg-black"
             style={{
               width: MOBILE_STAGE_W,
               height: MOBILE_STAGE_H,
@@ -571,24 +570,27 @@ function DashboardHeroJourneyPreviewMobile({ className }: { className?: string }
 function DashboardHeroJourneyPreviewAnimated({
   className,
   embedded = false,
+  cover = false,
 }: {
   className?: string;
   embedded?: boolean;
+  cover?: boolean;
 }) {
   const { t } = useI18n();
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const scale = useStageScale(viewportRef, embedded ? "embedded" : "default", {
-    capAtOne: embedded,
-    fitMultiplier: embedded ? 0.78 : 1,
+  const scale = useStageScale(viewportRef, embedded && !cover ? "embedded" : "default", {
+    capAtOne: embedded && !cover,
+    fitMultiplier: embedded && !cover ? 0.78 : 1,
+    cover,
   });
   useJourneyAnimationVars(stageRef);
 
   return (
     <div
       className={cn(
-        "hero-journey-preview relative h-full w-full overflow-hidden",
-        embedded && "rounded-[8px]",
+        "hero-journey-preview relative h-full w-full overflow-hidden bg-black",
+        embedded && !cover && "rounded-[8px]",
         className,
       )}
       role="img"
@@ -598,11 +600,14 @@ function DashboardHeroJourneyPreviewAnimated({
         ref={viewportRef}
         className={cn(
           "absolute inset-0 flex justify-center overflow-hidden",
-          embedded ? "items-end" : "items-center",
+          embedded && !cover ? "items-end" : "items-center",
         )}
       >
         <div
-          className={cn("relative shrink-0 overflow-hidden", embedded ? "rounded-[8px]" : "rounded-[2px]")}
+          className={cn(
+            "relative shrink-0 overflow-hidden bg-black",
+            embedded && !cover && "rounded-[8px]",
+          )}
           style={{
             width: STAGE_W * scale,
             height: STAGE_H * scale,
@@ -612,7 +617,7 @@ function DashboardHeroJourneyPreviewAnimated({
             ref={stageRef}
             className={cn(
               "hero-journey-stage absolute top-0 left-0 overflow-hidden bg-black",
-              embedded && "rounded-[8px]",
+              embedded && !cover && "rounded-[8px]",
             )}
             style={{
               width: STAGE_W,

@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { RotateCcw, SlidersHorizontal } from "@/lib/lucide";
 
@@ -356,6 +357,11 @@ export function CatalogFiltersAside(props: {
   const kindOptions = useCatalogKindOptions();
   const phaseOptions = useCatalogPhaseOptions();
   const sortOptions = useCatalogSortOptions();
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -401,50 +407,53 @@ export function CatalogFiltersAside(props: {
     locale,
   };
 
-  return (
-    <>
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-[200] lg:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/70"
-            aria-label={t("catalog.filters.closeAria")}
-            onClick={() => onMobileOpenChange?.(false)}
-          />
-          <div className="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-3xl bg-[#050505] shadow-2xl">
-            <div className="flex shrink-0 flex-col items-center pt-2.5 pb-1">
-              <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
+  const mobileFiltersSheet =
+    mobileOpen && portalReady ? (
+      <div className="fixed inset-0 z-[250] lg:hidden">
+        <button
+          type="button"
+          className="absolute inset-0 bg-black/70"
+          aria-label={t("catalog.filters.closeAria")}
+          onClick={() => onMobileOpenChange?.(false)}
+        />
+        <div className="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-3xl bg-[#050505] shadow-2xl">
+          <div className="flex shrink-0 flex-col items-center pt-2.5 pb-1">
+            <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
+          </div>
+          <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-4 py-2.5">
+            <div>
+              <p className="text-base font-semibold text-white">{t("catalog.filters.title")}</p>
+              <p className="text-[11px] text-zinc-500">
+                {tf(t("catalog.filters.countOf"), {
+                  filtered: String(filteredCount),
+                  total: String(totalCount),
+                })}
+              </p>
             </div>
-            <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-4 py-2.5">
-              <div>
-                <p className="text-base font-semibold text-white">{t("catalog.filters.title")}</p>
-                <p className="text-[11px] text-zinc-500">
-                  {tf(t("catalog.filters.countOf"), {
-                    filtered: String(filteredCount),
-                    total: String(totalCount),
-                  })}
-                </p>
-              </div>
-              <button type="button" onClick={onReset} className={ghostButton}>
-                <RotateCcw className="size-3.5" />
-                {t("catalog.filters.reset")}
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 Spliton-scrollbar">
-              <FiltersPanel {...panelProps} />
-            </div>
-            <div className="shrink-0 border-t border-white/8 bg-[#050505] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <button
-                type="button"
-                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black transition hover:bg-zinc-200 active:scale-[0.98]"
-                onClick={() => onMobileOpenChange?.(false)}
-              >
-                {tf(t("catalog.filters.showResults"), { count: String(filteredCount) })}
-              </button>
-            </div>
+            <button type="button" onClick={onReset} className={ghostButton}>
+              <RotateCcw className="size-3.5" />
+              {t("catalog.filters.reset")}
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 Spliton-scrollbar">
+            <FiltersPanel {...panelProps} />
+          </div>
+          <div className="shrink-0 border-t border-white/8 bg-[#050505] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              className="inline-flex h-11 w-full touch-manipulation items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black transition hover:bg-zinc-200 active:scale-[0.98]"
+              onClick={() => onMobileOpenChange?.(false)}
+            >
+              {tf(t("catalog.filters.showResults"), { count: String(filteredCount) })}
+            </button>
           </div>
         </div>
-      ) : null}
+      </div>
+    ) : null;
+
+  return (
+    <>
+      {mobileFiltersSheet ? createPortal(mobileFiltersSheet, document.body) : null}
 
       <aside
         className={cn(

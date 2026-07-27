@@ -218,7 +218,7 @@ function SubItemIcon({ sub, className }: { sub: DashboardNavSubItem; className?:
         <img
           src={sub.iconSrc}
           alt=""
-          className="h-full w-full object-cover object-center brightness-125 contrast-125 saturate-110 transition-transform duration-300 group-hover:scale-[1.04]"
+          className="h-full w-full object-cover object-center brightness-125 contrast-125 saturate-110"
         />
       </div>
     );
@@ -227,7 +227,7 @@ function SubItemIcon({ sub, className }: { sub: DashboardNavSubItem; className?:
   return (
     <div
       className={cn(
-        "relative z-[2] flex size-11 items-center justify-center rounded-xl border border-dashed border-white/18 bg-white/[0.03] text-[11px] font-bold tracking-tight text-white/30 transition-all duration-300 group-hover:border-white/28 group-hover:bg-white/[0.06] group-hover:text-white/50",
+        "relative z-[2] flex size-11 items-center justify-center rounded-xl border border-dashed border-white/18 bg-white/[0.03] text-[11px] font-bold tracking-tight text-white/30 transition-colors duration-150 group-hover:border-white/28 group-hover:bg-white/[0.06] group-hover:text-white/50",
         className
       )}
       aria-hidden
@@ -238,10 +238,10 @@ function SubItemIcon({ sub, className }: { sub: DashboardNavSubItem; className?:
 }
 
 const cardShell =
-  "group relative flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black transition-all duration-300 sm:min-h-[236px]";
+  "group relative flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black transition-colors duration-150 sm:min-h-[236px]";
 
 const cardHover =
-  "hover:z-[2] hover:scale-[1.01] hover:border-white/16 hover:shadow-[0_16px_48px_-18px_rgba(0,0,0,0.85)]";
+  "hover:border-white/14 hover:bg-zinc-950";
 
 function MegamenuFeaturedGraphic() {
   return (
@@ -332,7 +332,7 @@ function MegamenuLinkCard({
           onClick={handleDangerClick}
           className={cn(
             cardShell,
-            "w-full text-left border-fuchsia-500/15 p-3 sm:p-3.5 hover:z-[2] hover:scale-[1.01] hover:border-fuchsia-400/35 hover:shadow-[0_16px_48px_-18px_rgba(80,0,60,0.5)]",
+            "w-full text-left border-fuchsia-500/15 p-3 sm:p-3.5 hover:border-fuchsia-400/30 hover:bg-zinc-950",
           )}
         >
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 opacity-25">
@@ -597,8 +597,8 @@ function SplitMegamenuNavRow({
 }) {
   const danger = Boolean(sub.danger);
   const shell = cn(
-    "group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors sm:px-3.5 sm:py-3",
-    active ? "bg-zinc-100" : "hover:bg-zinc-50",
+    "group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 sm:px-3.5 sm:py-3",
+    active ? "bg-[#f5f5f5]" : "hover:bg-[#f5f5f5]",
     danger && active && "bg-fuchsia-50 hover:bg-fuchsia-50",
     danger && !active && "hover:bg-fuchsia-50/70",
   );
@@ -639,8 +639,12 @@ function SplitMegamenuNavRow({
       </span>
       <ChevronRight
         className={cn(
-          "mt-1 size-4 shrink-0 text-zinc-300 transition-colors",
-          active && (danger ? "text-fuchsia-400" : "text-zinc-500"),
+          "mt-1 size-4 shrink-0 text-zinc-400 transition-opacity duration-150",
+          active
+            ? danger
+              ? "opacity-100 text-fuchsia-400"
+              : "opacity-100"
+            : "opacity-0 group-hover:opacity-100",
         )}
         strokeWidth={2}
         aria-hidden
@@ -691,7 +695,7 @@ function SplitMegamenuPreviewPanel({
 
   if (danger && dangerAction) {
     return (
-      <div className="flex h-full min-h-[340px] flex-col p-4 sm:p-5">
+      <div className="flex h-full min-h-0 flex-col p-4 sm:p-5">
         <div className="flex-1" />
         <button
           type="button"
@@ -706,14 +710,13 @@ function SplitMegamenuPreviewPanel({
   }
 
   return (
-    <div className="flex h-full min-h-[340px] flex-col p-4 sm:p-5">
-      {preview}
-      <div className="flex-1" />
+    <div className="flex h-full min-h-0 flex-col overflow-hidden p-4 sm:p-5">
+      <div className="min-h-0 flex-1 overflow-hidden">{preview}</div>
 
       <Link
         href={sub.href}
         onClick={onNavigate}
-        className="mt-4 inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
+        className="mt-4 inline-flex h-9 shrink-0 items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
       >
         {t("navigation.megamenu.servicesGo")}
         <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
@@ -753,10 +756,10 @@ export function SplitMegamenuFlyout({
     >
       <div
         key={openItem.id}
-        className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_24px_56px_-16px_rgba(0,0,0,0.55)] ring-1 ring-black/[0.06]"
+        className="animate-dashboard-megamenu-in flex h-[min(560px,calc(100dvh-5.5rem))] max-h-[calc(100dvh-5.5rem)] w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]"
       >
-        <div className="flex min-h-[420px] max-h-[min(72vh,620px)] w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
-          <div className="border-b border-zinc-100 px-4 py-3">
+        <div className="flex h-full min-h-0 w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
+          <div className="shrink-0 border-b border-zinc-100 px-4 py-3">
             <p className="text-sm font-semibold text-zinc-900">{openItem.label}</p>
           </div>
           <ul
@@ -783,7 +786,7 @@ export function SplitMegamenuFlyout({
           </ul>
         </div>
 
-        <div className="hidden min-w-0 flex-1 bg-zinc-50/50 sm:block">
+        <div className="hidden h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-50/50 sm:block">
           <SplitMegamenuPreviewPanel
             key={active.href}
             sub={active}
@@ -839,7 +842,7 @@ export function ProfileMegamenuFlyout({
       aria-label={t("navigation.megamenu.profileAria")}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_24px_56px_-16px_rgba(0,0,0,0.55)] ring-1 ring-black/[0.06]">
+      <div className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
         <div className="flex min-h-[420px] max-h-[min(72vh,620px)] w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
           <div className="border-b border-zinc-100 px-4 py-3">
             <p className="text-sm font-semibold text-zinc-900">{t("navigation.header.profile")}</p>
@@ -908,7 +911,7 @@ export function SupportMegamenuFlyout({
       aria-label={t("navigation.header.help")}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_24px_56px_-16px_rgba(0,0,0,0.55)] ring-1 ring-black/[0.06]">
+      <div className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
         <div className="flex min-h-[420px] max-h-[min(72vh,620px)] w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
           <div className="border-b border-zinc-100 px-4 py-3">
             <p className="text-sm font-semibold text-zinc-900">{t("support.hero.title")}</p>

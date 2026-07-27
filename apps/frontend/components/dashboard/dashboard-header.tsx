@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { createPortal } from "react-dom";
@@ -107,6 +107,8 @@ function NavTrigger({
   onToggle,
   onHoverOpen,
   onNavigate,
+  onFlyoutEnter,
+  onFlyoutLeave,
   isDesktop,
   size = "desktop",
   menuAriaLabel,
@@ -119,6 +121,8 @@ function NavTrigger({
   onHoverOpen: (id: string) => void;
   /** Закрыть мегаменю при переходе по ссылке пункта */
   onNavigate: () => void;
+  onFlyoutEnter?: () => void;
+  onFlyoutLeave?: () => void;
   isDesktop: boolean;
   size?: "desktop" | "mobile";
   menuAriaLabel: string;
@@ -192,16 +196,18 @@ function NavTrigger({
         </button>
       </div>
 
-      {isSplitMegamenuId(item.id) && isOpen && isDesktop ? (
-        <SplitMegamenuFlyout
-          openItem={item}
-          onNavigate={onNavigate}
-          className={cn(
-            "absolute top-full z-[120] hidden pt-2 lg:block",
-            item.id === "misc" ? "right-0" : "left-0",
-          )}
-        />
-      ) : null}
+      {isSplitMegamenuId(item.id) && isOpen && isDesktop && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed left-1/2 top-[4.5rem] z-[120] -translate-x-1/2"
+              onMouseEnter={onFlyoutEnter}
+              onMouseLeave={onFlyoutLeave}
+            >
+              <SplitMegamenuFlyout openItem={item} onNavigate={onNavigate} />
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -468,7 +474,7 @@ export function DashboardHeader({
       <div
         role="presentation"
         aria-hidden
-        className="fixed inset-0 z-[105] animate-dashboard-megamenu-in bg-black/60 motion-reduce:animate-none"
+        className="fixed inset-0 z-[105] animate-dashboard-megamenu-in bg-black/40 motion-reduce:animate-none"
         style={{
           WebkitBackdropFilter: "blur(40px) brightness(0.42) saturate(0.92)",
           backdropFilter: "blur(40px) brightness(0.42) saturate(0.92)",
@@ -485,7 +491,7 @@ export function DashboardHeader({
         ref={headerRef}
         className={cn(
           flushBottom ? "border-b-0" : "border-b border-transparent",
-          "!bg-black transition-shadow duration-300 ease-out",
+          "!bg-black transition-colors duration-150 ease-out",
           sticky ? "sticky top-0 z-[110]" : "relative z-[110] shrink-0",
           elevatedOnScroll && headerElevated && "shadow-[0_8px_30px_rgba(0,0,0,0.38)]",
         )}
@@ -516,6 +522,8 @@ export function DashboardHeader({
                 onToggle={onToggle}
                 onHoverOpen={onHoverOpen}
                 onNavigate={closeSubnav}
+                onFlyoutEnter={cancelCloseMenuTimer}
+                onFlyoutLeave={scheduleCloseMenu}
                 isDesktop={isDesktop}
                 size="desktop"
                 menuAriaLabel={tf(t("navigation.header.navMenu"), { label: item.label })}

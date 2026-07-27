@@ -123,6 +123,7 @@
   }
   html {
     @apply font-sans;
+    font-feature-settings: "cv01" on, "ss03" on, "zero" on;
     -ms-overflow-style: none;
     scrollbar-width: none;
     overflow-x: clip;
@@ -130,7 +131,7 @@
     background-color: #000;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-black text-foreground;
     -ms-overflow-style: none;
     scrollbar-width: none;
     overflow-x: clip;
@@ -188,6 +189,17 @@
   }
 }
 
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes revshare-track-head {
   0%,
   100% {
@@ -230,7 +242,7 @@
 @keyframes dashboard-megamenu-in {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -241,11 +253,9 @@
 @keyframes dashboard-megamenu-card-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -264,7 +274,7 @@
 @keyframes payout-flow-summary-in {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -296,11 +306,11 @@
 
 @layer utilities {
   .animate-dashboard-megamenu-in {
-    animation: dashboard-megamenu-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: dashboard-megamenu-in 0.16s ease-out both;
   }
 
   .animate-dashboard-megamenu-card-in {
-    animation: dashboard-megamenu-card-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: dashboard-megamenu-card-in 0.14s ease-out both;
   }
 
   .animate-payout-flow-panel-in {
@@ -645,6 +655,185 @@
   }
 }
 
+@keyframes market-scale-bar {
+  0%,
+  100% {
+    transform: scaleY(0.72);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes market-scale-depth {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes market-scale-cover-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes market-scale-orb-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes market-scale-orb-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes market-scale-marquee {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes market-scale-tape {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes market-scale-mid-pulse {
+  0%,
+  100% {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+  50% {
+    background-color: rgba(240, 118, 43, 0.14);
+  }
+}
+
+@keyframes market-scale-ring-draw {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes market-scale-sat {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+html.landing-scroll-smooth {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.landing-scroll-smooth {
+    scroll-behavior: auto;
+  }
+}
+
+.market-scale-marquee {
+  animation: market-scale-marquee 26s linear infinite;
+  will-change: transform;
+}
+
+.market-scale-marquee--slow {
+  animation-duration: 32s;
+}
+
+.market-scale-tape {
+  animation: market-scale-tape 22s linear infinite;
+  will-change: transform;
+}
+
+.market-scale-mid-pulse {
+  animation: market-scale-mid-pulse 2.4s ease-in-out infinite;
+}
+
+.market-scale-ring-draw {
+  animation: market-scale-ring-draw 2.8s ease-in-out infinite;
+}
+
+.market-scale-sat {
+  animation: market-scale-sat 3.2s ease-in-out infinite;
+}
+
+.market-scale-bar {
+  transform-origin: bottom center;
+  animation: market-scale-bar 2.4s ease-in-out infinite;
+}
+
+.market-scale-depth {
+  transform-origin: left center;
+  animation: market-scale-depth 2.8s ease-in-out infinite;
+}
+
+.market-scale-depth--right {
+  transform-origin: right center;
+}
+
+.market-scale-cover--a {
+  animation: market-scale-cover-float 5.2s ease-in-out infinite;
+}
+
+.market-scale-cover--b {
+  animation: market-scale-cover-float 4.4s ease-in-out infinite reverse;
+  animation-delay: 0.4s;
+}
+
+.market-scale-cover--c {
+  animation: market-scale-cover-float 4.8s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.market-scale-orb-glow {
+  animation: market-scale-orb-pulse 2.6s ease-in-out infinite;
+}
+
+.market-scale-orb-ring--2 {
+  animation: market-scale-orb-spin 18s linear infinite;
+  border-style: dashed;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-revshare-track-eq,
   .animate-revshare-track-head,
@@ -691,7 +880,20 @@
   .animate-revshare-status-orbit,
   .animate-revshare-status-breathe,
   .animate-instrument-candle-rise,
-  .animate-instrument-candle-float {
+  .animate-instrument-candle-float,
+  .market-scale-bar,
+  .market-scale-depth,
+  .market-scale-cover--a,
+  .market-scale-cover--b,
+  .market-scale-cover--c,
+  .market-scale-orb-glow,
+  .market-scale-orb-ring--2,
+  .market-scale-marquee,
+  .market-scale-marquee--slow,
+  .market-scale-tape,
+  .market-scale-mid-pulse,
+  .market-scale-ring-draw,
+  .market-scale-sat {
     animation: none !important;
   }
 
@@ -704,6 +906,12 @@
   }
 
   .animate-support-fade-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  [class*="animate-[fadeUp"] {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

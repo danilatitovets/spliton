@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Globe, Mail } from "@/lib/lucide";
+import { ArrowRight, Globe, Mail } from "@/lib/lucide";
 
+import {
+  landingDisplay,
+  landingFog,
+} from "@/components/dashboard/dashboard-landing-tokens";
 import { LanguageSelector } from "@/components/i18n/language-selector";
 import { FooterRegisterQr } from "@/components/layout/footer-register-qr";
-import { FooterSoundtrack } from "@/components/layout/footer-soundtrack";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { BRAND } from "@/constants/brand";
 import { SUPPORT_HELPDESK_EMAIL } from "@/constants/support-center";
@@ -16,6 +19,15 @@ import { tf } from "@/lib/i18n/financial-messages";
 import { cn } from "@/lib/utils";
 
 type FooterHref = { label: string; href: string };
+
+const footerGhostPill =
+  "inline-flex h-11 items-center justify-center rounded-full px-6 text-[14px] font-[510] tracking-[-0.011em] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] transition hover:bg-white/[0.04] active:scale-[0.98]";
+
+const footerPrimaryPill =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white pl-6 pr-1.5 text-[14px] font-[510] tracking-[-0.011em] text-black transition hover:bg-[#e8e8e8] active:scale-[0.98]";
+
+const footerGhostIcon =
+  "flex size-11 items-center justify-center rounded-full text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] transition hover:bg-white/[0.04] active:scale-[0.98]";
 
 const socials: { label: string; href: string; icon: "telegram" | "x" | "github" | "youtube" | "linkedin" | "mail" }[] = [
   { label: "Telegram", href: "#", icon: "telegram" },
@@ -77,8 +89,9 @@ function FooterLinkColumn({
     <div className="min-w-0">
       <h3
         className={cn(
-          "mb-3 font-semibold uppercase tracking-[0.2em] text-zinc-500 sm:mb-5",
-          compact ? "text-[10px]" : "text-[11px]",
+          landingDisplay,
+          "mb-3 text-white normal-case sm:mb-5",
+          compact ? "text-[13px]" : "text-[14px]",
         )}
       >
         {title}
@@ -124,36 +137,32 @@ export function SiteFooter({
           compact ? "pb-4 pt-10 sm:pb-8 sm:pt-20 lg:pb-10 lg:pt-24" : "pb-6 pt-16 sm:pb-8 sm:pt-20 lg:pb-10 lg:pt-24",
         )}
       >
-        <div className={cn("border-b border-white/8", compact ? "hidden pb-0 sm:block sm:pb-12 md:pb-16" : "pb-12 md:pb-16")}>
+        <div className={cn(compact ? "hidden pb-0 sm:block sm:pb-12 md:pb-16" : "pb-12 md:pb-16")}>
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-            <div className="max-w-2xl space-y-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-                {t("footer.promo.eyebrow")}
-              </p>
-              <p className="text-2xl font-semibold leading-[1.15] tracking-tight text-white md:text-3xl lg:text-[2.15rem]">
-                {t("footer.promo.title")}{" "}
-                <Link
-                  href={ROUTES.news}
-                  className="text-zinc-300 underline decoration-white/20 underline-offset-[6px] transition hover:text-white hover:decoration-white/40"
-                >
-                  {t("footer.promo.titleLink")}
-                </Link>
-                .
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
+            <p
+              className={cn(
+                landingDisplay,
+                "max-w-2xl text-2xl leading-[1.15] md:text-3xl lg:text-[2.05rem]",
+              )}
+            >
+              {t("footer.promo.title")}{" "}
               <Link
                 href={ROUTES.news}
-                className="inline-flex h-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] px-6 text-xs font-semibold uppercase tracking-wide text-zinc-100 transition hover:border-white/25 hover:bg-white/[0.07]"
+                className="text-[#8a8f98] underline decoration-[#3fe280]/40 underline-offset-[6px] transition hover:text-[#d0d6e0] hover:decoration-[#3fe280]/65"
               >
+                {t("footer.promo.titleLink")}
+              </Link>
+              .
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href={ROUTES.news} className={footerGhostPill}>
                 {t("footer.promo.ctaNews")}
               </Link>
-              <Link
-                href={ROUTES.dashboard}
-                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-white px-6 text-xs font-semibold uppercase tracking-wide text-black transition hover:bg-zinc-200"
-              >
+              <Link href={ROUTES.dashboard} className={footerPrimaryPill}>
                 {t("footer.promo.ctaDashboard")}
-                <ArrowUpRight className="size-3.5 opacity-80" strokeWidth={2} aria-hidden />
+                <span className="inline-flex size-8 items-center justify-center rounded-full bg-black text-white">
+                  <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
+                </span>
               </Link>
             </div>
           </div>
@@ -207,43 +216,35 @@ export function SiteFooter({
         </div>
 
         <div
-          className={cn("relative", compact ? "mt-8 hidden md:mt-24 md:block" : "mt-16 md:mt-24")}
+          className={cn("relative", compact ? "mt-10 sm:mt-14 md:mt-20" : "mt-16 md:mt-24")}
           style={{ fontSize: "clamp(4.5rem, 22vw, 14rem)" }}
         >
-          <FooterSoundtrack
-            variant="around-title"
-            className="pointer-events-none absolute inset-x-0 -top-2 z-0 md:-top-3"
-          />
           <div className="pointer-events-none select-none text-center leading-[0.82]">
             <p
-              className="bg-gradient-to-b from-white/[0.16] via-white/[0.07] to-transparent bg-clip-text font-semibold tracking-[-0.05em] text-transparent"
+              className="bg-clip-text font-bold tracking-[-0.05em] text-transparent"
+              style={{
+                backgroundImage: "url('/images/landing/footer-spliton-texture-fill-bw.png')",
+                backgroundSize: "125% auto",
+                backgroundPosition: "50% 40%",
+                backgroundRepeat: "no-repeat",
+              }}
               aria-hidden
             >
               {BRAND.name}
             </p>
           </div>
 
-          <div className="relative mt-10 overflow-hidden rounded-2xl md:mt-12">
-            <Image
-              src="/images/sotsety.png"
-              alt=""
-              fill
-              className="object-cover object-right"
-              sizes="(max-width: 1400px) 100vw, 1400px"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/88 via-black/72 to-black/55" aria-hidden />
-            <div className="relative flex flex-col gap-8 px-5 py-10 sm:px-8 md:flex-row md:items-center md:justify-between md:gap-6 md:py-12">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
-                  {t("footer.community.eyebrow")}
-                </p>
+          <div className="relative mt-10 overflow-hidden rounded-[12px] bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] md:mt-12">
+            <div className="relative grid grid-cols-1 divide-y divide-white/[0.12] md:grid-cols-3 md:divide-x md:divide-y-0">
+              <div className="flex flex-col justify-center px-5 py-8 sm:px-8 sm:py-10">
+                <p className={cn(landingDisplay, "text-[14px] text-white")}>{t("footer.community.eyebrow")}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {socials.map((s) => (
                     <Link
                       key={s.icon}
                       href={s.href}
                       aria-label={s.icon === "mail" ? t("footer.social.mail") : s.label}
-                      className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-zinc-400 backdrop-blur-sm transition hover:border-white/18 hover:bg-white/[0.05] hover:text-zinc-100"
+                      className={footerGhostIcon}
                     >
                       <SocialGlyph kind={s.icon} />
                     </Link>
@@ -251,25 +252,36 @@ export function SiteFooter({
                 </div>
               </div>
 
-              <p className="max-w-md text-center text-[11px] leading-relaxed text-zinc-500 md:text-left">
-                {t("footer.community.tagline")}
-              </p>
+              <div className="flex items-center px-5 py-8 sm:px-8 sm:py-10">
+                <p
+                  className={cn(
+                    landingFog,
+                    "mx-auto max-w-md text-center text-[14px] leading-relaxed tracking-[-0.011em] md:mx-0 md:text-left",
+                  )}
+                >
+                  {t("footer.community.tagline")}
+                </p>
+              </div>
 
-              <Link
-                href={ROUTES.systemStatus}
-                className="inline-flex items-center gap-2 self-center rounded-full border border-white/10 bg-black/30 px-4 py-2 text-[11px] text-zinc-300 backdrop-blur-sm transition hover:border-white/16 hover:text-zinc-100 md:self-auto"
-              >
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400/50 opacity-40" />
-                  <span className="relative inline-flex size-2 rounded-full bg-emerald-400/90" />
-                </span>
-                {t("footer.community.statusLink")}
-              </Link>
+              <div className="flex items-center justify-center px-5 py-8 sm:px-8 sm:py-10 md:justify-end">
+                <Link href={ROUTES.systemStatus} className={cn(footerGhostPill, "gap-2 px-5")}>
+                  <span className="relative flex size-2 shrink-0">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/35 opacity-60" />
+                    <span className="relative inline-flex size-2 rounded-full bg-white" />
+                  </span>
+                  {t("footer.community.statusLink")}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className={cn("flex flex-col items-start justify-between gap-3 border-t border-white/6 pt-6 text-[12px] text-zinc-600 sm:flex-row sm:items-center sm:pt-8", compact && "mt-6 sm:mt-10")}>
+        <div
+          className={cn(
+            "flex flex-col items-start justify-between gap-3 pt-6 text-[12px] text-zinc-600 sm:flex-row sm:items-center sm:pt-8",
+            compact && "mt-6 sm:mt-10",
+          )}
+        >
           <p>
             <span className="font-medium text-zinc-400">{BRAND.name}</span> · {year} · {t("footer.rights")}
           </p>

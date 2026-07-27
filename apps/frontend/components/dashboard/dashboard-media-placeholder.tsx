@@ -1,37 +1,58 @@
-import { ImageIcon } from "@/lib/lucide";
+import NextImage from "next/image";
 
 import { cn } from "@/lib/utils";
 
+/** White Spliton wordmark — not the black-on-white square tile. */
+export const SPLITON_COVER_PLACEHOLDER = "/images/LOGO/white-logo.png";
+
 type MediaPlaceholderProps = {
-  /** Короткая подпись, например «Обложка — фото позже» */
-  label: string;
+  label?: string;
   className?: string;
-  /** Без рамок и фона (для случаев поверх градиентов/абсолютного слоя) */
   frameless?: boolean;
-  /** Tailwind aspect class */
   aspectClassName?: string;
+  showLabel?: boolean;
 };
 
-/** Плейсхолдер под будущие фото / скрины (помечено явно для контента) */
+/** Dark cover when photography is missing — white Spliton logo on smoky glow. */
 export function MediaPlaceholder({
   label,
   className,
   frameless = false,
   aspectClassName = "aspect-[4/3]",
+  showLabel = false,
 }: MediaPlaceholderProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 border border-dashed border-white/10 bg-neutral-900/80 text-center",
-        frameless && "border-0 bg-transparent",
+        "relative overflow-hidden bg-black",
+        !frameless && "border border-white/[0.06]",
         aspectClassName,
-        className
+        className,
       )}
     >
-      <ImageIcon className="size-7 text-neutral-600" strokeWidth={1.25} aria-hidden />
-      <span className="max-w-[85%] px-2 text-[10px] font-semibold uppercase leading-snug tracking-[0.14em] text-neutral-500">
-        {label}
-      </span>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-1/4 top-0 size-[70%] rounded-full bg-[#3a6cff]/25 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-1/4 bottom-0 size-[65%] rounded-full bg-[#c47a2c]/20 blur-3xl"
+      />
+      <div className="absolute inset-0 flex items-center justify-center p-[18%]">
+        <NextImage
+          src={SPLITON_COVER_PLACEHOLDER}
+          alt=""
+          width={480}
+          height={160}
+          className="h-auto w-full max-w-[220px] object-contain opacity-95"
+        />
+      </div>
+      {showLabel && label ? (
+        <span className="absolute inset-x-0 bottom-2 z-10 px-2 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-white/45">
+          {label}
+        </span>
+      ) : null}
+      <span className="sr-only">{label ?? "Spliton"}</span>
     </div>
   );
 }

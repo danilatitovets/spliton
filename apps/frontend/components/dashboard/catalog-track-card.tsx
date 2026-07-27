@@ -3,15 +3,16 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Play } from "@/lib/lucide";
 
-import { MediaPlaceholder } from "@/components/dashboard/dashboard-media-placeholder";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { tf } from "@/lib/i18n/financial-messages";
 import { CatalogTrackCardChart } from "@/components/dashboard/catalog-track-card-chart";
 import type { ExchangeNeonTrend } from "@/components/shared/charts/exchange-neon-sparkline";
 import { analyticsReleaseDetailPath, catalogBuyUnitsPathForRelease } from "@/constants/routes";
 import type { CatalogItem } from "@/lib/catalog-mock";
+import { resolveCatalogCoverUrl } from "@/lib/catalog/catalog-demo-covers";
 import { isCatalogPrimaryPurchasable } from "@/lib/catalog/catalog-purchase.util";
 import { cn } from "@/lib/utils";
 
@@ -194,6 +195,7 @@ function RowKindLine({
 
 function CatalogCover({
   coverUrl,
+  seed,
   className,
   rounded = "rounded-xl",
   showPlay = false,
@@ -201,25 +203,31 @@ function CatalogCover({
   imageClassName = "object-cover",
 }: {
   coverUrl?: string | null;
+  /** Stable id/title for demo artwork when cover is missing. */
+  seed?: string;
   className?: string;
   rounded?: string;
   showPlay?: boolean;
   playLabel?: string;
   imageClassName?: string;
 }) {
+  const seedKey = seed ?? coverUrl ?? "catalog";
+  const [broken, setBroken] = useState(false);
+  const src = broken
+    ? resolveCatalogCoverUrl(null, `${seedKey}-fallback`)
+    : resolveCatalogCoverUrl(coverUrl, seedKey);
+
   return (
     <div className={cn("relative overflow-hidden bg-[#070707]", rounded, className)}>
-      {coverUrl ? (
-        <Image
-          src={coverUrl}
-          alt=""
-          fill
-          className={imageClassName}
-          sizes="(max-width: 768px) 100vw, 33vw"
-        />
-      ) : (
-        <MediaPlaceholder label="Spliton" aspectClassName="absolute inset-0 h-full w-full min-h-0" />
-      )}
+      <Image
+        key={src}
+        src={src}
+        alt=""
+        fill
+        className={imageClassName}
+        sizes="(max-width: 768px) 100vw, 33vw"
+        onError={() => setBroken(true)}
+      />
       {showPlay && playLabel ? <PlayFab label={playLabel} small /> : null}
     </div>
   );
@@ -471,6 +479,7 @@ export function CatalogTrackCard({
           <div className={rowMainRow}>
             <CatalogCover
               coverUrl={item.coverUrl}
+              seed={item.id}
               rounded="rounded-lg"
               showPlay={showPlay}
               playLabel={playLabel}
@@ -517,6 +526,7 @@ export function CatalogTrackCard({
       >
         <CatalogCover
           coverUrl={item.coverUrl}
+          seed={item.id}
           rounded="rounded-none"
           showPlay={showPlay}
           playLabel={playLabel}
@@ -624,6 +634,7 @@ export function CatalogTrackCard({
         <div className={rowMainRow}>
           <CatalogCover
             coverUrl={"coverUrl" in item ? item.coverUrl : undefined}
+            seed={item.id}
             rounded="rounded-lg"
             showPlay={showPlay}
             playLabel={playLabel}
@@ -672,6 +683,7 @@ export function CatalogTrackCard({
     >
       <CatalogCover
         coverUrl={"coverUrl" in item ? item.coverUrl : undefined}
+        seed={item.id}
         rounded="rounded-none"
         showPlay={showPlay}
         playLabel={playLabel}

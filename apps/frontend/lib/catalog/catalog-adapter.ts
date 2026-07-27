@@ -1,4 +1,5 @@
 import type { CatalogItem } from "@/lib/catalog-mock";
+import { resolveCatalogCoverUrl } from "@/lib/catalog/catalog-demo-covers";
 import { DICTIONARIES } from "@/lib/i18n/dictionaries";
 import { lookupDictionaryMessage } from "@/lib/i18n/dictionaries";
 import { catalogCardRiskLabel, catalogCardStatusLabel } from "@/lib/i18n/catalog-card-labels";
@@ -179,7 +180,7 @@ export function adaptCatalogCardToItem(
       genre: card.genre,
       sharePrice: price > 0 ? formatUsdtFixed(price, locale) : "—",
       sharePriceChange: card.lastTradePrice ? lastTrade : "—",
-      lastMonthPayout: formatForecastYield(card.expectedYieldPct, locale),      coverUrl: card.coverUrl,
+      lastMonthPayout: formatForecastYield(card.expectedYieldPct, locale),      coverUrl: resolveCatalogCoverUrl(card.coverUrl, card.id),
       shortDescription: card.shortDescription,
       statusLabel: catalogCardStatusLabel({
         purchaseState: card.purchaseState,
@@ -232,7 +233,7 @@ export function adaptCatalogCardToItem(
     availablePct,
     forecastYield: formatForecastYield(card.expectedYieldPct, locale),
     unitPriceUsdt: unitPrice > 0 ? formatUsdtFixed(unitPrice, locale) : "—",
-    coverUrl: card.coverUrl,
+    coverUrl: resolveCatalogCoverUrl(card.coverUrl, card.id),
     shortDescription: card.shortDescription,
     riskLabel: catalogCardRiskLabel({
       purchaseState: card.purchaseState,

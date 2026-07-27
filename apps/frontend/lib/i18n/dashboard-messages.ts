@@ -6,11 +6,21 @@ const RU: Record<string, string> = {
     "Главная кабинета Spliton: биржа долей в релизах, каталог, стакан вторичного рынка, начисления и вывод USDT (TRC20).",
 
   "dashboard.hero.badge": "Spliton · Музыкальные инвестиции",
-  "dashboard.hero.title": "Инвестируйте в музыку: покупка долей, торговля и выплаты в одном кабинете",
+  "dashboard.hero.title":
+    "Инвестируйте умнее в доли релизов и принимайте решения через USDT",
+  "dashboard.hero.headline.lead1": "Инвестируйте умнее",
+  "dashboard.hero.headline.lead2": "в доли релизов",
+  "dashboard.hero.headline.lead3": "и принимайте решения через",
+  "dashboard.hero.headline.pill": "USDT",
   "dashboard.hero.subtitle":
-    "Выбирайте релизы в каталоге, покупайте UNT, управляйте продажами на вторичном рынке и отслеживайте выплаты в USDT (TRC20) в понятном интерфейсе.",
+    "Собирайте портфель из релизов, сравнивайте доходность и ликвидность, торгуйте UNT на вторичке и контролируйте выплаты в USDT (TRC20) — в одном понятном кабинете, без лишних экранов.",
   "dashboard.hero.ctaCatalog": "Открыть каталог",
   "dashboard.hero.ctaHowItWorks": "Как это работает",
+  "dashboard.hero.ctaSecondary": "Вторичный рынок",
+  "dashboard.hero.stageLive": "Live",
+  "dashboard.hero.stageFloatTitle": "Order book",
+  "dashboard.hero.chipNew": "New",
+  "dashboard.hero.chipSessions": "Вторичный рынок · live котировки",
 
   "dashboard.heroJourney.ariaLabel":
     "Анимация пути пользователя: каталог, покупка UNT, выставление на вторичке и торговля через стакан",
@@ -100,6 +110,33 @@ const RU: Record<string, string> = {
   "dashboard.referralSummary.unavailableAfter": ", чтобы начать приглашать.",
 
   "dashboard.stats.title": "Сводка ликвидности",
+  "dashboard.marketScale.explore": "Смотреть",
+  "dashboard.marketScale.card.wallet": "Кошелёк",
+  "dashboard.marketScale.card.volume": "Объём",
+  "dashboard.marketScale.card.listings": "Листинги",
+  "dashboard.marketScale.card.releases": "Релизы",
+  "dashboard.marketScale.card.rounds": "Раунды",
+  "dashboard.marketScale.wallet.asset": "USDT баланс",
+  "dashboard.marketScale.wallet.available": "Доступно к операциям",
+  "dashboard.marketScale.wallet.volume": "Объём 24ч",
+  "dashboard.marketScale.wallet.ready": "Готов",
+  "dashboard.marketScale.wallet.buy": "Купить",
+  "dashboard.marketScale.wallet.sell": "Продать",
+  "dashboard.marketScale.wallet.send": "Отправить",
+  "dashboard.marketScale.wallet.receive": "Получить",
+  "dashboard.marketScale.eyebrow": "Вторичный рынок",
+  "dashboard.marketScale.title": "Ликвидность площадки в реальном времени",
+  "dashboard.marketScale.lead":
+    "Показатели из live API: объём, листинги, релизы и котировки UNT/USDT — без демо-цифр.",
+  "dashboard.marketScale.railLabel": "Сводка рынка",
+  "dashboard.marketScale.railLive": "Live API",
+  "dashboard.marketScale.numbersEyebrow": "В цифрах",
+  "dashboard.marketScale.numbersTitle": "Масштаб без декоративного шума",
+  "dashboard.marketScale.numbersLead":
+    "Показатели вторички и каталога с live API — крупные числа, короткие пояснения, без карточных рамок.",
+  "dashboard.marketScale.quotesEyebrow": "Live-котировки",
+  "dashboard.marketScale.quotesTitle": "Активные инструменты",
+  "dashboard.marketScale.quotesNeedLive": "Котировки доступны в live-режиме.",
   "dashboard.stats.demoNotice": "Демо-показатели. В production используется live API.",
   "dashboard.stats.retry": "Повторить",
   "dashboard.stats.empty": "Нет данных для отображения.",
@@ -137,6 +174,7 @@ const RU: Record<string, string> = {
   "dashboard.trustStrip.usdt": "USDT · TRC20",
 
   "dashboard.journey.kicker": "Сценарий инвестора",
+  "dashboard.journey.timelineAria": "Шаги сценария инвестора",
   "dashboard.journey.title": "Путь по бирже Spliton",
   "dashboard.journey.subtitle": "От знакомства с релизом до сделок на вторичке и вывода начислений в USDT.",
   "dashboard.journey.ctaMarket": "Перейти к рынку",
@@ -156,23 +194,34 @@ const RU: Record<string, string> = {
   "dashboard.journey.register": "Регистрация",
   "dashboard.journey.portfolio": "К портфелю",
 
-  "dashboard.markets.title": "Сервисы площадки",
+  "dashboard.markets.title": "Ваш надёжный партнёр для долей в музыкальных релизах",
+  "dashboard.markets.titleBefore": "Ваш надёжный партнёр для долей в ",
+  "dashboard.markets.titleHighlight": "музыкальных",
+  "dashboard.markets.titleAfter": " релизах",
   "dashboard.markets.subtitleMobile": "Все инструменты Spliton — в одном клике",
   "dashboard.markets.secondary.title": "Вторичный рынок",
   "dashboard.markets.secondary.subtitle": "Стакан · заявки · история",
-  "dashboard.markets.secondary.description": "Покупайте и продавайте доли в релизах мгновенно по лучшим ценам в стакане.",
+  "dashboard.markets.secondary.description":
+    "Торгуйте без колебаний. Покупайте и продавайте доли в релизах мгновенно по лучшим ценам в стакане.",
+  "dashboard.markets.secondary.link": "Открыть вторичный рынок",
   "dashboard.markets.secondary.cta": "К торговле",
   "dashboard.markets.analytics.title": "Аналитика релизов",
   "dashboard.markets.analytics.subtitle": "Доходность и сравнение",
-  "dashboard.markets.analytics.description": "Сравнивайте доходность, выплаты и динамику релизов в одном интерфейсе.",
+  "dashboard.markets.analytics.description":
+    "Сравнивайте доходность, выплаты и динамику релизов в одном интерфейсе.",
+  "dashboard.markets.analytics.link": "Смотреть аналитику",
   "dashboard.markets.analytics.cta": "Смотреть",
   "dashboard.markets.news.title": "Новости платформы",
   "dashboard.markets.news.subtitle": "Релизы продукта и операций",
-  "dashboard.markets.news.description": "Обновления продукта, операции площадки и важные объявления для инвесторов.",
+  "dashboard.markets.news.description":
+    "Обновления продукта, операции площадки и важные объявления для инвесторов.",
+  "dashboard.markets.news.link": "Читать новости",
   "dashboard.markets.news.cta": "Читать",
-  "dashboard.markets.fees.title": "Комиссии",
+  "dashboard.markets.fees.title": "Прозрачные комиссии",
   "dashboard.markets.fees.subtitle": "Тарифы и примеры",
-  "dashboard.markets.fees.description": "Прозрачные тарифы, примеры расчёта и пояснения по USDT и рынкам.",
+  "dashboard.markets.fees.description":
+    "Прозрачные тарифы, примеры расчёта и пояснения по USDT и рынкам.",
+  "dashboard.markets.fees.link": "Смотреть тарифы",
   "dashboard.markets.fees.cta": "Подробнее",
 
   "dashboard.cta.title": "Готовы начать с первого релиза?",
@@ -189,14 +238,64 @@ const RU: Record<string, string> = {
   "dashboard.valueGrid.error": "Не удалось загрузить котировки. Попробуйте обновить страницу.",
   "dashboard.valueGrid.empty": "Пока нет активных инструментов на вторичном рынке.",
 
-  "dashboard.catalogPreview.heading": "Выберите проект для входа",
+  "dashboard.catalogPreview.heading": "Релизы с открытой подпиской UNT",
   "dashboard.catalogPreview.body":
-    "Те же карточки, что в каталоге: быстрый вход в релиз, покупка UNT и переход ко всем позициям на площадке.",
-  "dashboard.catalogPreview.openCta": "Открыть каталог",
+    "Три релиза с обложками, прогрессом раунда и метриками — как в каталоге. Клик открывает полный список проектов.",
+  "dashboard.catalogPreview.openCta": "В каталог",
   "dashboard.catalogPreview.viewAll": "Смотреть все",
-  "dashboard.catalogPreview.demoBanner": "Демо-карточки каталога",
+  "dashboard.catalogPreview.demoBanner": "Пример карточек — переход в каталог",
   "dashboard.catalogPreview.empty": "Пока нет доступных релизов в каталоге.",
-  "dashboard.catalogPreview.fullCatalog": "Перейти в полный каталог",
+  "dashboard.catalogPreview.fullCatalog": "Весь каталог",
+
+  "dashboard.figures.srTitle": "Принципы платформы",
+  "dashboard.figures.stat.units": "доли в музыкальных релизах",
+  "dashboard.figures.stat.settle": "расчёты в USDT · TRC20",
+  "dashboard.figures.stat.mission": "кабинет: каталог, стакан и выплаты",
+  "dashboard.figures.leadStrong": "Биржа долей нового типа.",
+  "dashboard.figures.leadRest":
+    "Создана для инвесторов в музыку: каталог релизов, стакан вторичного рынка и выплаты USDT — в одном точном интерфейсе.",
+  "dashboard.figures.trust.unt": "UNT",
+  "dashboard.figures.trust.usdt": "USDT · TRC20",
+  "dashboard.figures.trust.book": "Order book",
+  "dashboard.figures.trust.payouts": "Payouts",
+  "dashboard.figures.trust.catalog": "Catalog",
+  "dashboard.figures.trust.analytics": "Analytics",
+  "dashboard.figures.purpose.title": "Сделано под продукт",
+  "dashboard.figures.purpose.text":
+    "Spliton собран вокруг реальных практик: вход в релиз, ликвидность долей и прозрачные начисления.",
+  "dashboard.figures.agents.title": "Рынок и кабинет вместе",
+  "dashboard.figures.agents.text":
+    "От каталога до стакана и выплат — единый поток без переключения между разрозненными сервисами.",
+  "dashboard.figures.speed.title": "Скорость без шума",
+  "dashboard.figures.speed.text":
+    "Плотный интерфейс убирает лишнее, чтобы быстрее находить релизы, выставлять лоты и выводить USDT.",
+
+  "dashboard.trust.kicker": "Доверие",
+  "dashboard.trust.title": "Инфраструктура под капитал",
+  "dashboard.trust.subtitle":
+    "Терминал держит фокус на данных: безопасный поток UNT, USDT (TRC20) и прозрачные начисления без декоративного шума.",
+  "dashboard.trust.badge.safe": "Safe data",
+  "dashboard.trust.badge.insured": "Операционный контроль",
+  "dashboard.trust.badge.usdt": "USDT · TRC20",
+  "dashboard.trust.announce.tag": "Announcement",
+  "dashboard.trust.announce.title": "Прозрачные правила площадки и статус доверия",
+  "dashboard.trust.announce.text":
+    "Как устроены расчёты, выплаты и контроль рисков — в одном разделе Trust, без лишней маркетинговой оболочки.",
+  "dashboard.trust.announce.cta": "Открыть Trust",
+
+  "dashboard.announcements.title": "Последние объявления",
+  "dashboard.announcements.insured.tag": "Announcement",
+  "dashboard.announcements.insured.title": "С 2025 года позиции и выплаты Spliton защищены доп. контролем",
+  "dashboard.announcements.insured.text":
+    "Дополнительный слой операционного контроля и прозрачных правил — чтобы капитал на площадке читался как живой терминал, а не как маркетинговый слоган.",
+  "dashboard.announcements.alliance.tag": "Announcement",
+  "dashboard.announcements.alliance.title": "Spliton в контуре безопасных практик и white-hat процессов",
+  "dashboard.announcements.alliance.text":
+    "Мы выстраиваем процедуры реагирования и публичные правила доверия рядом с продуктовым контуром кабинета и рынка.",
+  "dashboard.announcements.audit.tag": "Security",
+  "dashboard.announcements.audit.title": "Аудит, безопасность и прозрачная отчётность",
+  "dashboard.announcements.audit.text":
+    "Статусы доверия, отчёты и операционные политики собраны в разделе Trust — без лишнего декоративного шума.",
 };
 
 const EN: Record<string, string> = {
@@ -205,11 +304,21 @@ const EN: Record<string, string> = {
     "Spliton dashboard home: release share exchange, catalog, secondary order book, accruals and USDT (TRC20) withdrawals.",
 
   "dashboard.hero.badge": "Spliton · Revenue share",
-  "dashboard.hero.title": "Music share exchange: catalog, order book and payouts in one dashboard",
+  "dashboard.hero.title":
+    "Invest smarter in release shares and act on insights through USDT",
+  "dashboard.hero.headline.lead1": "Invest smarter",
+  "dashboard.hero.headline.lead2": "in release shares",
+  "dashboard.hero.headline.lead3": "and act on insights through",
+  "dashboard.hero.headline.pill": "USDT",
   "dashboard.hero.subtitle":
-    "Spliton is a revenue share platform: buy UNT by release, limit orders on the secondary market, transparent accruals and USDT (TRC20) withdrawals without switching services.",
+    "Build a release portfolio, compare yield and liquidity, trade UNT on the secondary market, and track USDT (TRC20) payouts — one clear dashboard, no extra screens.",
   "dashboard.hero.ctaCatalog": "Open catalog",
   "dashboard.hero.ctaHowItWorks": "How it works",
+  "dashboard.hero.ctaSecondary": "Secondary market",
+  "dashboard.hero.stageLive": "Live",
+  "dashboard.hero.stageFloatTitle": "Order book",
+  "dashboard.hero.chipNew": "New",
+  "dashboard.hero.chipSessions": "Secondary market · live quotes",
 
   "dashboard.heroJourney.ariaLabel":
     "User journey animation: catalog, UNT purchase, secondary listing and order book trading",
@@ -299,6 +408,33 @@ const EN: Record<string, string> = {
   "dashboard.referralSummary.unavailableAfter": " to start inviting.",
 
   "dashboard.stats.title": "Liquidity summary",
+  "dashboard.marketScale.explore": "Explore",
+  "dashboard.marketScale.card.wallet": "Wallet",
+  "dashboard.marketScale.card.volume": "Volume",
+  "dashboard.marketScale.card.listings": "Listings",
+  "dashboard.marketScale.card.releases": "Releases",
+  "dashboard.marketScale.card.rounds": "Rounds",
+  "dashboard.marketScale.wallet.asset": "USDT balance",
+  "dashboard.marketScale.wallet.available": "Available to trade",
+  "dashboard.marketScale.wallet.volume": "Volume 24h",
+  "dashboard.marketScale.wallet.ready": "Ready",
+  "dashboard.marketScale.wallet.buy": "Buy",
+  "dashboard.marketScale.wallet.sell": "Sell",
+  "dashboard.marketScale.wallet.send": "Send",
+  "dashboard.marketScale.wallet.receive": "Receive",
+  "dashboard.marketScale.eyebrow": "Secondary market",
+  "dashboard.marketScale.title": "Platform liquidity in real time",
+  "dashboard.marketScale.lead":
+    "Live API metrics: volume, listings, releases and UNT/USDT quotes — no demo figures.",
+  "dashboard.marketScale.railLabel": "Market summary",
+  "dashboard.marketScale.railLive": "Live API",
+  "dashboard.marketScale.numbersEyebrow": "By the numbers",
+  "dashboard.marketScale.numbersTitle": "Unprecedented clarity",
+  "dashboard.marketScale.numbersLead":
+    "Secondary and catalog metrics from the live API — large figures, short copy, no card chrome.",
+  "dashboard.marketScale.quotesEyebrow": "Live quotes",
+  "dashboard.marketScale.quotesTitle": "Active instruments",
+  "dashboard.marketScale.quotesNeedLive": "Quotes are available in live mode.",
   "dashboard.stats.demoNotice": "Demo metrics. Production uses the live API.",
   "dashboard.stats.retry": "Retry",
   "dashboard.stats.empty": "No data to display.",
@@ -336,6 +472,7 @@ const EN: Record<string, string> = {
   "dashboard.trustStrip.usdt": "USDT · TRC20",
 
   "dashboard.journey.kicker": "Investor journey",
+  "dashboard.journey.timelineAria": "Investor journey steps",
   "dashboard.journey.title": "Your path on Spliton",
   "dashboard.journey.subtitle": "From exploring a release to secondary trades and USDT payout withdrawals.",
   "dashboard.journey.ctaMarket": "Go to market",
@@ -355,23 +492,34 @@ const EN: Record<string, string> = {
   "dashboard.journey.register": "Register",
   "dashboard.journey.portfolio": "To portfolio",
 
-  "dashboard.markets.title": "Platform services",
+  "dashboard.markets.title": "Your reliable partner for music release shares",
+  "dashboard.markets.titleBefore": "Your reliable partner for ",
+  "dashboard.markets.titleHighlight": "music",
+  "dashboard.markets.titleAfter": " release shares",
   "dashboard.markets.subtitleMobile": "All Spliton tools — one click away",
   "dashboard.markets.secondary.title": "Secondary market",
   "dashboard.markets.secondary.subtitle": "Order book · orders · history",
-  "dashboard.markets.secondary.description": "Buy and sell release shares instantly at the best prices in the book.",
+  "dashboard.markets.secondary.description":
+    "Trade without hesitation. Buy and sell release shares instantly at the best prices in the book.",
+  "dashboard.markets.secondary.link": "Open secondary market",
   "dashboard.markets.secondary.cta": "Trade",
   "dashboard.markets.analytics.title": "Release analytics",
   "dashboard.markets.analytics.subtitle": "Yield and comparison",
-  "dashboard.markets.analytics.description": "Compare yield, payouts and release dynamics in one interface.",
+  "dashboard.markets.analytics.description":
+    "Compare yield, payouts and release dynamics in one interface.",
+  "dashboard.markets.analytics.link": "View release analytics",
   "dashboard.markets.analytics.cta": "View",
   "dashboard.markets.news.title": "Platform news",
   "dashboard.markets.news.subtitle": "Product and operations updates",
-  "dashboard.markets.news.description": "Product updates, platform operations and important investor announcements.",
+  "dashboard.markets.news.description":
+    "Product updates, platform operations and important investor announcements.",
+  "dashboard.markets.news.link": "Read platform news",
   "dashboard.markets.news.cta": "Read",
-  "dashboard.markets.fees.title": "Fees",
+  "dashboard.markets.fees.title": "Transparent fees",
   "dashboard.markets.fees.subtitle": "Rates and examples",
-  "dashboard.markets.fees.description": "Transparent rates, calculation examples and USDT and market notes.",
+  "dashboard.markets.fees.description":
+    "Transparent rates, calculation examples and notes on USDT and markets.",
+  "dashboard.markets.fees.link": "See fee schedule",
   "dashboard.markets.fees.cta": "Learn more",
 
   "dashboard.cta.title": "Ready to start with your first release?",
@@ -388,14 +536,64 @@ const EN: Record<string, string> = {
   "dashboard.valueGrid.error": "Could not load quotes. Try refreshing the page.",
   "dashboard.valueGrid.empty": "No active secondary-market instruments yet.",
 
-  "dashboard.catalogPreview.heading": "Choose a release to enter",
+  "dashboard.catalogPreview.heading": "Releases open for UNT allocation",
   "dashboard.catalogPreview.body":
-    "The same cards as in the catalog: quick entry, UNT purchase and access to all listings on the platform.",
+    "Three releases with covers, round progress, and metrics—like the catalog. Click through to the full project list.",
   "dashboard.catalogPreview.openCta": "Open catalog",
   "dashboard.catalogPreview.viewAll": "View all",
-  "dashboard.catalogPreview.demoBanner": "Demo catalog cards",
+  "dashboard.catalogPreview.demoBanner": "Sample cards — opens the catalog",
   "dashboard.catalogPreview.empty": "No releases available in the catalog yet.",
-  "dashboard.catalogPreview.fullCatalog": "Go to full catalog",
+  "dashboard.catalogPreview.fullCatalog": "Full catalog",
+
+  "dashboard.figures.srTitle": "Platform principles",
+  "dashboard.figures.stat.units": "share units across music releases",
+  "dashboard.figures.stat.settle": "settlements in USDT · TRC20",
+  "dashboard.figures.stat.mission": "one cabinet for catalog, book and payouts",
+  "dashboard.figures.leadStrong": "A new species of share exchange.",
+  "dashboard.figures.leadRest":
+    "Built for music investors: release catalog, secondary order book and USDT payouts in one precision interface.",
+  "dashboard.figures.trust.unt": "UNT",
+  "dashboard.figures.trust.usdt": "USDT · TRC20",
+  "dashboard.figures.trust.book": "Order book",
+  "dashboard.figures.trust.payouts": "Payouts",
+  "dashboard.figures.trust.catalog": "Catalog",
+  "dashboard.figures.trust.analytics": "Analytics",
+  "dashboard.figures.purpose.title": "Purpose-built",
+  "dashboard.figures.purpose.text":
+    "Spliton is shaped by real investor workflows: enter a release, trade liquidity and track accruals.",
+  "dashboard.figures.agents.title": "Market and cabinet as one",
+  "dashboard.figures.agents.text":
+    "From catalog to order book and payouts — a single flow without hopping between disconnected tools.",
+  "dashboard.figures.speed.title": "Designed for speed",
+  "dashboard.figures.speed.text":
+    "A quiet interface that cuts noise so you can find releases, list lots and withdraw USDT faster.",
+
+  "dashboard.trust.kicker": "Trust",
+  "dashboard.trust.title": "Infrastructure for capital",
+  "dashboard.trust.subtitle":
+    "The terminal stays data-first: safe UNT flow, USDT (TRC20) and transparent accruals without decorative noise.",
+  "dashboard.trust.badge.safe": "Safe data",
+  "dashboard.trust.badge.insured": "Operational controls",
+  "dashboard.trust.badge.usdt": "USDT · TRC20",
+  "dashboard.trust.announce.tag": "Announcement",
+  "dashboard.trust.announce.title": "Clear platform rules and trust status",
+  "dashboard.trust.announce.text":
+    "Settlements, payouts and risk controls — in one Trust section, without marketing chrome.",
+  "dashboard.trust.announce.cta": "Open Trust",
+
+  "dashboard.announcements.title": "Recent Announcements",
+  "dashboard.announcements.insured.tag": "Announcement",
+  "dashboard.announcements.insured.title": "Since 2025, Spliton positions and payouts have extra operational cover",
+  "dashboard.announcements.insured.text":
+    "An additional layer of operational control and clear rules — so capital on the platform reads like a live terminal, not a marketing slogan.",
+  "dashboard.announcements.alliance.tag": "Announcement",
+  "dashboard.announcements.alliance.title": "Spliton aligns with safe-harbor style security practices",
+  "dashboard.announcements.alliance.text":
+    "We keep response procedures and public trust rules next to the product surface of the cabinet and market.",
+  "dashboard.announcements.audit.tag": "Security",
+  "dashboard.announcements.audit.title": "Audited posture, security and transparent reporting",
+  "dashboard.announcements.audit.text":
+    "Trust status, reports and operating policies live in the Trust section — without decorative noise.",
 };
 
 const ES: Record<string, string> = {
@@ -404,11 +602,21 @@ const ES: Record<string, string> = {
     "Inicio del panel Spliton: bolsa de participaciones en lanzamientos, catálogo, libro de órdenes secundario, devengos y retiro USDT (TRC20).",
 
   "dashboard.hero.badge": "Spliton · Revenue share",
-  "dashboard.hero.title": "Bolsa de participaciones musicales: catálogo, libro y pagos en un solo panel",
+  "dashboard.hero.title":
+    "Invierta con más criterio en participaciones de lanzamientos y decida mediante USDT",
+  "dashboard.hero.headline.lead1": "Invierta con más criterio",
+  "dashboard.hero.headline.lead2": "en participaciones de lanzamientos",
+  "dashboard.hero.headline.lead3": "y decida con datos mediante",
+  "dashboard.hero.headline.pill": "USDT",
   "dashboard.hero.subtitle":
-    "Spliton es una plataforma revenue share: compra UNT por lanzamiento, órdenes limitadas en secundario, devengos transparentes y retiro USDT (TRC20) sin cambiar de servicio.",
+    "Arme un portafolio de lanzamientos, compare rentabilidad y liquidez, opere UNT en secundario y controle pagos en USDT (TRC20) — un solo panel claro, sin pantallas de más.",
   "dashboard.hero.ctaCatalog": "Abrir catálogo",
   "dashboard.hero.ctaHowItWorks": "Cómo funciona",
+  "dashboard.hero.ctaSecondary": "Mercado secundario",
+  "dashboard.hero.stageLive": "Live",
+  "dashboard.hero.stageFloatTitle": "Order book",
+  "dashboard.hero.chipNew": "New",
+  "dashboard.hero.chipSessions": "Mercado secundario · cotizaciones live",
 
   "dashboard.heroJourney.ariaLabel":
     "Animación del recorrido: catálogo, compra UNT, listado en secundario y operación en el libro",
@@ -498,6 +706,33 @@ const ES: Record<string, string> = {
   "dashboard.referralSummary.unavailableAfter": " para empezar a invitar.",
 
   "dashboard.stats.title": "Resumen de liquidez",
+  "dashboard.marketScale.explore": "Explorar",
+  "dashboard.marketScale.card.wallet": "Cartera",
+  "dashboard.marketScale.card.volume": "Volumen",
+  "dashboard.marketScale.card.listings": "Listados",
+  "dashboard.marketScale.card.releases": "Lanzamientos",
+  "dashboard.marketScale.card.rounds": "Rondas",
+  "dashboard.marketScale.wallet.asset": "Saldo USDT",
+  "dashboard.marketScale.wallet.available": "Disponible para operar",
+  "dashboard.marketScale.wallet.volume": "Volumen 24h",
+  "dashboard.marketScale.wallet.ready": "Listo",
+  "dashboard.marketScale.wallet.buy": "Comprar",
+  "dashboard.marketScale.wallet.sell": "Vender",
+  "dashboard.marketScale.wallet.send": "Enviar",
+  "dashboard.marketScale.wallet.receive": "Recibir",
+  "dashboard.marketScale.eyebrow": "Mercado secundario",
+  "dashboard.marketScale.title": "Liquidez de la plataforma en tiempo real",
+  "dashboard.marketScale.lead":
+    "Métricas de la API live: volumen, listados, lanzamientos y cotizaciones UNT/USDT — sin cifras demo.",
+  "dashboard.marketScale.railLabel": "Resumen del mercado",
+  "dashboard.marketScale.railLive": "Live API",
+  "dashboard.marketScale.numbersEyebrow": "En cifras",
+  "dashboard.marketScale.numbersTitle": "Escala sin ruido decorativo",
+  "dashboard.marketScale.numbersLead":
+    "Métricas del secundario y del catálogo desde la API live — cifras grandes, texto breve, sin marcos de tarjeta.",
+  "dashboard.marketScale.quotesEyebrow": "Cotizaciones live",
+  "dashboard.marketScale.quotesTitle": "Instrumentos activos",
+  "dashboard.marketScale.quotesNeedLive": "Las cotizaciones están disponibles en modo live.",
   "dashboard.stats.demoNotice": "Métricas demo. En producción se usa la API live.",
   "dashboard.stats.retry": "Reintentar",
   "dashboard.stats.empty": "No hay datos para mostrar.",
@@ -535,6 +770,7 @@ const ES: Record<string, string> = {
   "dashboard.trustStrip.usdt": "USDT · TRC20",
 
   "dashboard.journey.kicker": "Recorrido del inversor",
+  "dashboard.journey.timelineAria": "Pasos del recorrido del inversor",
   "dashboard.journey.title": "Camino en la bolsa Spliton",
   "dashboard.journey.subtitle": "Del lanzamiento a operaciones en secundario y retiro de devengos en USDT.",
   "dashboard.journey.ctaMarket": "Ir al mercado",
@@ -554,23 +790,34 @@ const ES: Record<string, string> = {
   "dashboard.journey.register": "Registro",
   "dashboard.journey.portfolio": "Al portafolio",
 
-  "dashboard.markets.title": "Servicios de la plataforma",
+  "dashboard.markets.title": "Su socio de confianza para participaciones en lanzamientos musicales",
+  "dashboard.markets.titleBefore": "Su socio de confianza para participaciones en lanzamientos ",
+  "dashboard.markets.titleHighlight": "musicales",
+  "dashboard.markets.titleAfter": "",
   "dashboard.markets.subtitleMobile": "Todas las herramientas Spliton — a un clic",
   "dashboard.markets.secondary.title": "Mercado secundario",
   "dashboard.markets.secondary.subtitle": "Libro · órdenes · historial",
-  "dashboard.markets.secondary.description": "Compre y venda participaciones al mejor precio en el libro.",
+  "dashboard.markets.secondary.description":
+    "Opere sin dudar. Compre y venda participaciones al mejor precio en el libro.",
+  "dashboard.markets.secondary.link": "Abrir mercado secundario",
   "dashboard.markets.secondary.cta": "Operar",
   "dashboard.markets.analytics.title": "Analítica de lanzamientos",
   "dashboard.markets.analytics.subtitle": "Rentabilidad y comparación",
-  "dashboard.markets.analytics.description": "Compare rentabilidad, pagos y dinámica en una sola interfaz.",
+  "dashboard.markets.analytics.description":
+    "Compare rentabilidad, pagos y dinámica en una sola interfaz.",
+  "dashboard.markets.analytics.link": "Ver analítica",
   "dashboard.markets.analytics.cta": "Ver",
   "dashboard.markets.news.title": "Noticias de la plataforma",
   "dashboard.markets.news.subtitle": "Producto y operaciones",
-  "dashboard.markets.news.description": "Actualizaciones de producto, operaciones y avisos para inversores.",
+  "dashboard.markets.news.description":
+    "Actualizaciones de producto, operaciones y avisos para inversores.",
+  "dashboard.markets.news.link": "Leer noticias",
   "dashboard.markets.news.cta": "Leer",
-  "dashboard.markets.fees.title": "Comisiones",
+  "dashboard.markets.fees.title": "Comisiones transparentes",
   "dashboard.markets.fees.subtitle": "Tarifas y ejemplos",
-  "dashboard.markets.fees.description": "Tarifas transparentes, ejemplos y notas sobre USDT y mercados.",
+  "dashboard.markets.fees.description":
+    "Tarifas transparentes, ejemplos y notas sobre USDT y mercados.",
+  "dashboard.markets.fees.link": "Ver tarifas",
   "dashboard.markets.fees.cta": "Más información",
 
   "dashboard.cta.title": "¿Listo para empezar con su primer lanzamiento?",
@@ -587,14 +834,64 @@ const ES: Record<string, string> = {
   "dashboard.valueGrid.error": "No se pudieron cargar las cotizaciones. Actualice la página.",
   "dashboard.valueGrid.empty": "Aún no hay instrumentos activos en el mercado secundario.",
 
-  "dashboard.catalogPreview.heading": "Elija un proyecto para entrar",
+  "dashboard.catalogPreview.heading": "Lanzamientos con suscripción UNT abierta",
   "dashboard.catalogPreview.body":
-    "Las mismas tarjetas que en el catálogo: entrada rápida, compra de UNT y acceso a todas las posiciones.",
-  "dashboard.catalogPreview.openCta": "Abrir catálogo",
+    "Compare rondas, abra la ficha del proyecto y asigne participaciones: el mismo flujo que en el catálogo completo.",
+  "dashboard.catalogPreview.openCta": "Al catálogo",
   "dashboard.catalogPreview.viewAll": "Ver todo",
-  "dashboard.catalogPreview.demoBanner": "Tarjetas de catálogo demo",
+  "dashboard.catalogPreview.demoBanner": "Tarjetas de ejemplo — abre el catálogo",
   "dashboard.catalogPreview.empty": "Aún no hay lanzamientos disponibles en el catálogo.",
   "dashboard.catalogPreview.fullCatalog": "Ir al catálogo completo",
+
+  "dashboard.figures.srTitle": "Principios de la plataforma",
+  "dashboard.figures.stat.units": "participaciones en lanzamientos musicales",
+  "dashboard.figures.stat.settle": "liquidaciones en USDT · TRC20",
+  "dashboard.figures.stat.mission": "un panel: catálogo, libro y pagos",
+  "dashboard.figures.leadStrong": "Una nueva especie de bolsa de participaciones.",
+  "dashboard.figures.leadRest":
+    "Hecha para inversores en música: catálogo, libro secundario y pagos USDT en una interfaz precisa.",
+  "dashboard.figures.trust.unt": "UNT",
+  "dashboard.figures.trust.usdt": "USDT · TRC20",
+  "dashboard.figures.trust.book": "Order book",
+  "dashboard.figures.trust.payouts": "Payouts",
+  "dashboard.figures.trust.catalog": "Catalog",
+  "dashboard.figures.trust.analytics": "Analytics",
+  "dashboard.figures.purpose.title": "Hecho a medida",
+  "dashboard.figures.purpose.text":
+    "Spliton sigue flujos reales: entrar en un lanzamiento, negociar liquidez y ver devengos.",
+  "dashboard.figures.agents.title": "Mercado y panel juntos",
+  "dashboard.figures.agents.text":
+    "Del catálogo al libro y a los pagos — un solo flujo sin cambiar de herramienta.",
+  "dashboard.figures.speed.title": "Diseñado para velocidad",
+  "dashboard.figures.speed.text":
+    "Una interfaz quieta que reduce ruido para encontrar lanzamientos, listar lotes y retirar USDT más rápido.",
+
+  "dashboard.trust.kicker": "Confianza",
+  "dashboard.trust.title": "Infraestructura para capital",
+  "dashboard.trust.subtitle":
+    "El terminal prioriza datos: flujo UNT seguro, USDT (TRC20) y accruals transparentes sin ruido decorativo.",
+  "dashboard.trust.badge.safe": "Safe data",
+  "dashboard.trust.badge.insured": "Controles operativos",
+  "dashboard.trust.badge.usdt": "USDT · TRC20",
+  "dashboard.trust.announce.tag": "Announcement",
+  "dashboard.trust.announce.title": "Reglas claras y estado de confianza",
+  "dashboard.trust.announce.text":
+    "Liquidaciones, pagos y control de riesgos — en una sección Trust, sin cromo de marketing.",
+  "dashboard.trust.announce.cta": "Abrir Trust",
+
+  "dashboard.announcements.title": "Anuncios recientes",
+  "dashboard.announcements.insured.tag": "Announcement",
+  "dashboard.announcements.insured.title": "Desde 2025, posiciones y pagos de Spliton tienen control operativo extra",
+  "dashboard.announcements.insured.text":
+    "Una capa adicional de control operativo y reglas claras — para que el capital en la plataforma se lea como un terminal en vivo.",
+  "dashboard.announcements.alliance.tag": "Announcement",
+  "dashboard.announcements.alliance.title": "Spliton se alinea con prácticas de seguridad tipo safe harbor",
+  "dashboard.announcements.alliance.text":
+    "Mantenemos procedimientos de respuesta y reglas públicas de confianza junto al producto del panel y el mercado.",
+  "dashboard.announcements.audit.tag": "Security",
+  "dashboard.announcements.audit.title": "Postura auditada, seguridad e informes transparentes",
+  "dashboard.announcements.audit.text":
+    "El estado de confianza, informes y políticas viven en Trust — sin ruido decorativo.",
 };
 
 const PT: Record<string, string> = {
@@ -603,11 +900,21 @@ const PT: Record<string, string> = {
     "Início do painel Spliton: bolsa de participações em lançamentos, catálogo, livro secundário, accruals e levantamento USDT (TRC20).",
 
   "dashboard.hero.badge": "Spliton · Revenue share",
-  "dashboard.hero.title": "Bolsa de participações musicais: catálogo, livro e pagamentos num painel",
+  "dashboard.hero.title":
+    "Invista com mais critério em participações de lançamentos e decida via USDT",
+  "dashboard.hero.headline.lead1": "Invista com mais critério",
+  "dashboard.hero.headline.lead2": "em participações de lançamentos",
+  "dashboard.hero.headline.lead3": "e decida com dados via",
+  "dashboard.hero.headline.pill": "USDT",
   "dashboard.hero.subtitle":
-    "Spliton é uma plataforma revenue share: compra UNT por lançamento, ordens limitadas no secundário, accruals transparentes e levantamento USDT (TRC20) sem mudar de serviço.",
+    "Monte um portfólio de lançamentos, compare rendimento e liquidez, negocie UNT no secundário e acompanhe pagamentos em USDT (TRC20) — um painel claro, sem ecrãs a mais.",
   "dashboard.hero.ctaCatalog": "Abrir catálogo",
   "dashboard.hero.ctaHowItWorks": "Como funciona",
+  "dashboard.hero.ctaSecondary": "Mercado secundário",
+  "dashboard.hero.stageLive": "Live",
+  "dashboard.hero.stageFloatTitle": "Order book",
+  "dashboard.hero.chipNew": "New",
+  "dashboard.hero.chipSessions": "Mercado secundário · cotações live",
 
   "dashboard.heroJourney.ariaLabel":
     "Animação do percurso: catálogo, compra UNT, listagem no secundário e negociação no livro",
@@ -697,6 +1004,33 @@ const PT: Record<string, string> = {
   "dashboard.referralSummary.unavailableAfter": " para começar a convidar.",
 
   "dashboard.stats.title": "Resumo de liquidez",
+  "dashboard.marketScale.explore": "Explorar",
+  "dashboard.marketScale.card.wallet": "Carteira",
+  "dashboard.marketScale.card.volume": "Volume",
+  "dashboard.marketScale.card.listings": "Listagens",
+  "dashboard.marketScale.card.releases": "Lançamentos",
+  "dashboard.marketScale.card.rounds": "Rondas",
+  "dashboard.marketScale.wallet.asset": "Saldo USDT",
+  "dashboard.marketScale.wallet.available": "Disponível para operar",
+  "dashboard.marketScale.wallet.volume": "Volume 24h",
+  "dashboard.marketScale.wallet.ready": "Pronto",
+  "dashboard.marketScale.wallet.buy": "Comprar",
+  "dashboard.marketScale.wallet.sell": "Vender",
+  "dashboard.marketScale.wallet.send": "Enviar",
+  "dashboard.marketScale.wallet.receive": "Receber",
+  "dashboard.marketScale.eyebrow": "Mercado secundário",
+  "dashboard.marketScale.title": "Liquidez da plataforma em tempo real",
+  "dashboard.marketScale.lead":
+    "Métricas da API live: volume, listagens, lançamentos e cotações UNT/USDT — sem números demo.",
+  "dashboard.marketScale.railLabel": "Resumo do mercado",
+  "dashboard.marketScale.railLive": "Live API",
+  "dashboard.marketScale.numbersEyebrow": "Em números",
+  "dashboard.marketScale.numbersTitle": "Escala sem ruído decorativo",
+  "dashboard.marketScale.numbersLead":
+    "Métricas do secundário e do catálogo da API live — números grandes, texto curto, sem molduras de cartão.",
+  "dashboard.marketScale.quotesEyebrow": "Cotações live",
+  "dashboard.marketScale.quotesTitle": "Instrumentos ativos",
+  "dashboard.marketScale.quotesNeedLive": "As cotações estão disponíveis no modo live.",
   "dashboard.stats.demoNotice": "Métricas demo. Em produção usa-se a API live.",
   "dashboard.stats.retry": "Repetir",
   "dashboard.stats.empty": "Sem dados para mostrar.",
@@ -734,6 +1068,7 @@ const PT: Record<string, string> = {
   "dashboard.trustStrip.usdt": "USDT · TRC20",
 
   "dashboard.journey.kicker": "Percurso do investidor",
+  "dashboard.journey.timelineAria": "Passos do percurso do investidor",
   "dashboard.journey.title": "Caminho na bolsa Spliton",
   "dashboard.journey.subtitle": "Do lançamento a operações no secundário e levantamento de accruals em USDT.",
   "dashboard.journey.ctaMarket": "Ir ao mercado",
@@ -753,23 +1088,34 @@ const PT: Record<string, string> = {
   "dashboard.journey.register": "Registo",
   "dashboard.journey.portfolio": "Ao portfólio",
 
-  "dashboard.markets.title": "Serviços da plataforma",
+  "dashboard.markets.title": "O seu parceiro fiável para participações em lançamentos musicais",
+  "dashboard.markets.titleBefore": "O seu parceiro fiável para participações em lançamentos ",
+  "dashboard.markets.titleHighlight": "musicais",
+  "dashboard.markets.titleAfter": "",
   "dashboard.markets.subtitleMobile": "Todas as ferramentas Spliton — a um clique",
   "dashboard.markets.secondary.title": "Mercado secundário",
   "dashboard.markets.secondary.subtitle": "Livro · ordens · histórico",
-  "dashboard.markets.secondary.description": "Compre e venda participações ao melhor preço no livro.",
+  "dashboard.markets.secondary.description":
+    "Negocie sem hesitar. Compre e venda participações ao melhor preço no livro.",
+  "dashboard.markets.secondary.link": "Abrir mercado secundário",
   "dashboard.markets.secondary.cta": "Negociar",
   "dashboard.markets.analytics.title": "Análise de lançamentos",
   "dashboard.markets.analytics.subtitle": "Rentabilidade e comparação",
-  "dashboard.markets.analytics.description": "Compare rentabilidade, pagamentos e dinâmica numa interface.",
+  "dashboard.markets.analytics.description":
+    "Compare rentabilidade, pagamentos e dinâmica numa interface.",
+  "dashboard.markets.analytics.link": "Ver análise",
   "dashboard.markets.analytics.cta": "Ver",
   "dashboard.markets.news.title": "Notícias da plataforma",
   "dashboard.markets.news.subtitle": "Produto e operações",
-  "dashboard.markets.news.description": "Atualizações de produto, operações e avisos para investidores.",
+  "dashboard.markets.news.description":
+    "Atualizações de produto, operações e avisos para investidores.",
+  "dashboard.markets.news.link": "Ler notícias",
   "dashboard.markets.news.cta": "Ler",
-  "dashboard.markets.fees.title": "Comissões",
+  "dashboard.markets.fees.title": "Comissões transparentes",
   "dashboard.markets.fees.subtitle": "Tarifas e exemplos",
-  "dashboard.markets.fees.description": "Tarifas transparentes, exemplos e notas sobre USDT e mercados.",
+  "dashboard.markets.fees.description":
+    "Tarifas transparentes, exemplos e notas sobre USDT e mercados.",
+  "dashboard.markets.fees.link": "Ver tarifas",
   "dashboard.markets.fees.cta": "Saber mais",
 
   "dashboard.cta.title": "Pronto para começar com o primeiro lançamento?",
@@ -786,14 +1132,64 @@ const PT: Record<string, string> = {
   "dashboard.valueGrid.error": "Não foi possível carregar cotações. Atualize a página.",
   "dashboard.valueGrid.empty": "Ainda não há instrumentos ativos no mercado secundário.",
 
-  "dashboard.catalogPreview.heading": "Escolha um projeto para entrar",
+  "dashboard.catalogPreview.heading": "Lançamentos com subscrição UNT aberta",
   "dashboard.catalogPreview.body":
-    "Os mesmos cartões do catálogo: entrada rápida, compra de UNT e acesso a todas as posições na plataforma.",
-  "dashboard.catalogPreview.openCta": "Abrir catálogo",
+    "Compare rondas, abra a ficha do projeto e aloque participações — o mesmo fluxo do catálogo completo.",
+  "dashboard.catalogPreview.openCta": "Ao catálogo",
   "dashboard.catalogPreview.viewAll": "Ver tudo",
-  "dashboard.catalogPreview.demoBanner": "Cartões de catálogo demo",
+  "dashboard.catalogPreview.demoBanner": "Cartões de exemplo — abre o catálogo",
   "dashboard.catalogPreview.empty": "Ainda não há lançamentos disponíveis no catálogo.",
   "dashboard.catalogPreview.fullCatalog": "Ir ao catálogo completo",
+
+  "dashboard.figures.srTitle": "Princípios da plataforma",
+  "dashboard.figures.stat.units": "participações em lançamentos musicais",
+  "dashboard.figures.stat.settle": "liquidações em USDT · TRC20",
+  "dashboard.figures.stat.mission": "um painel: catálogo, livro e pagamentos",
+  "dashboard.figures.leadStrong": "Uma nova espécie de bolsa de participações.",
+  "dashboard.figures.leadRest":
+    "Feita para investidores em música: catálogo, livro secundário e pagamentos USDT numa interface precisa.",
+  "dashboard.figures.trust.unt": "UNT",
+  "dashboard.figures.trust.usdt": "USDT · TRC20",
+  "dashboard.figures.trust.book": "Order book",
+  "dashboard.figures.trust.payouts": "Payouts",
+  "dashboard.figures.trust.catalog": "Catalog",
+  "dashboard.figures.trust.analytics": "Analytics",
+  "dashboard.figures.purpose.title": "Feito a pensar no produto",
+  "dashboard.figures.purpose.text":
+    "O Spliton segue fluxos reais: entrar num lançamento, negociar liquidez e acompanhar accruals.",
+  "dashboard.figures.agents.title": "Mercado e painel juntos",
+  "dashboard.figures.agents.text":
+    "Do catálogo ao livro e aos pagamentos — um único fluxo sem mudar de ferramenta.",
+  "dashboard.figures.speed.title": "Desenhado para velocidade",
+  "dashboard.figures.speed.text":
+    "Uma interface quieta que corta o ruído para encontrar lançamentos, listar lotes e levantar USDT mais depressa.",
+
+  "dashboard.trust.kicker": "Confiança",
+  "dashboard.trust.title": "Infraestrutura para capital",
+  "dashboard.trust.subtitle":
+    "O terminal prioriza dados: fluxo UNT seguro, USDT (TRC20) e accruals transparentes sem ruído decorativo.",
+  "dashboard.trust.badge.safe": "Safe data",
+  "dashboard.trust.badge.insured": "Controlos operacionais",
+  "dashboard.trust.badge.usdt": "USDT · TRC20",
+  "dashboard.trust.announce.tag": "Announcement",
+  "dashboard.trust.announce.title": "Regras claras e estado de confiança",
+  "dashboard.trust.announce.text":
+    "Liquidações, pagamentos e controlo de risco — numa secção Trust, sem cromo de marketing.",
+  "dashboard.trust.announce.cta": "Abrir Trust",
+
+  "dashboard.announcements.title": "Anúncios recentes",
+  "dashboard.announcements.insured.tag": "Announcement",
+  "dashboard.announcements.insured.title": "Desde 2025, posições e pagamentos Spliton têm cobertura operacional extra",
+  "dashboard.announcements.insured.text":
+    "Uma camada adicional de controlo operacional e regras claras — para o capital na plataforma ler como um terminal ao vivo.",
+  "dashboard.announcements.alliance.tag": "Announcement",
+  "dashboard.announcements.alliance.title": "Spliton alinha-se com práticas de segurança tipo safe harbor",
+  "dashboard.announcements.alliance.text":
+    "Mantemos procedimentos de resposta e regras públicas de confiança junto ao produto do painel e do mercado.",
+  "dashboard.announcements.audit.tag": "Security",
+  "dashboard.announcements.audit.title": "Postura auditada, segurança e relatórios transparentes",
+  "dashboard.announcements.audit.text":
+    "Estado de confiança, relatórios e políticas estão na secção Trust — sem ruído decorativo.",
 };
 
 export const DASHBOARD_MESSAGES: Record<AppLocale, Record<string, string>> = {

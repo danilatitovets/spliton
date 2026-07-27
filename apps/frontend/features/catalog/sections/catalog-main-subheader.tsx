@@ -61,8 +61,8 @@ export function CatalogMainSubheader({
           {onOpenFilters ? (
             <button
               type="button"
-              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white/[0.08] px-3.5 font-sans text-[12px] font-medium text-zinc-100 transition hover:bg-white/12 lg:hidden"
-              onClick={onOpenFilters}
+              className="inline-flex h-9 shrink-0 touch-manipulation items-center gap-1.5 rounded-full bg-white/[0.08] px-3.5 font-sans text-[12px] font-medium text-zinc-100 transition hover:bg-white/12 lg:hidden"
+              onClick={() => onOpenFilters?.()}
               data-testid="catalog-mobile-filters-button"
             >
               <SlidersHorizontal className="size-3.5" strokeWidth={2} />

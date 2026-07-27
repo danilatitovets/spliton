@@ -22,7 +22,7 @@ export function CatalogViewIconButton({
       aria-label={label}
       aria-pressed={active}
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors",
+        "relative z-10 flex size-9 shrink-0 touch-manipulation items-center justify-center rounded-lg text-zinc-500 transition-colors",
         "hover:bg-white/5 hover:text-zinc-200",
         active && "bg-white/12 text-white",
       )}

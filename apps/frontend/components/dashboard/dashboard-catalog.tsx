@@ -2,138 +2,74 @@
 
 import Link from "next/link";
 import { ArrowRight } from "@/lib/lucide";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { CatalogTrackCard } from "@/components/dashboard/catalog-track-card";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ROUTES } from "@/constants/routes";
-import { catalogItems } from "@/lib/catalog-mock";
-import type { CatalogItem } from "@/lib/catalog-mock";
+import { catalogLandingDemoItems } from "@/lib/catalog-mock";
 import { localizeCatalogItem } from "@/lib/catalog/catalog-adapter";
-import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
 import { cn } from "@/lib/utils";
-import { isLiveCatalogEnabled, loadLiveCatalogItems } from "@/services/catalog.service";
-
-function CatalogPreviewSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-[280px] animate-pulse rounded-2xl bg-white/5" />
-      ))}
-    </div>
-  );
-}
 
 export function DashboardCatalogSection({ className }: { className?: string }) {
   const { locale, t } = useI18n();
-  const live = isLiveCatalogEnabled();
-  const mockPreviewItems = useMemo(
-    () => catalogItems.slice(0, 4).map((item) => localizeCatalogItem(item, locale)),
+
+  const items = useMemo(
+    () => catalogLandingDemoItems.map((item) => localizeCatalogItem(item, locale)),
     [locale],
   );
-  const [items, setItems] = useState<CatalogItem[]>(live ? [] : mockPreviewItems);
-  const [loading, setLoading] = useState(live);
-  const [fetchError, setFetchError] = useState<unknown>(null);
-
-  const load = useCallback(() => {
-    if (!live) {
-      setItems(mockPreviewItems);
-      setLoading(false);
-      setFetchError(null);
-      return;
-    }
-
-    setLoading(true);
-    setFetchError(null);
-
-    void loadLiveCatalogItems({ page: 1, pageSize: 4, sort: "progress_desc" }, locale)
-      .then((next) => {
-        setItems(next.items.slice(0, 4));
-      })
-      .catch((err) => {
-        setItems([]);
-        setFetchError(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [live, locale, mockPreviewItems]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    if (!live) setItems(mockPreviewItems);
-  }, [live, mockPreviewItems]);
 
   return (
     <section
       id="catalog"
-      className={cn("scroll-mt-24 border-t border-white/10 pb-12 md:pb-16 lg:pb-[4.5rem]", className)}
+      className={cn("scroll-mt-24 pb-12 md:pb-16 lg:pb-24", className)}
       aria-labelledby="dash-catalog-heading"
     >
-      <div className="mx-auto w-full max-w-[1400px] px-4 pt-10 sm:px-6 sm:pt-12 md:pt-16 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start lg:gap-12 xl:gap-16">
-          <div className="max-w-lg lg:sticky lg:top-28 lg:self-start">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-              {t("catalog.title")}
-            </p>
-            <h2
-              id="dash-catalog-heading"
-              className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl lg:text-[2.75rem] lg:leading-[1.08]"
-            >
-              {t("dashboard.catalogPreview.heading")}
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-zinc-400 md:text-base md:leading-7">
-              {t("dashboard.catalogPreview.body")}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+      <div className="mx-auto w-full max-w-[1200px] px-4 pt-12 sm:px-6 sm:pt-16 md:pt-20 lg:px-8">
+        <div className="mb-8 max-w-2xl sm:mb-10 lg:mb-12">
+          <h2
+            id="dash-catalog-heading"
+            className="text-3xl font-medium tracking-[-0.022em] text-white md:text-4xl lg:text-[2.75rem] lg:leading-[1.08] [font-feature-settings:'cv01'_on,'ss03'_on,'zero'_on]"
+          >
+            {t("dashboard.catalogPreview.heading")}
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-[#8a8f98] md:text-base md:leading-7">
+            {t("dashboard.catalogPreview.body")}
+          </p>
+        </div>
+
+        <div className="min-w-0">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
+            {items.map((item) => (
               <Link
+                key={item.id}
                 href={ROUTES.dashboardCatalog}
-                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-zinc-200"
+                className="block w-[min(88vw,340px)] shrink-0 snap-center rounded-2xl outline-offset-2 transition hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/40 sm:w-auto sm:shrink"
+                aria-label={`${item.title} — ${t("dashboard.catalogPreview.openCta")}`}
               >
-                {t("dashboard.catalogPreview.openCta")}
-                <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
+                <div className="pointer-events-none">
+                  <CatalogTrackCard item={item} variant="card" size="default" />
+                </div>
               </Link>
-              <Link
-                href={ROUTES.dashboardCatalog}
-                className="inline-flex h-11 items-center justify-center rounded-full px-2 text-sm font-semibold text-zinc-400 transition hover:text-white"
-              >
-                {t("dashboard.catalogPreview.viewAll")}
-              </Link>
-            </div>
+            ))}
           </div>
 
-          <div className="min-w-0 space-y-4">
-            {!live ? (
-              <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                {t("dashboard.catalogPreview.demoBanner")}
-              </p>
-            ) : null}
-
-            {loading ? (
-              <CatalogPreviewSkeleton />
-            ) : fetchError ? (
-              <ReadOnlySectionError
-                sectionId="dashboard-catalog-preview"
-                error={fetchError}
-                onRetry={load}
-                variant="dark"
-              />
-            ) : items.length === 0 ? (
-              <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-zinc-400">
-                {t("dashboard.catalogPreview.empty")}
-              </p>
-            ) : (
-              items.map((item) => <CatalogTrackCard key={item.id} item={item} variant="card" size="default" />)
-            )}
+          <div className="mt-8 flex flex-wrap items-center gap-4 sm:mt-10">
             <Link
               href={ROUTES.dashboardCatalog}
-              className="inline-flex items-center gap-1 pt-1 text-sm font-medium text-zinc-400 transition hover:text-[#d4f570]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white pl-6 pr-1.5 text-[14px] font-[510] tracking-[-0.011em] text-black transition hover:bg-[#e8e8e8] active:scale-[0.98]"
+            >
+              {t("dashboard.catalogPreview.openCta")}
+              <span className="inline-flex size-8 items-center justify-center rounded-full bg-black text-white">
+                <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
+              </span>
+            </Link>
+            <Link
+              href={ROUTES.dashboardCatalog}
+              className="inline-flex items-center gap-1 text-[14px] font-[510] tracking-[-0.011em] text-[#71717a] transition hover:text-white"
             >
               {t("dashboard.catalogPreview.fullCatalog")}
-              <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
+              <ArrowRight className="size-3.5" strokeWidth={1.75} aria-hidden />
             </Link>
           </div>
         </div>

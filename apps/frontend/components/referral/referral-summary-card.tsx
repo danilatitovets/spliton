@@ -23,8 +23,8 @@ function StatSkeleton() {
     <div className={landingStatGrid}>
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className={cn(landingStatTile, "animate-pulse space-y-3")}>
-          <div className="h-2.5 w-20 rounded bg-neutral-100" />
-          <div className="h-7 w-16 rounded bg-neutral-100" />
+          <div className="h-2.5 w-20 rounded bg-white/5" />
+          <div className="h-7 w-16 rounded bg-white/5" />
         </div>
       ))}
     </div>
@@ -36,10 +36,10 @@ function ReferralMetricsGrid({ metrics }: { metrics: { label: string; value: str
     <div className={landingStatGrid}>
       {metrics.map((item) => (
         <article key={item.label} className={landingStatTile}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-400 sm:tracking-[0.14em]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#62666d] sm:tracking-[0.14em]">
             {item.label}
           </p>
-          <p className="mt-2 font-mono text-base font-semibold tabular-nums tracking-tight text-neutral-900 sm:mt-3 sm:text-xl">
+          <p className="mt-2 font-mono text-base font-medium tabular-nums tracking-tight text-white sm:mt-3 sm:text-xl">
             {item.value}
           </p>
         </article>
@@ -105,8 +105,8 @@ export function ReferralSummaryCard({ className }: { className?: string }) {
     body = <ReferralMetricsGrid metrics={landingReferralDemoMetrics} />;
   } else if (!user) {
     body = (
-      <p className="rounded-2xl bg-neutral-50 px-4 py-4 text-sm text-neutral-600 ring-1 ring-neutral-100">
-        <Link href={ROUTES.login} className="font-semibold text-neutral-900 underline-offset-4 hover:underline">
+      <p className="rounded-[12px] bg-[#0f1011] px-4 py-4 text-sm text-[#8a8f98] shadow-[inset_0_0_0_1px_#23252a]">
+        <Link href={ROUTES.login} className="font-medium text-white underline-offset-4 hover:underline">
           {t("dashboard.referralSummary.signIn")}
         </Link>
         {t("dashboard.referralSummary.signInPrompt")}
@@ -116,7 +116,7 @@ export function ReferralSummaryCard({ className }: { className?: string }) {
     body = <StatSkeleton />;
   } else if (loadError) {
     body = (
-      <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      <p className="rounded-[12px] bg-[#eb5757]/10 px-4 py-3 text-sm text-[#eb5757] shadow-[inset_0_0_0_1px_rgba(235,87,87,0.25)]" role="alert">
         {loadError}
       </p>
     );
@@ -124,9 +124,9 @@ export function ReferralSummaryCard({ className }: { className?: string }) {
     body = <ReferralMetricsGrid metrics={metricsFromMe(me, t)} />;
   } else {
     body = (
-      <p className="rounded-2xl bg-neutral-50 px-4 py-4 text-sm text-neutral-600 ring-1 ring-neutral-100">
+      <p className="rounded-[12px] bg-[#0f1011] px-4 py-4 text-sm text-[#8a8f98] shadow-[inset_0_0_0_1px_#23252a]">
         {t("dashboard.referralSummary.unavailableBefore")}{" "}
-        <Link href={ROUTES.referralProgram} className="font-semibold text-neutral-900 underline-offset-4 hover:underline">
+        <Link href={ROUTES.referralProgram} className="font-medium text-white underline-offset-4 hover:underline">
           {t("dashboard.referralSummary.programLink")}
         </Link>
         {t("dashboard.referralSummary.unavailableAfter")}
@@ -140,7 +140,7 @@ export function ReferralSummaryCard({ className }: { className?: string }) {
         <h2 className={landingSectionTitle}>{t("dashboard.referralSummary.title")}</h2>
         <Link
           href={ROUTES.referralProgram}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-neutral-900 underline-offset-4 hover:underline"
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#d0d6e0] underline-offset-4 hover:text-white hover:underline"
         >
           {t("dashboard.referralSummary.open")}
           <ArrowUpRight className="size-3.5" strokeWidth={2} aria-hidden />

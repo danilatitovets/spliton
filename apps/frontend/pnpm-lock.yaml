@@ -112,6 +112,10 @@ importers:
         specifier: ^3.2.4
         version: 3.2.6(@types/node@20.19.39)(happy-dom@20.10.6)(jiti@2.6.1)(lightningcss@1.32.0)(msw@2.13.4(@types/node@20.19.39)(typescript@5.9.3))
 
+  ../..: {}
+
+  ../backend: {}
+
 packages:
 
   '@adobe/css-tools@4.5.0':

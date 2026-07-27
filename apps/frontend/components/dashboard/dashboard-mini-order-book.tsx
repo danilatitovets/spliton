@@ -218,7 +218,7 @@ function MiniBookDemo({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0c]/90 font-mono text-[11px] text-zinc-400 backdrop-blur-sm sm:text-[10px]",
+        "overflow-hidden rounded-[12px] bg-[#08090a] font-mono text-[11px] text-[#8a8f98] shadow-[inset_0_0_0_1px_#23252a] sm:text-[10px]",
         className,
       )}
     >

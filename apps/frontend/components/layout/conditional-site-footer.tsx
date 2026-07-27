@@ -23,8 +23,14 @@ function hideFooterForPath(pathname: string | null) {
   return false;
 }
 
+function isCompactFooterPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  const path = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return path === ROUTES.dashboard;
+}
+
 export function ConditionalSiteFooter() {
   const pathname = usePathname();
   if (hideFooterForPath(pathname)) return null;
-  return <SiteFooter />;
+  return <SiteFooter variant={isCompactFooterPath(pathname) ? "compact" : "default"} />;
 }

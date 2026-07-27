@@ -4,9 +4,12 @@
 export function FooterSoundtrack({
   variant = "default",
   className,
+  hideEdgeFade,
 }: {
   variant?: "default" | "around-title";
   className?: string;
+  /** Landing footer: no dark side bands (avoids vertical edge lines). */
+  hideEdgeFade?: boolean;
 }) {
   const isAroundTitle = variant === "around-title";
   const accentLine = isAroundTitle
@@ -101,16 +104,23 @@ export function FooterSoundtrack({
             />
 
             <g className="animate-footer-chart-dot-pulse">
-              <circle cx={1440} cy={14} r={2.5} fill="#ffffff" fillOpacity={0.9} />
-              <circle cx={1440} cy={14} r={6} fill="#ffffff" fillOpacity={0.12} />
+              <circle cx={720} cy={isAroundTitle ? 50 : 14} r={2.5} fill="#ffffff" fillOpacity={0.9} />
+              <circle cx={720} cy={isAroundTitle ? 50 : 14} r={6} fill="#ffffff" fillOpacity={0.12} />
             </g>
           </g>
         </svg>
       </div>
-      <div
-        className="pointer-events-none absolute inset-0 z-1 bg-[linear-gradient(90deg,rgba(0,0,0,0.85)_0%,transparent_14%,transparent_86%,rgba(0,0,0,0.85)_100%),linear-gradient(180deg,rgba(0,0,0,0.55)_0%,transparent_45%)]"
-        aria-hidden
-      />
+      {hideEdgeFade ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-1 bg-[linear-gradient(180deg,rgba(0,0,0,0.45)_0%,transparent_50%)]"
+          aria-hidden
+        />
+      ) : (
+        <div
+          className="pointer-events-none absolute inset-0 z-1 bg-[linear-gradient(90deg,rgba(0,0,0,0.85)_0%,transparent_14%,transparent_86%,rgba(0,0,0,0.85)_100%),linear-gradient(180deg,rgba(0,0,0,0.55)_0%,transparent_45%)]"
+          aria-hidden
+        />
+      )}
     </div>
   );
 }

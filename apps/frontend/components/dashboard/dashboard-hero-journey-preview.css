@@ -17,8 +17,9 @@
 .hero-journey-scene {
   opacity: 0;
   visibility: hidden;
-  transform: translateY(8px);
+  transform: none;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .hero-journey-scene--catalog { animation-name: dhj-scene-catalog; }
@@ -27,27 +28,27 @@
 .hero-journey-scene--book { animation-name: dhj-scene-book; }
 
 @keyframes dhj-scene-catalog {
-  0%, 3% { opacity: 0; visibility: hidden; transform: translateY(10px); }
-  5%, 24% { opacity: 1; visibility: visible; transform: translateY(0); }
-  27%, 100% { opacity: 0; visibility: hidden; transform: translateY(-6px); }
+  0%, 3% { opacity: 0; visibility: hidden; }
+  5%, 24% { opacity: 1; visibility: visible; }
+  27%, 100% { opacity: 0; visibility: hidden; }
 }
 
 @keyframes dhj-scene-buy {
-  0%, 24% { opacity: 0; visibility: hidden; transform: translateY(10px); }
-  27%, 48% { opacity: 1; visibility: visible; transform: translateY(0); }
-  51%, 100% { opacity: 0; visibility: hidden; transform: translateY(-6px); }
+  0%, 24% { opacity: 0; visibility: hidden; }
+  27%, 48% { opacity: 1; visibility: visible; }
+  51%, 100% { opacity: 0; visibility: hidden; }
 }
 
 @keyframes dhj-scene-sell {
-  0%, 48% { opacity: 0; visibility: hidden; transform: translateY(10px); }
-  51%, 72% { opacity: 1; visibility: visible; transform: translateY(0); }
-  75%, 100% { opacity: 0; visibility: hidden; transform: translateY(-6px); }
+  0%, 48% { opacity: 0; visibility: hidden; }
+  51%, 72% { opacity: 1; visibility: visible; }
+  75%, 100% { opacity: 0; visibility: hidden; }
 }
 
 @keyframes dhj-scene-book {
-  0%, 72% { opacity: 0; visibility: hidden; transform: translateY(10px); }
-  75%, 96% { opacity: 1; visibility: visible; transform: translateY(0); }
-  100% { opacity: 0; visibility: hidden; transform: translateY(-6px); }
+  0%, 72% { opacity: 0; visibility: hidden; }
+  75%, 96% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
 }
 
 /* ——— Курсор внутри сцены: px-координаты от реальных кнопок ——— */
@@ -361,17 +362,8 @@
   overflow: hidden;
 }
 
-.hero-journey-preview--mobile .hero-journey-scene > div:first-child {
-  padding-block: 0.45rem;
-  padding-inline: 0.75rem;
-}
-
-.hero-journey-preview--mobile .hero-journey-scene > div:first-child span:last-child {
-  display: none;
-}
-
-.hero-journey-preview--mobile .hero-journey-scene--catalog > div:nth-child(2),
-.hero-journey-preview--mobile .hero-journey-scene--catalog > div:nth-child(3) {
+.hero-journey-preview--mobile .hero-journey-scene--catalog > div:nth-child(1),
+.hero-journey-preview--mobile .hero-journey-scene--catalog > div:nth-child(2) {
   display: none;
 }
 
@@ -398,7 +390,7 @@
   display: none;
 }
 
-.hero-journey-preview--mobile [data-journey-root="buy"] > div:nth-child(3) {
+.hero-journey-preview--mobile [data-journey-root="buy"] > div:nth-child(2) {
   display: none;
 }
 
@@ -424,17 +416,17 @@
 }
 
 .hero-journey-preview--mobile [data-journey-root="sell"] .hero-journey-toast--sell {
-  top: 3.25rem;
+  top: 0.75rem;
   left: 0.75rem;
   right: 0.75rem;
   font-size: 10px;
 }
 
-.hero-journey-preview--mobile [data-journey-root="book"] > div:nth-child(2) {
+.hero-journey-preview--mobile [data-journey-root="book"] > div:first-child {
   padding: 0.75rem;
 }
 
-.hero-journey-preview--mobile [data-journey-root="book"] > div:nth-child(2) > div:first-child {
+.hero-journey-preview--mobile [data-journey-root="book"] > div:first-child > div:first-child {
   display: none;
 }
 

@@ -36,7 +36,7 @@ export function HeroJourneyBuyPreview() {
   const targetUnits = release.units;
 
   return (
-    <div className="hero-journey-buy-panel relative rounded-3xl bg-white p-5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] md:p-7">
+    <div className="hero-journey-buy-panel relative flex min-h-0 flex-col overflow-hidden rounded-3xl bg-white p-4 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] md:p-5">
       <div className={FIELD_BOX}>
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0 flex-1 text-left">
@@ -109,7 +109,7 @@ export function HeroJourneyBuyPreview() {
       <button
         type="button"
         data-journey-target="buy"
-        className="hero-journey-buy-btn mt-5 h-12 w-full rounded-2xl bg-zinc-950 text-[14px] font-semibold text-white"
+        className="hero-journey-buy-btn mt-4 h-11 w-full shrink-0 rounded-2xl bg-zinc-950 text-[14px] font-semibold text-white"
       >
         {t("catalog.buy.submitDemo")}
       </button>
