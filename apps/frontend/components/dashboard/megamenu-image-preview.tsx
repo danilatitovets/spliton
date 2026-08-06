@@ -11,14 +11,14 @@ export function MegamenuImagePreview({ sub }: { sub: DashboardNavSubItem }) {
     <div key={sub.href} className="overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/80">
       <MegamenuPreviewChrome title={sub.label} />
       <div className="relative aspect-5/4 overflow-hidden bg-[#f6f7f9] p-2">
-        <div className="animate-service-preview-page-in relative h-full overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200/60 motion-reduce:animate-none">
+        <div className="relative h-full overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200/60">
           {sub.iconSrc ? (
             <Image
               src={sub.iconSrc}
               alt=""
               fill
               sizes="360px"
-              className="object-cover object-top transition-transform duration-500 ease-out hover:scale-[1.02]"
+              className="object-cover object-top"
               unoptimized
             />
           ) : (

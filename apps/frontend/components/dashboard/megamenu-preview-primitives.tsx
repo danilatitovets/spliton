@@ -44,9 +44,7 @@ export function MegamenuPreviewSceneShell({
         )}
       >
         <div className="relative h-full overflow-visible rounded-md">
-          <div className="animate-service-preview-page-in h-full overflow-visible opacity-100 motion-reduce:animate-none motion-reduce:opacity-100">
-            {children}
-          </div>
+          <div className="h-full overflow-visible opacity-100">{children}</div>
         </div>
       </div>
     </div>

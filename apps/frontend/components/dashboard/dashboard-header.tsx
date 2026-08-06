@@ -474,7 +474,7 @@ export function DashboardHeader({
       <div
         role="presentation"
         aria-hidden
-        className="fixed inset-0 z-[105] animate-dashboard-megamenu-in bg-black/40 motion-reduce:animate-none"
+        className="fixed inset-0 z-[105] bg-black/40"
         style={{
           WebkitBackdropFilter: "blur(40px) brightness(0.42) saturate(0.92)",
           backdropFilter: "blur(40px) brightness(0.42) saturate(0.92)",

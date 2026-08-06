@@ -34,6 +34,7 @@ import {
   UserRound,
   TrendingUp,
   UserPlus,
+  Wallet,
   type LucideIcon,
 } from "@/lib/lucide";
 import { useEffect, useState, type ReactNode } from "react";
@@ -323,10 +324,7 @@ function MegamenuLinkCard({
 
   if (danger) {
     return (
-      <div
-        className="animate-dashboard-megamenu-card-in h-full w-full"
-        style={{ animationDelay: `${45 + index * 42}ms` }}
-      >
+      <div className="h-full w-full">
         <button
           type="button"
           onClick={handleDangerClick}
@@ -361,10 +359,7 @@ function MegamenuLinkCard({
   }
 
   return (
-    <div
-      className="animate-dashboard-megamenu-card-in h-full w-full"
-      style={{ animationDelay: `${45 + index * 42}ms` }}
-    >
+    <div className="h-full w-full">
       <Link
         href={sub.href}
         onClick={onNavigate}
@@ -490,19 +485,35 @@ const CATALOG_MENU_ICONS: Record<string, LucideIcon> = {
 };
 
 const HOLDINGS_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.myAssetsOverview]: LayoutDashboard,
-  [ROUTES.myAssetsMetrics]: BarChart3,
+  [ROUTES.myAssetsOverview]: Wallet,
+  [ROUTES.myAssetsMetrics]: TrendingUp,
   [ROUTES.myAssetsOperations]: Activity,
-  [ROUTES.myAssetsPositionsStructure]: LayoutGrid,
+  [ROUTES.myAssetsPositionsStructure]: PieChart,
 };
 
 const PAYOUTS_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.dashboardPayouts]: PieChart,
+  [ROUTES.dashboardPayouts]: LayoutDashboard,
   [ROUTES.dashboardPayoutsComparison]: GitCompare,
   [ROUTES.dashboardPayoutsHistory]: History,
   [`${ROUTES.dashboardPayouts}/deposit`]: ArrowDownToLine,
   [`${ROUTES.dashboardPayouts}/withdraw`]: ArrowUpFromLine,
 };
+
+/** OKX-style section titles for long service menus */
+const SERVICE_MENU_SECTIONS: { title: string; hrefs: string[] }[] = [
+  {
+    title: "Платформа",
+    hrefs: [ROUTES.calculator, ROUTES.fees, ROUTES.systemStatus, ROUTES.news],
+  },
+  {
+    title: "Программы",
+    hrefs: [ROUTES.referralProgram, ROUTES.partnerProgram, ROUTES.dashboardArtist],
+  },
+  {
+    title: "Документы и доверие",
+    hrefs: [ROUTES.dashboardDisputes, ROUTES.dashboardStatements, ROUTES.trust],
+  },
+];
 
 const PROFILE_MENU_ICONS: Record<string, LucideIcon> = {
   [profileDashboardHref("overview")]: UserRound,
@@ -597,29 +608,29 @@ function SplitMegamenuNavRow({
 }) {
   const danger = Boolean(sub.danger);
   const shell = cn(
-    "group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 sm:px-3.5 sm:py-3",
-    active ? "bg-[#f5f5f5]" : "hover:bg-[#f5f5f5]",
+    "group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left sm:px-3.5 sm:py-3",
+    active ? "bg-[#f4f4f5]" : "hover:bg-[#f4f4f5]",
     danger && active && "bg-fuchsia-50 hover:bg-fuchsia-50",
     danger && !active && "hover:bg-fuchsia-50/70",
   );
   const iconShell = cn(
-    "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border transition-colors",
+    "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full",
     danger
       ? active
-        ? "border-fuchsia-200 bg-white text-fuchsia-700"
-        : "border-transparent bg-fuchsia-50 text-fuchsia-600 group-hover:border-fuchsia-200 group-hover:bg-white"
+        ? "bg-fuchsia-100 text-fuchsia-700"
+        : "bg-fuchsia-50 text-fuchsia-600 group-hover:bg-fuchsia-100"
       : active
-        ? "border-zinc-200 bg-white text-zinc-900"
-        : "border-transparent bg-zinc-100 text-zinc-700 group-hover:border-zinc-200 group-hover:bg-white",
+        ? "bg-zinc-200/80 text-zinc-900"
+        : "bg-zinc-100 text-zinc-700 group-hover:bg-zinc-200/70",
   );
   const labelClass = cn(
-    "text-[14px] font-semibold leading-snug",
+    "text-[14px] font-semibold leading-snug tracking-[-0.01em]",
     danger ? "text-fuchsia-900" : "text-zinc-900",
   );
   const inner = (
     <>
       <span className={iconShell}>
-        <Icon className="size-4" strokeWidth={1.75} aria-hidden />
+        <Icon className="size-[18px]" strokeWidth={1.75} aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2">
@@ -639,12 +650,8 @@ function SplitMegamenuNavRow({
       </span>
       <ChevronRight
         className={cn(
-          "mt-1 size-4 shrink-0 text-zinc-400 transition-opacity duration-150",
-          active
-            ? danger
-              ? "opacity-100 text-fuchsia-400"
-              : "opacity-100"
-            : "opacity-0 group-hover:opacity-100",
+          "mt-1.5 size-4 shrink-0",
+          danger ? "text-fuchsia-400" : "text-zinc-400",
         )}
         strokeWidth={2}
         aria-hidden
@@ -700,7 +707,7 @@ function SplitMegamenuPreviewPanel({
         <button
           type="button"
           onClick={dangerAction}
-          className="mt-4 inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg bg-fuchsia-700 px-4 text-sm font-semibold text-white transition hover:bg-fuchsia-600"
+        className="mt-4 inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg bg-fuchsia-700 px-4 text-sm font-semibold text-white hover:bg-fuchsia-600"
         >
           {sub.label}
           <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
@@ -716,7 +723,7 @@ function SplitMegamenuPreviewPanel({
       <Link
         href={sub.href}
         onClick={onNavigate}
-        className="mt-4 inline-flex h-9 shrink-0 items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
+        className="mt-4 inline-flex h-9 shrink-0 items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
       >
         {t("navigation.megamenu.servicesGo")}
         <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
@@ -725,7 +732,7 @@ function SplitMegamenuPreviewPanel({
   );
 }
 
-/** Двухколоночный flyout (master-detail) — как «Сервисы». */
+/** Двухколоночный flyout (master-detail) — OKX-style, без анимаций при ховере. */
 export function SplitMegamenuFlyout({
   openItem,
   onNavigate,
@@ -736,7 +743,6 @@ export function SplitMegamenuFlyout({
   className?: string;
 }) {
   const children = openItem.children ?? [];
-  const isLongList = children.length > 6;
   const iconMap = MEGAMENU_ICON_MAPS[openItem.id] ?? {};
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -747,6 +753,35 @@ export function SplitMegamenuFlyout({
   const active = children[activeIdx] ?? children[0];
   if (!active) return null;
 
+  const sections =
+    openItem.id === "misc"
+      ? SERVICE_MENU_SECTIONS.map((section) => ({
+          title: section.title,
+          items: section.hrefs
+            .map((href) => {
+              const index = children.findIndex((c) => c.href === href);
+              return index >= 0 ? { sub: children[index], index } : null;
+            })
+            .filter((x): x is { sub: DashboardNavSubItem; index: number } => x != null),
+        })).filter((s) => s.items.length > 0)
+      : null;
+
+  const renderRow = (sub: DashboardNavSubItem, index: number) => {
+    const Icon = iconMap[sub.href] ?? BookOpen;
+    return (
+      <li key={sub.href} className="shrink-0">
+        <SplitMegamenuNavRow
+          sub={sub}
+          index={index}
+          active={activeIdx === index}
+          onActivate={setActiveIdx}
+          onNavigate={onNavigate}
+          Icon={Icon}
+        />
+      </li>
+    );
+  };
+
   return (
     <div
       id={DASHBOARD_MEGAMENU_PANEL_ID}
@@ -754,41 +789,26 @@ export function SplitMegamenuFlyout({
       aria-labelledby={`nav-trigger-${openItem.id}`}
       className={cn("pointer-events-auto", className)}
     >
-      <div
-        key={openItem.id}
-        className="animate-dashboard-megamenu-in flex h-[min(560px,calc(100dvh-5.5rem))] max-h-[calc(100dvh-5.5rem)] w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]"
-      >
+      <div className="flex h-[min(560px,calc(100dvh-5.5rem))] max-h-[calc(100dvh-5.5rem)] w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
         <div className="flex h-full min-h-0 w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
-          <div className="shrink-0 border-b border-zinc-100 px-4 py-3">
-            <p className="text-sm font-semibold text-zinc-900">{openItem.label}</p>
-          </div>
-          <ul
-            className={cn(
-              "min-h-0 flex-1 gap-1.5 overflow-y-auto p-2 [scrollbar-color:rgb(212_212_216)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar]:w-1.5",
-              isLongList ? "flex flex-col" : "grid auto-rows-min",
-            )}
-          >
-            {children.map((sub, i) => {
-              const Icon = iconMap[sub.href] ?? BookOpen;
-              return (
-                <li key={sub.href} className="shrink-0">
-                  <SplitMegamenuNavRow
-                    sub={sub}
-                    index={i}
-                    active={activeIdx === i}
-                    onActivate={setActiveIdx}
-                    onNavigate={onNavigate}
-                    Icon={Icon}
-                  />
-                </li>
-              );
-            })}
+          <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2 [scrollbar-color:rgb(212_212_216)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar]:w-1.5">
+            {sections
+              ? sections.map((section) => (
+                  <li key={section.title} className="shrink-0">
+                    <p className="px-3 pb-1 pt-2.5 text-[11px] font-medium uppercase tracking-[0.06em] text-zinc-400">
+                      {section.title}
+                    </p>
+                    <ul className="flex flex-col gap-0.5">
+                      {section.items.map(({ sub, index }) => renderRow(sub, index))}
+                    </ul>
+                  </li>
+                ))
+              : children.map((sub, i) => renderRow(sub, i))}
           </ul>
         </div>
 
         <div className="hidden h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-50/50 sm:block">
           <SplitMegamenuPreviewPanel
-            key={active.href}
             sub={active}
             onNavigate={onNavigate}
             preview={renderSplitMegamenuPreview(openItem.id, active)}
@@ -842,17 +862,11 @@ export function ProfileMegamenuFlyout({
       aria-label={t("navigation.megamenu.profileAria")}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
+      <div className="flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
         <div className="flex min-h-[420px] max-h-[min(72vh,620px)] w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
-          <div className="border-b border-zinc-100 px-4 py-3">
-            <p className="text-sm font-semibold text-zinc-900">{t("navigation.header.profile")}</p>
-            <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-zinc-500">
-              {t("navigation.profile.overview.desc")}
-            </p>
-          </div>
           <ul
             className={cn(
-              "min-h-0 flex-1 gap-1.5 overflow-y-auto p-2 [scrollbar-color:rgb(212_212_216)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar]:w-1.5",
+              "min-h-0 flex-1 gap-0.5 overflow-y-auto p-2 [scrollbar-color:rgb(212_212_216)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar]:w-1.5",
               isLongList ? "flex flex-col" : "grid auto-rows-min",
             )}
           >
@@ -877,7 +891,6 @@ export function ProfileMegamenuFlyout({
 
         <div className="hidden min-w-0 flex-1 bg-zinc-50/50 sm:block">
           <SplitMegamenuPreviewPanel
-            key={active.href}
             sub={active}
             onNavigate={onNavigate}
             preview={renderProfileMegamenuPreview(active)}
@@ -911,15 +924,11 @@ export function SupportMegamenuFlyout({
       aria-label={t("navigation.header.help")}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="animate-dashboard-megamenu-in flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
+      <div className="flex w-[min(calc(100vw-1.5rem),760px)] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.05]">
         <div className="flex min-h-[420px] max-h-[min(72vh,620px)] w-[min(56%,360px)] shrink-0 flex-col border-r border-zinc-100">
-          <div className="border-b border-zinc-100 px-4 py-3">
-            <p className="text-sm font-semibold text-zinc-900">{t("support.hero.title")}</p>
-            <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-zinc-500">{t("support.hero.subtitle")}</p>
-          </div>
           <ul
             className={cn(
-              "min-h-0 flex-1 gap-1.5 overflow-y-auto p-2 [scrollbar-color:rgb(212_212_216)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar]:w-1.5",
+              "min-h-0 flex-1 gap-0.5 overflow-y-auto p-2 [scrollbar-color:rgb(212_212_216)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar]:w-1.5",
               isLongList ? "flex flex-col" : "grid auto-rows-min",
             )}
           >
@@ -943,7 +952,6 @@ export function SupportMegamenuFlyout({
 
         <div className="hidden min-w-0 flex-1 bg-zinc-50/50 sm:block">
           <SplitMegamenuPreviewPanel
-            key={active.href}
             sub={active}
             onNavigate={onNavigate}
             preview={renderSupportMegamenuPreview(active)}
@@ -984,7 +992,7 @@ function MobileMegamenuScroll({
     <div className="w-full px-3 py-2 sm:px-4 sm:py-2">
       <div
         key={openItem.id}
-        className="animate-dashboard-megamenu-in relative z-[1] flex snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative z-[1] flex snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {showIntro ? (
           <div className="w-[min(260px,85vw)] flex-none snap-start">
@@ -1061,7 +1069,7 @@ export function DashboardMegamenuPanel({
       <div className="w-full px-3 py-2 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5">
         <div
           key={openItem.id}
-          className="animate-dashboard-megamenu-in relative z-[1] hidden gap-2 lg:grid"
+          className="relative z-[1] hidden gap-2 lg:grid"
           style={{ gridTemplateColumns: gridCols }}
         >
           {showIntro ? (
