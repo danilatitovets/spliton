@@ -490,7 +490,7 @@ export function DashboardMarketScale({ className }: { className?: string }) {
   return (
     <section
       id="holdings"
-      className={cn("scroll-mt-24 w-full max-w-[100vw] overflow-x-hidden bg-black", className)}
+      className={cn("scroll-mt-24 w-full max-w-full bg-black", className)}
       aria-labelledby="dash-market-scale-heading"
     >
       <div className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-10 sm:px-6 sm:py-16 lg:px-8 lg:py-20">

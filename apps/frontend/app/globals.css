@@ -126,7 +126,9 @@
     font-feature-settings: "cv01" on, "ss03" on, "zero" on;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    /* clip X only — do not use overflow-x:hidden (pairs Y to auto and traps mobile scroll) */
     overflow-x: clip;
+    overflow-y: auto;
     max-width: 100%;
     background-color: #000;
   }
@@ -135,6 +137,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
     overflow-x: clip;
+    overflow-y: visible;
     max-width: 100%;
   }
   html:has(body.mobile-tab-bar-active),
@@ -761,8 +764,14 @@
 }
 
 html.landing-scroll-smooth {
-  scroll-behavior: smooth;
   scroll-padding-top: 4.5rem;
+}
+
+/* Smooth anchors on fine pointers only — on touch, smooth document scroll feels stuck */
+@media (pointer: fine) {
+  html.landing-scroll-smooth {
+    scroll-behavior: smooth;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

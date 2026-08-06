@@ -38,7 +38,7 @@ export default async function RootLayout({
   return (
     <html
       lang={initialLocale}
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} min-h-full antialiased`}
     >
       <head>
         <link rel="icon" href="/favicon.ico" sizes="32x32" />

@@ -19,7 +19,7 @@ export function DashboardLandingLogoStrip({ className }: { className?: string })
   return (
     <div
       className={cn(
-        "flex w-full items-center gap-6 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:justify-center sm:gap-x-10 sm:overflow-visible md:gap-x-12 lg:gap-x-14 [&::-webkit-scrollbar]:hidden",
+        "flex w-full touch-pan-y items-center gap-6 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:justify-center sm:gap-x-10 sm:overflow-visible md:gap-x-12 lg:gap-x-14 [&::-webkit-scrollbar]:hidden",
         className,
       )}
       aria-label="Supported wallets and rails"

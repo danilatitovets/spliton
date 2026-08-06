@@ -19,7 +19,7 @@ export default function DashboardMainPage() {
   return (
     <LandingScrollRoot>
       <div
-        className={`relative flex min-h-dvh w-full max-w-[100vw] flex-col overflow-x-hidden font-sans text-white antialiased *:font-sans ${landingVoid}`}
+        className={`relative flex min-h-dvh w-full max-w-full flex-col font-sans text-white antialiased *:font-sans ${landingVoid}`}
       >
         <DashboardHeader />
 

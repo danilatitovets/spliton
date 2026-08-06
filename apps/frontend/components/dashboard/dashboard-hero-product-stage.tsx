@@ -38,9 +38,9 @@ function HeroStageOrderBook({ className }: { className?: string }) {
 export function DashboardHeroProductStage({ className }: { className?: string }) {
   return (
     <div className={cn("relative mx-auto w-full max-w-[1080px]", className)}>
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[24px] bg-black shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <div className="relative aspect-[16/10] w-full touch-pan-y overflow-hidden rounded-[24px] bg-black shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         {/* contain + matching aspect = full frame, no crop of bottom/side UI */}
-        <DashboardHeroJourneyPreview className="absolute inset-0 h-full w-full bg-black" />
+        <DashboardHeroJourneyPreview className="pointer-events-none absolute inset-0 h-full w-full bg-black" />
 
         <div className="pointer-events-none absolute right-3 top-3 z-10 hidden w-[min(260px,30%)] lg:block xl:right-5 xl:top-5">
           <HeroStageOrderBook />
