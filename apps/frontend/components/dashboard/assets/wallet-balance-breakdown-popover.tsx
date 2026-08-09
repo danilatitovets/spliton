@@ -30,10 +30,12 @@ export function WalletBalanceBreakdownPopover({
   walletSummary,
   hidden = false,
   className,
+  tone = "onLight",
 }: {
   walletSummary?: WalletSummary | null;
   hidden?: boolean;
   className?: string;
+  tone?: "onLight" | "onDark";
 }) {
   const { t, locale } = useI18n();
 
@@ -59,7 +61,12 @@ export function WalletBalanceBreakdownPopover({
   return (
     <details className={cn("relative shrink-0", className)}>
       <summary
-        className="inline-flex size-8 cursor-pointer list-none items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700 [&::-webkit-details-marker]:hidden"
+        className={cn(
+          "inline-flex size-8 cursor-pointer list-none items-center justify-center rounded-full transition [&::-webkit-details-marker]:hidden",
+          tone === "onDark"
+            ? "text-white/45 hover:bg-white/10 hover:text-white"
+            : "text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700",
+        )}
         aria-label={t("assets.overview.walletBreakdownOpen")}
       >
         <MoreHorizontal className="size-4" strokeWidth={1.75} aria-hidden />

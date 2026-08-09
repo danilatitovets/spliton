@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { useI18n } from "@/components/providers/i18n-provider";
+import { BRAND } from "@/constants/brand";
 import { ROUTES } from "@/constants/routes";
 import { WalletBalanceBreakdownPopover } from "@/components/dashboard/assets/wallet-balance-breakdown-popover";
-import { assetsCardClass, assetsPrimaryButtonClass, assetsSecondaryButtonClass } from "@/components/dashboard/assets/assets-ui";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { tf } from "@/lib/i18n/financial-messages";
 import { formatNumber, formatUsdtAmount } from "@/lib/i18n/formatters";
 import { cn } from "@/lib/utils";
@@ -70,81 +71,106 @@ export function OverviewHero({
   const secondaryActions = [{ href: ROUTES.dashboardCatalog, label: t("overview.openCatalog") }] as const;
 
   return (
-    <section className={assetsCardClass} aria-label={t("overview.summaryAria")}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="text-sm text-neutral-500">{t("overview.estimatedTotal")}</p>
-          <button
-            type="button"
-            onClick={() => setHidden((v) => !v)}
-            className="inline-flex size-7 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
-            aria-label={hidden ? t("overview.showBalance") : t("overview.hideBalance")}
-          >
-            {hidden ? <EyeOff className="size-4" strokeWidth={1.75} aria-hidden /> : <Eye className="size-4" strokeWidth={1.75} aria-hidden />}
-          </button>
-        </div>
-        <WalletBalanceBreakdownPopover walletSummary={walletSummary} hidden={hidden} />
+    <section
+      className="relative overflow-hidden rounded-[1.35rem] bg-black px-5 py-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)] sm:px-7 sm:py-8"
+      aria-label={t("overview.summaryAria")}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+        aria-hidden
+      >
+        <p
+          className="select-none bg-clip-text font-bold leading-[0.82] tracking-[-0.05em] text-transparent opacity-[0.92]"
+          style={{
+            fontSize: "clamp(4.25rem, 18vw, 9.5rem)",
+            backgroundImage: "url('/images/landing/footer-spliton-texture-fill-bw.png')",
+            backgroundSize: "125% auto",
+            backgroundPosition: "50% 40%",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {BRAND.name}
+        </p>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-end gap-2">
-        {totalValueUnavailable || resolvedTotal == null || walletLoading ? (
-          <p className="font-mono text-[2rem] font-semibold tabular-nums tracking-tight text-neutral-400 sm:text-[2.35rem]">
-            {walletLoading ? "…" : t("assets.overview.insufficientData")}
-          </p>
-        ) : (
-          <>
-            <p className="font-mono text-[2.35rem] font-semibold tabular-nums tracking-tight text-neutral-900 sm:text-[2.6rem]">
-              {hidden ? "••••••" : formatNumber(Math.round(resolvedTotal * 100) / 100, locale)}
-            </p>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/25" aria-hidden />
+
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="text-sm text-white/55">{t("overview.estimatedTotal")}</p>
             <button
               type="button"
-              className="mb-1.5 inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-100"
-              aria-label="USDT"
+              onClick={() => setHidden((v) => !v)}
+              className="inline-flex size-7 items-center justify-center rounded-full text-white/45 transition hover:bg-white/10 hover:text-white"
+              aria-label={hidden ? t("overview.showBalance") : t("overview.hideBalance")}
             >
-              USDT
-              <ChevronDown className="size-4" strokeWidth={2} aria-hidden />
+              {hidden ? <EyeOff className="size-4" strokeWidth={1.75} aria-hidden /> : <Eye className="size-4" strokeWidth={1.75} aria-hidden />}
             </button>
-          </>
-        )}
-      </div>
+          </div>
+          <WalletBalanceBreakdownPopover walletSummary={walletSummary} hidden={hidden} tone="onDark" />
+        </div>
 
-      <p className={cn("mt-1 text-sm tabular-nums", change30dPct != null && !hidden ? "text-neutral-600" : "text-neutral-500")}>
-        {hidden ? "••••" : pnlLine}
-      </p>
+        <div className="mt-4 flex flex-wrap items-end gap-2 sm:mt-5">
+          {totalValueUnavailable || resolvedTotal == null || walletLoading ? (
+            <p className="font-mono text-[2.5rem] font-semibold tabular-nums tracking-tight text-white/40 sm:text-[3.25rem]">
+              {walletLoading ? "…" : t("assets.overview.insufficientData")}
+            </p>
+          ) : (
+            <>
+              <p className="font-mono text-[2.75rem] font-semibold tabular-nums tracking-tight text-white sm:text-[3.5rem]">
+                {hidden ? "••••••" : formatNumber(Math.round(resolvedTotal * 100) / 100, locale)}
+              </p>
+              <button
+                type="button"
+                className="mb-2 inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-sm font-medium text-white/55 transition hover:bg-white/10 hover:text-white/80"
+                aria-label="USDT"
+              >
+                USDT
+                <ChevronDown className="size-4" strokeWidth={2} aria-hidden />
+              </button>
+            </>
+          )}
+        </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        {primaryActions.map((action) => (
-          <Link
-            key={action.href}
-            href={action.href}
-            className={cn(
-              "inline-flex h-10 min-w-[5.5rem] flex-1 items-center justify-center rounded-full px-4 text-sm font-semibold transition active:scale-[0.98] sm:flex-none",
-              action.primary ? assetsPrimaryButtonClass : assetsSecondaryButtonClass,
-            )}
-          >
-            {action.label}
-          </Link>
-        ))}
-      </div>
+        <p className={cn("mt-1.5 text-sm tabular-nums", change30dPct != null && !hidden ? "text-white/70" : "text-white/45")}>
+          {hidden ? "••••" : pnlLine}
+        </p>
 
-      <div className="mt-2 flex flex-wrap gap-2">
-        {secondaryActions.map((action) => (
-          <Link
-            key={action.href}
-            href={action.href}
-            className="inline-flex h-9 items-center rounded-full bg-neutral-100 px-4 text-sm font-medium text-neutral-800 transition hover:bg-neutral-200/80"
-          >
-            {action.label}
-          </Link>
-        ))}
-        {live && walletSummary?.availableBalance ? (
-          <span className="inline-flex h-9 items-center rounded-full px-1 text-xs text-neutral-500">
-            {t("assets.overview.walletAvailable")}:{" "}
-            <span className="ml-1 font-mono font-semibold tabular-nums text-neutral-800">
-              {hidden ? "••••" : formatUsdtAmount(parseMoney(walletSummary.availableBalance) ?? 0, locale)}
+        <div className="mt-7 flex flex-wrap gap-2 sm:mt-8">
+          {primaryActions.map((action) => (
+            <SplitonCtaPill
+              key={action.href}
+              href={action.href}
+              tone="onDark"
+              variant={action.primary ? "primary" : "ghost"}
+              withArrow={Boolean(action.primary)}
+              className="min-w-[5.5rem] flex-1 sm:flex-none"
+            >
+              {action.label}
+            </SplitonCtaPill>
+          ))}
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {secondaryActions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="inline-flex h-9 items-center rounded-full px-4 text-sm font-medium text-white/80 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)] transition hover:bg-white/[0.06] hover:text-white"
+            >
+              {action.label}
+            </Link>
+          ))}
+          {live && walletSummary?.availableBalance ? (
+            <span className="inline-flex h-9 items-center rounded-full px-1 text-xs text-white/45">
+              {t("assets.overview.walletAvailable")}:{" "}
+              <span className="ml-1 font-mono font-semibold tabular-nums text-white/85">
+                {hidden ? "••••" : formatUsdtAmount(parseMoney(walletSummary.availableBalance) ?? 0, locale)}
+              </span>
             </span>
-          </span>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </section>
   );

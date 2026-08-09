@@ -1,13 +1,18 @@
 "use client";
 
+import Link from "next/link";
+
+import { assetsSectionTitleClass } from "@/components/dashboard/assets/assets-ui";
 import { MetricsAssetDynamicsChart } from "@/components/dashboard/assets/metrics-charts";
 import { OverviewHero } from "@/components/dashboard/assets/overview-hero";
+import { PayoutsOverviewSummary } from "@/components/dashboard/assets/payouts-overview-summary";
 import { PortfolioOverviewEmptyState } from "@/components/dashboard/assets/portfolio-overview-empty-state";
 import { PortfolioOverviewSkeleton } from "@/components/dashboard/assets/portfolio-overview-skeleton";
 import { RecentActivityCard } from "@/components/dashboard/assets/recent-activity-card";
 import { TopPositionsCard } from "@/components/dashboard/assets/top-positions-card";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
+import { ROUTES } from "@/constants/routes";
 import {
   usePortfolioActivityLive,
   usePortfolioOverviewLive,
@@ -32,6 +37,7 @@ export function AssetsOverviewContent() {
   const portfolioChart = usePortfolioValueChartLive();
   const cashflow = useWalletCashflowTotals();
 
+  // Soft revalidate: never blank the whole page when we already have overview.
   if (live && loading && !overview) {
     return <PortfolioOverviewSkeleton />;
   }
@@ -62,22 +68,46 @@ export function AssetsOverviewContent() {
       : undefined;
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-5 sm:space-y-6">
       {!live ? (
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
           {t("assets.overview.demoBanner")}
         </p>
       ) : null}
 
+      <OverviewHero
+        live={live}
+        totalValueUsdt={totalUsdt}
+        totalValueUnavailable={live && overview == null}
+        change30dPct={overview?.change30dPct ?? null}
+        walletSummary={walletSummary}
+        walletLoading={walletLoading}
+      />
+
+      <section className="space-y-3" aria-labelledby="overview-payouts-heading">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 id="overview-payouts-heading" className={assetsSectionTitleClass()}>
+              {t("meta.payouts.overviewTitle")}
+            </h2>
+            <p className="mt-1 text-sm text-neutral-500">{t("meta.payouts.overviewHint")}</p>
+          </div>
+          <Link
+            href={ROUTES.dashboardPayouts}
+            className="shrink-0 text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-900"
+          >
+            {t("payouts.recent.viewAll")}
+          </Link>
+        </div>
+        <PayoutsOverviewSummary embedded />
+      </section>
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-stretch lg:gap-5">
-        <OverviewHero
-          live={live}
-          totalValueUsdt={totalUsdt}
-          totalValueUnavailable={live && overview == null}
-          change30dPct={overview?.change30dPct ?? null}
-          walletSummary={walletSummary}
-          walletLoading={walletLoading}
-        />
+        {isEmptyPortfolio ? (
+          <PortfolioOverviewEmptyState />
+        ) : (
+          <TopPositionsCard rows={topPositions ?? undefined} live={live} loading={loading} compact />
+        )}
 
         <RecentActivityCard
           preview
@@ -89,12 +119,6 @@ export function AssetsOverviewContent() {
           variant="statement"
         />
       </div>
-
-      {isEmptyPortfolio ? (
-        <PortfolioOverviewEmptyState />
-      ) : (
-        <TopPositionsCard rows={topPositions ?? undefined} live={live} loading={loading} compact />
-      )}
 
       {live ? (
         <MetricsAssetDynamicsChart
