@@ -34,14 +34,21 @@ export function assertSafeE2eCleanupTarget(url: string): void {
 
   const mainUrl = process.env.DATABASE_URL?.trim();
   const testUrl = process.env.TEST_DATABASE_URL?.trim();
+  const isolated =
+    process.env.E2E_ISOLATED_DATABASE === '1' ||
+    /@(127\.0\.0\.1|localhost)(:|\/)/i.test(url);
+  // After configureE2eDatabase remaps TEST → DATABASE, the two env vars match by design.
+  // Refuse only when both point at the same non-isolated URL (shared main DB misuse).
   if (
     mainUrl &&
     testUrl &&
     mainUrl === testUrl &&
+    !isolated &&
     process.env.ALLOW_E2E_CLEANUP !== '1'
   ) {
     throw new Error(
-      'Refusing e2e cleanup: TEST_DATABASE_URL equals DATABASE_URL. Use a dedicated test project.',
+      'Refusing e2e cleanup: TEST_DATABASE_URL equals DATABASE_URL. Use a dedicated test project ' +
+        '(local Docker :5433 or separate Supabase e2e), or set ALLOW_E2E_CLEANUP=1.',
     );
   }
 }

@@ -60,7 +60,7 @@ describe("CatalogTrackCard purchase gating", () => {
     );
 
     const buyLink = screen.getByRole("link", { name: "Купить UNT" });
-    expect(buyLink).toHaveAttribute("href", "/catalog/buy/sold-out-track");
+    expect(buyLink).toHaveAttribute("href", `/catalog/buy/${soldOutItem.id}`);
   });
 
   it("links to secondary market view when listings exist", () => {

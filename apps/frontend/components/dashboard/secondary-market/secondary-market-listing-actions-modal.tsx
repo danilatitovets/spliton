@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/components/providers/i18n-provider";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { cn } from "@/lib/utils";
 
 type SecondaryMarketListingActionsTriggerProps = {
@@ -18,20 +19,21 @@ export function SecondaryMarketListingActionsTrigger({
   const { t } = useI18n();
 
   return (
-    <button
+    <SplitonCtaPill
       type="button"
+      tone="onDark"
       disabled={disabled}
       onClick={onOpen}
       className={cn(
-        "inline-flex items-center justify-center rounded-full border text-[11px] font-medium transition",
-        compactTrigger ? "h-7 px-2.5" : "h-8 px-3",
-        disabled
-          ? "cursor-not-allowed border-white/8 text-zinc-600"
-          : "border-white/15 text-zinc-300 hover:border-white/25 hover:text-white",
+        "shrink-0 whitespace-nowrap",
+        compactTrigger
+          ? "h-8 gap-1.5 pl-3 pr-1 text-[11px] font-medium tracking-[-0.01em] [&>span:last-child]:size-6 [&>span:last-child>svg]:size-3"
+          : "h-9 gap-2 pl-3.5 pr-1 text-[12px] font-medium tracking-[-0.01em] [&>span:last-child]:size-7 [&>span:last-child>svg]:size-3.5",
+        disabled && "cursor-not-allowed opacity-40 hover:bg-white",
       )}
     >
       {disabled ? t("secondaryMarket.listings.unavailable") : t("secondaryMarket.actions.actions")}
-    </button>
+    </SplitonCtaPill>
   );
 }
 

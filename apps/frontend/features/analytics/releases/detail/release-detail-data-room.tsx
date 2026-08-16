@@ -61,10 +61,7 @@ export function ReleaseDetailDataRoom({ releaseId }: { releaseId: string }) {
 
   return (
     <section className="mt-10 rounded-2xl bg-[#0d0d0d] p-5 ring-1 ring-white/6">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-        {t("analytics.detail.dataRoom.eyebrow")}
-      </p>
-      <h2 className="mt-1 text-lg font-semibold text-white">{t("analytics.detail.dataRoom.title")}</h2>
+      <h2 className="text-lg font-semibold text-white">{t("analytics.detail.dataRoom.title")}</h2>
 
       {!loaded ? (
         <>

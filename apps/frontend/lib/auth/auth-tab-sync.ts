@@ -3,7 +3,7 @@ import type { SafeUser } from "@/types/auth";
 const CHANNEL_NAME = "spliton-auth-v1";
 const LOCK_KEY = "spliton:auth:refresh-lock";
 const LOCK_TTL_MS = 15_000;
-const SYNC_WAIT_MS = 12_000;
+const SYNC_WAIT_MS = 4_000;
 
 export type AuthSyncPayload = {
   user: SafeUser;
@@ -113,9 +113,9 @@ function waitForSessionSync(minTs = 0): Promise<AuthSyncPayload | null> {
     };
 
     const onStorage = (event: StorageEvent) => {
+      // Lock released by another tab — wait for SESSION broadcast, do not
+      // treat this as refresh failure (that was logging users out briefly).
       if (event.key !== LOCK_KEY || event.newValue !== null) return;
-      cleanup();
-      resolve(null);
     };
 
     const timer = window.setTimeout(() => {
@@ -170,6 +170,8 @@ export async function coordinatedRefresh(
 
     lockId = tryAcquireRefreshLock();
     if (!lockId) {
+      // Do not refresh without a lock — concurrent refresh can rotate/reuse the
+      // HttpOnly cookie and revoke every session (random logout across tabs).
       return null;
     }
   }

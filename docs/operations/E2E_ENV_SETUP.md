@@ -6,17 +6,17 @@ Do not commit real secrets. Copy from Supabase dashboard and a password manager.
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Backend runtime + Prisma pooler (`:6543`, `?pgbouncer=true`) |
+| `DATABASE_URL` | Nest runtime: Supabase **session** pooler `:5432` (**no** `pgbouncer=true`) |
 | `DIRECT_URL` | Migrations only: `db.<project-ref>.supabase.co:5432` |
-| `TEST_DATABASE_URL` | Jest e2e — **dedicated** project recommended |
+| `TEST_DATABASE_URL` | Jest e2e — prefer `docker-compose.test.yml` on `127.0.0.1:5433`, or session `:5432` |
 | `TEST_DIRECT_URL` | Migrations on test DB |
 
-`jest-e2e.setup.ts` maps `TEST_DATABASE_URL` → `DATABASE_URL` for the test process only.
+`jest-e2e.setup.ts` maps `TEST_DATABASE_URL` → `DATABASE_URL` for the test process only. Do **not** use transaction pooler `:6543?pgbouncer=true` for Nest-under-test.
 
 Setup:
 
 ```powershell
-cd d:\Projects\revshare-platform
+cd d:\Projects\spliton
 npm run test:db:setup
 npm run test:db:drift-check
 ```

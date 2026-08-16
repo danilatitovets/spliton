@@ -5,9 +5,9 @@ import { LegalPolicyPublicView } from "@/components/legal/legal-policy-public-vi
 
 export function PrivacyPageContent() {
   return (
-    <div className="flex min-h-dvh flex-col bg-[#f6f7f9]">
+    <div className="flex min-h-dvh flex-col bg-white text-[#1f2328] antialiased [color-scheme:light]">
       <DashboardHeader />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
+      <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-10 sm:px-6 sm:py-14">
         <LegalPolicyPublicView typeParam="privacy_policy" />
       </main>
     </div>

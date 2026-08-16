@@ -21,11 +21,14 @@ export function DashboardSectionUnderlineNav({
   ariaLabel,
   items,
   className,
+  tone = "light",
 }: {
   ariaLabel: string;
   items: DashboardSectionUnderlineNavItem[];
   className?: string;
+  tone?: "light" | "dark";
 }) {
+  const dark = tone === "dark";
   return (
     <nav aria-label={ariaLabel} className={cn(navClass, className)}>
       {items.map((item) => (
@@ -36,8 +39,12 @@ export function DashboardSectionUnderlineNav({
           className={cn(
             linkClass,
             item.active
-              ? "border-neutral-900 font-semibold text-neutral-900"
-              : "border-transparent font-medium text-neutral-500 hover:text-neutral-800",
+              ? dark
+                ? "border-white font-semibold text-white"
+                : "border-neutral-900 font-semibold text-neutral-900"
+              : dark
+                ? "border-transparent font-medium text-zinc-500 hover:text-zinc-200"
+                : "border-transparent font-medium text-neutral-500 hover:text-neutral-800",
           )}
         >
           {item.label}

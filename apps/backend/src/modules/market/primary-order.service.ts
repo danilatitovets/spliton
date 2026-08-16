@@ -451,6 +451,8 @@ export class PrimaryOrderService {
           unitsDelta: units,
           pricePerUnit,
           walletTransactionId: walletTx.id,
+          sourceEntityType: 'order',
+          sourceEntityId: order.id,
           happenedAt: new Date(),
         },
       });
@@ -646,8 +648,8 @@ export class PrimaryOrderService {
     };
   }
 
-  async preview(userId: string, roundId: string, unitsInput: number) {
-    await this.eligibility.assertAllowed(userId, ConsentSource.PRIMARY_PURCHASE);
+  async preview(userId: string, roundId: string, unitsInput: string) {
+    // Preview is a quote only — do not assert consents/KYC here (that gates purchase).
     const units = new Prisma.Decimal(String(unitsInput));
     if (units.lessThanOrEqualTo(0)) {
       throwAdminError(

@@ -13,6 +13,10 @@ const PROTECTED_REDIRECTS: { path: string; nextEncoded: string }[] = [
   { path: '/assets/payouts/withdraw', nextEncoded: 'next=%2Fassets%2Fpayouts%2Fwithdraw' },
   { path: '/dashboard/profile', nextEncoded: 'next=%2Fdashboard%2Fprofile' },
   { path: '/dashboard/secondary-market', nextEncoded: 'next=%2Fdashboard%2Fsecondary-market' },
+  { path: '/dashboard/disputes', nextEncoded: 'next=%2Fdashboard%2Fdisputes' },
+  { path: '/dashboard/documents', nextEncoded: 'next=%2Fdashboard%2Fdocuments' },
+  { path: '/dashboard/statements', nextEncoded: 'next=%2Fdashboard%2Fstatements' },
+  { path: '/dashboard/artist', nextEncoded: 'next=%2Fdashboard%2Fartist' },
 ];
 
 const PUBLIC_ROUTES = [

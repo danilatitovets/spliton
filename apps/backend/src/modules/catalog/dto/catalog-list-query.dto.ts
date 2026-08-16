@@ -139,6 +139,16 @@ export class CatalogListQueryDto {
   @Min(0)
   minLiquidity?: number;
 
+  /**
+   * Comma-separated release UUIDs. When present (including empty string after trim),
+   * results are restricted to that set. Empty list → zero results.
+   * Omit the param entirely to leave the catalog unrestricted.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  releaseIds?: string;
+
   @IsOptional()
   @IsIn(CATALOG_SORT_KEYS)
   sort?: CatalogSortKey;

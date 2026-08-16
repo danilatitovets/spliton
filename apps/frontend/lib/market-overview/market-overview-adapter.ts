@@ -8,6 +8,7 @@ import type {
 import type { ReleaseMarketAnalyticsPageData } from "@/types/catalog/release-market-analytics";
 import type {
   MarketOverviewCategory,
+  MarketOverviewPeriod,
   MarketOverviewRow,
 } from "@/types/market-overview";
 
@@ -28,13 +29,24 @@ function volume24hNumber(item: MarketOverviewListItemApi): number {
   return Number(raw) || 0;
 }
 
-export function adaptMarketOverviewRow(item: MarketOverviewListItemApi): MarketOverviewRow {
+export function adaptMarketOverviewRow(
+  item: MarketOverviewListItemApi,
+  period: MarketOverviewPeriod = "7d",
+): MarketOverviewRow {
+  const volume24h = volume24hNumber(item);
+  const volume7d = Number.parseFloat(String(item.volume7dUsdt ?? 0)) || 0;
+  const volume30d = Number.parseFloat(String(item.volume30dUsdt ?? 0)) || 0;
+  const periodVolume =
+    period === "24h" ? volume24h : period === "30d" || period === "90d" ? volume30d || volume7d : volume7d || volume24h;
+
   return {
     id: item.id,
     symbol: item.symbol,
     title: item.title,
     artist: item.artist,
     segment: item.segment || item.genre,
+    lastPriceUsdt: Number.parseFloat(item.lastPriceUsdt) || null,
+    volume24hUsdt: periodVolume,
     yieldPct: item.yieldPct,
     payoutsUsdt: item.payoutsUsdt,
     activityScore: item.activityScore,
@@ -59,6 +71,9 @@ export function adaptMarketOverviewRow(item: MarketOverviewListItemApi): MarketO
         "archive",
       ].includes(c),
     ),
+    activeListingsCount: item.activeListings,
+    spreadUsdt: Number.parseFloat(item.spread) || null,
+    spreadPercent: item.spreadPercent != null ? Number.parseFloat(item.spreadPercent) : null,
   };
 }
 

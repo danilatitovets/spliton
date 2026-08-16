@@ -9,9 +9,16 @@ import {
   ProfileSecurityModalFieldList,
   ProfileSecurityModalHints,
 } from "@/components/dashboard/profile/profile-security-modal";
-import { profileModalInputClass, profilePrimaryButtonClass } from "@/components/dashboard/profile/profile-ui";
+import {
+  profileOkxDangerPillClass,
+  profileOkxGhostClass,
+  profileOkxPillClass,
+} from "@/components/dashboard/profile/profile-okx";
+import { PROFILE_GLASS } from "@/components/dashboard/profile/profile-shared";
+import { profileModalInputClass } from "@/components/dashboard/profile/profile-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { ROUTES } from "@/constants/routes";
 import { localizedApiError } from "@/lib/api/localized-error";
 import { cn } from "@/lib/utils";
 import {
@@ -106,21 +113,13 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
 
   return (
     <>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-            enabled ? "bg-lime-100/90 text-lime-950" : "bg-neutral-200 text-neutral-700",
-          )}
-        >
-          {enabled ? t("profile.security.twoFa.enabled") : t("profile.security.twoFa.disabled")}
-        </span>
+      <div className="flex shrink-0 flex-col items-end gap-1">
         {!enabled && step === "idle" ? (
           <button
             type="button"
             disabled={busy}
             onClick={() => void startSetup()}
-            className="inline-flex h-9 items-center justify-center rounded-xl bg-lime-400 px-4 text-xs font-semibold text-neutral-950 transition hover:bg-lime-300 disabled:opacity-60"
+            className={profileOkxGhostClass}
           >
             {busy ? (
               <>
@@ -128,7 +127,7 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
                 {t("profile.security.twoFa.preparing")}
               </>
             ) : (
-              t("profile.security.twoFa.enable")
+              t("profile.okx.setup")
             )}
           </button>
         ) : null}
@@ -139,68 +138,63 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
               setStep("disable");
               setError(null);
             }}
-            className="inline-flex h-9 items-center justify-center rounded-xl bg-neutral-100 px-4 text-xs font-semibold text-neutral-800"
+            className={profileOkxGhostClass}
           >
-            {t("profile.security.twoFa.disable")}
+            {t("profile.okx.manage")}
           </button>
         ) : null}
+        {error && step === "idle" ? (
+          <p className="max-w-[16rem] text-right text-xs text-red-400" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
-
-      {error && step === "idle" ? (
-        <p className="mt-2 text-xs text-red-600" role="alert">
-          {error}
-        </p>
-      ) : null}
 
       <ProfileSecurityModal
         open={step === "setup"}
         onOpenChange={(open) => {
           if (!open) resetFlow();
         }}
-        eyebrow={t("profile.security.twoFa.title")}
-        title={t("profile.security.twoFa.setupTitle")}
+        title={t("profile.security.twoFa.title")}
+        headline={t("profile.security.twoFa.setupHeadline")}
+        description={t("profile.security.twoFa.setupBody")}
+        hero={PROFILE_GLASS.twoFa}
+        detailsHref={ROUTES.trust}
+        detailsLabel={t("profile.okx.details")}
         footer={
-          <div className="space-y-2">
-            {error ? <p className="text-sm text-red-700">{error}</p> : null}
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                disabled={busy || code.length !== 6}
-                onClick={() => void confirmSetup()}
-                className={cn(
-                  profilePrimaryButtonClass,
-                  "h-10 flex-1 bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-60",
-                )}
-              >
-                {busy ? (
-                  <>
-                    <SplitonLoader size="xxs" variant="dark" className="mr-2 inline" />
-                    {t("profile.security.twoFa.confirming")}
-                  </>
-                ) : (
-                  t("profile.security.twoFa.confirm")
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => resetFlow()}
-                className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-[#F5F5F5] text-sm font-semibold text-neutral-900 transition hover:bg-[#EBEBEB]"
-              >
-                {t("profile.security.password.cancel")}
-              </button>
-            </div>
+          <div className="space-y-3">
+            {error ? (
+              <p className="text-center text-sm text-red-400" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={busy || code.length !== 6}
+              onClick={() => void confirmSetup()}
+              className={cn(profileOkxPillClass, "disabled:opacity-60")}
+            >
+              {busy ? (
+                <>
+                  <SplitonLoader size="xxs" variant="dark" className="mr-2 inline" />
+                  {t("profile.security.twoFa.confirming")}
+                </>
+              ) : (
+                t("profile.security.twoFa.confirm")
+              )}
+            </button>
           </div>
         }
       >
         {secret ? (
-          <p className="mb-3 break-all rounded-xl bg-[#F5F5F5] px-3 py-2 font-mono text-xs text-neutral-700">
+          <p className="mb-3 break-all rounded-xl bg-white/[0.05] px-3 py-2 font-mono text-xs text-zinc-300">
             {t("profile.security.twoFa.secret")}: {secret}
           </p>
         ) : null}
         {otpauthUrl ? (
           <a
             href={otpauthUrl}
-            className="mb-4 inline-block text-xs font-semibold text-neutral-800 underline underline-offset-2"
+            className="mb-1 inline-block text-[13px] font-medium text-white underline decoration-white/45 underline-offset-[5px]"
           >
             {t("profile.security.twoFa.openOtpauth")}
           </a>
@@ -229,25 +223,19 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
         onOpenChange={(open) => {
           if (!open) resetFlow();
         }}
-        eyebrow={t("profile.security.twoFa.title")}
-        title={t("profile.security.twoFa.backupTitle")}
+        title={t("profile.security.twoFa.title")}
+        headline={t("profile.security.twoFa.backupTitle")}
         description={t("profile.security.twoFa.backupHint")}
+        hero={PROFILE_GLASS.twoFa}
         footer={
-          <button
-            type="button"
-            onClick={() => resetFlow()}
-            className={cn(
-              profilePrimaryButtonClass,
-              "h-10 w-full bg-neutral-900 text-white hover:bg-neutral-800",
-            )}
-          >
+          <button type="button" onClick={() => resetFlow()} className={profileOkxPillClass}>
             {t("profile.security.twoFa.done")}
           </button>
         }
       >
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="mt-6 grid gap-2 sm:grid-cols-2">
           {backupCodes.map((item) => (
-            <li key={item} className="rounded-lg bg-[#F5F5F5] px-3 py-2 font-mono text-xs text-neutral-800">
+            <li key={item} className="rounded-xl bg-white/[0.05] px-3 py-2.5 font-mono text-xs text-zinc-200">
               {item}
             </li>
           ))}
@@ -264,40 +252,31 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
             setStep("idle");
           }
         }}
-        eyebrow={t("profile.security.twoFa.title")}
-        title={t("profile.security.twoFa.disableTitle")}
+        title={t("profile.security.twoFa.title")}
+        headline={t("profile.security.twoFa.disableTitle")}
+        hero={PROFILE_GLASS.twoFa}
         footer={
-          <div className="space-y-2">
-            {error ? <p className="text-sm text-red-700">{error}</p> : null}
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                disabled={busy || !password || code.length !== 6}
-                onClick={() => void confirmDisable()}
-                className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-red-700 text-sm font-semibold text-white transition hover:bg-red-800 disabled:opacity-60"
-              >
-                {busy ? (
-                  <>
-                    <SplitonLoader size="xxs" variant="dark" className="mr-2 inline" />
-                    {t("profile.security.twoFa.disabling")}
-                  </>
-                ) : (
-                  t("profile.security.twoFa.disableConfirm")
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPassword("");
-                  setCode("");
-                  setError(null);
-                  setStep("idle");
-                }}
-                className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-[#F5F5F5] text-sm font-semibold text-neutral-900 transition hover:bg-[#EBEBEB]"
-              >
-                {t("profile.security.password.cancel")}
-              </button>
-            </div>
+          <div className="space-y-3">
+            {error ? (
+              <p className="text-center text-sm text-red-400" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={busy || !password || code.length !== 6}
+              onClick={() => void confirmDisable()}
+              className={cn(profileOkxDangerPillClass, "disabled:opacity-60")}
+            >
+              {busy ? (
+                <>
+                  <SplitonLoader size="xxs" variant="dark" className="mr-2 inline" />
+                  {t("profile.security.twoFa.disabling")}
+                </>
+              ) : (
+                t("profile.security.twoFa.disableConfirm")
+              )}
+            </button>
           </div>
         }
       >

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
@@ -26,34 +26,24 @@ import { cn } from "@/lib/utils";
 function FeeDisplay({
   value,
   suffix,
-  tone,
   size = "lg",
 }: {
   value: string;
   suffix?: string;
-  tone: "primary" | "units" | "fee" | "neutral";
+  tone?: "primary" | "units" | "fee" | "neutral";
   size?: "lg" | "xl";
 }) {
   const sizeCls = size === "xl" ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl";
-  const toneCls =
-    tone === "primary"
-      ? "bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-700 bg-clip-text text-transparent"
-      : tone === "units"
-        ? "bg-gradient-to-br from-emerald-800 via-teal-700 to-cyan-700 bg-clip-text text-transparent"
-        : tone === "fee"
-          ? "text-neutral-600"
-          : "text-neutral-900";
 
   return (
     <span
       className={cn(
-        "font-mono font-semibold tabular-nums tracking-tight [font-feature-settings:'tnum','lnum']",
+        "font-mono font-semibold tabular-nums tracking-tight text-neutral-900 [font-feature-settings:'tnum','lnum']",
         sizeCls,
-        toneCls,
       )}
     >
       {value}
-      {suffix ? <span className="text-[0.65em] font-medium text-neutral-500">{suffix}</span> : null}
+      {suffix ? <span className="text-[0.65em] font-medium text-neutral-400">{suffix}</span> : null}
     </span>
   );
 }
@@ -69,39 +59,56 @@ function ExampleCard({
   rows: { label: string; value: string; dim?: boolean }[];
   highlight: { label: string; amount: string; tone?: "primary" | "units" };
 }) {
-  const tone = highlight.tone ?? "primary";
   return (
-    <div className="flex flex-col rounded-2xl border border-neutral-200/80 bg-white px-5 py-6 sm:px-6 sm:py-7">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">{subtitle}</p>
-      <h3 className="mt-1 text-base font-semibold tracking-tight text-neutral-900">{title}</h3>
-      <div className="mt-5 rounded-xl bg-neutral-50 px-4 py-3 sm:px-5">
+    <article className="flex h-full min-h-0 flex-col">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">{subtitle}</p>
+      <h3 className="mt-2 min-h-[3rem] text-base font-semibold leading-snug tracking-tight text-neutral-900">
+        {title}
+      </h3>
+
+      <div className="mt-5 flex flex-1 flex-col">
         <div className="space-y-0">
           {rows.map((r, i) => (
-            <div key={r.label}>
-              {i > 0 ? <div className="border-t border-neutral-100/90" /> : null}
-              <div className="flex items-center justify-between gap-3 py-3">
-                <span className={cn("text-sm", r.dim ? "text-neutral-500" : "text-neutral-600")}>{r.label}</span>
-                <span className="font-mono text-xs font-medium tabular-nums text-neutral-900 sm:text-sm">{r.value}</span>
-              </div>
+            <div
+              key={r.label}
+              className={cn(
+                "grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1 py-3",
+                i > 0 && "border-t border-neutral-200/90",
+              )}
+            >
+              <span className={cn("text-[13px] leading-5", r.dim ? "text-neutral-400" : "text-neutral-600")}>
+                {r.label}
+              </span>
+              <span
+                className={cn(
+                  "font-mono text-[13px] font-medium tabular-nums tracking-tight",
+                  r.dim ? "text-neutral-400" : "text-neutral-900",
+                )}
+              >
+                {r.value}
+              </span>
             </div>
           ))}
         </div>
-      </div>
-      <div className="mt-4 rounded-xl bg-neutral-50 px-4 py-4 sm:px-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">{highlight.label}</p>
-        <div className="mt-1">
-          <FeeDisplay value={highlight.amount} suffix=" USDT" tone={tone} size="lg" />
+
+        <div className="mt-auto border-t border-neutral-200/90 pt-5">
+          <p className="min-h-[2.5rem] text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
+            {highlight.label}
+          </p>
+          <div className="mt-1">
+            <FeeDisplay value={highlight.amount} suffix=" USDT" tone={highlight.tone ?? "primary"} size="lg" />
+          </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
 function FeesTableSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="mt-8">
+    <section className="mt-10">
       <h3 className="text-lg font-semibold tracking-tight text-neutral-900">{title}</h3>
-      {description ? <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-600">{description}</p> : null}
+      {description ? <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-500">{description}</p> : null}
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -115,12 +122,12 @@ function FeesTable({
   rows: (string | ReactNode)[][];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-neutral-200/80">
+    <div className="overflow-x-auto">
       <table className="w-full min-w-[720px] border-collapse text-left text-sm">
         <thead>
-          <tr className="bg-neutral-50 text-[11px] font-semibold uppercase tracking-[0.1em] text-neutral-500">
+          <tr className="border-b border-neutral-200 text-[13px] font-semibold text-neutral-900">
             {headers.map((h) => (
-              <th key={h} className="px-4 py-3 font-medium">
+              <th key={h} className="px-0 py-3 pr-6 font-semibold">
                 {h}
               </th>
             ))}
@@ -128,13 +135,13 @@ function FeesTable({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-t border-neutral-100 transition-colors hover:bg-neutral-50/60">
+            <tr key={i} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50/70">
               {row.map((cell, j) => (
                 <td
                   key={j}
                   className={cn(
-                    "px-4 py-3.5 align-top",
-                    j === 0 ? "font-medium text-neutral-900" : "text-neutral-700",
+                    "px-0 py-3.5 pr-6 align-top",
+                    j === 0 ? "font-medium text-neutral-900" : "text-neutral-600",
                     j >= 2 && j < row.length - 1 ? "font-mono text-xs sm:text-sm" : "",
                     j === row.length - 1 ? "text-xs leading-relaxed text-neutral-500" : "",
                   )}
@@ -152,13 +159,13 @@ function FeesTable({
 
 function RulesBlock({ sections }: { sections: FeesRuleSection[] }) {
   return (
-    <div className="space-y-8 border-t border-neutral-200/80 pt-8">
+    <div className="mt-12 space-y-8 border-t border-neutral-200/90 pt-10">
       {sections.map((section) => (
         <section key={section.id} id={`fees-rule-${section.id}`}>
           <h3 className="text-base font-semibold text-neutral-900">{section.title}</h3>
           <div className="mt-3 space-y-3">
             {section.paragraphs.map((p) => (
-              <p key={p} className="text-sm leading-relaxed text-neutral-600">
+              <p key={p} className="text-sm leading-relaxed text-neutral-500">
                 {p}
               </p>
             ))}
@@ -422,21 +429,26 @@ export function FeesPageContent() {
 
   if (live && loading) {
     return (
-      <div className="rounded-2xl border border-neutral-200/80 bg-white px-6 py-16 text-center text-sm text-neutral-500">
-        {t("fees.loading")}
+      <div className="py-10" aria-busy aria-live="polite">
+        <div className="space-y-4">
+          <div className="h-8 w-64 max-w-full animate-pulse rounded bg-neutral-100" />
+          <div className="h-4 w-full max-w-xl animate-pulse rounded bg-neutral-100" />
+          <div className="mt-6 h-40 animate-pulse rounded bg-neutral-50" />
+        </div>
+        <span className="sr-only">{t("fees.loading")}</span>
       </div>
     );
   }
 
   if (live && error && !liveFees) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-12 text-center">
-        <p className="text-sm font-medium text-red-900">{t("fees.error.title")}</p>
-        <p className="mt-2 text-sm text-red-800">{error}</p>
+      <div className="border-y border-rose-200 py-12 text-center">
+        <p className="text-sm font-medium text-rose-800">{t("fees.error.title")}</p>
+        <p className="mt-2 text-sm text-rose-600/90">{error}</p>
         <button
           type="button"
           onClick={() => void reload()}
-          className="mt-4 rounded-xl border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-50"
+          className="mt-4 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
         >
           {t("fees.retry")}
         </button>
@@ -445,9 +457,9 @@ export function FeesPageContent() {
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm">
-      <div className="px-5 py-5 sm:px-8 sm:py-6">
-        <FeesPageTabs items={mainSections} active={mainSection} onChange={setMainSection} />
+    <div>
+      <div>
+        <FeesPageTabs items={mainSections} active={mainSection} onChange={setMainSection} variant="underline" />
 
         {mainSection === "trading" ? (
           <div className="mt-8">
@@ -456,10 +468,10 @@ export function FeesPageContent() {
                 <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
                   {t("fees.trading.title")}
                 </h2>
-                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-neutral-600">{t("fees.trading.description")}</p>
+                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-neutral-500">{t("fees.trading.description")}</p>
               </div>
               {effectiveLabel ? (
-                <p className="inline-flex items-center gap-1.5 rounded-full bg-neutral-50 px-3 py-1.5 text-xs text-neutral-600">
+                <p className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
                   <Clock className="size-3.5" aria-hidden />
                   {tf(t("fees.trading.effectiveFrom"), { date: effectiveLabel })}
                 </p>
@@ -467,20 +479,20 @@ export function FeesPageContent() {
             </div>
 
             <div className="mt-8">
-              <FeesPageTabs items={tradingTabs} active={tradingTab} onChange={setTradingTab} size="sub" />
+              <FeesPageTabs items={tradingTabs} active={tradingTab} onChange={setTradingTab} size="sub" variant="underline" />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-neutral-500">
-                {tradingTab === "overview"
-                  ? t("fees.trading.description")
-                  : tradingTab === "primary"
-                    ? t("fees.trading.primaryHint")
-                    : t("fees.trading.secondaryHint")}
-              </p>
+              {tradingTab !== "overview" ? (
+                <p className="text-sm text-neutral-500">
+                  {tradingTab === "primary" ? t("fees.trading.primaryHint") : t("fees.trading.secondaryHint")}
+                </p>
+              ) : (
+                <span />
+              )}
               <a
                 href="#fees-rule-updates"
-                className="text-sm font-medium text-neutral-700 underline-offset-2 hover:text-neutral-900 hover:underline"
+                className="text-sm font-medium text-neutral-700 underline-offset-2 transition hover:text-neutral-900 hover:underline"
               >
                 {t("fees.trading.updateHistory")}
               </a>
@@ -535,30 +547,33 @@ export function FeesPageContent() {
               ) : null}
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <article className="rounded-xl bg-neutral-50 px-4 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+            <div className="mt-8 grid gap-8 border-t border-neutral-200/90 pt-8 sm:grid-cols-2 lg:grid-cols-4">
+              <article>
+                <p className="text-[11px] font-medium text-neutral-400">
                   {t("fees.stat.platformFee")}
                 </p>
                 <FeeDisplay value={pct(rates.platformBuy)} tone="primary" />
               </article>
-              <article className="rounded-xl bg-neutral-50 px-4 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+              <article>
+                <p className="text-[11px] font-medium text-neutral-400">
                   {t("fees.stat.secondaryFee")}
                 </p>
                 <FeeDisplay value={pct(rates.secondary)} tone="units" />
               </article>
-              <article className="rounded-xl bg-neutral-50 px-4 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+              <article>
+                <p className="text-[11px] font-medium text-neutral-400">
                   {t("fees.stat.depositFee")}
                 </p>
                 <FeeDisplay value={pct(rates.deposit)} tone="neutral" />
               </article>
-              <article className="rounded-xl bg-neutral-50 px-4 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+              <article>
+                <p className="text-[11px] font-medium text-neutral-400">
                   {t("fees.stat.calculator")}
                 </p>
-                <Link href={ROUTES.calculator} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:underline">
+                <Link
+                  href={ROUTES.calculator}
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-neutral-900 transition hover:text-neutral-600"
+                >
                   {t("fees.stat.openCalculator")}
                   <ExternalLink className="size-3.5" aria-hidden />
                 </Link>
@@ -567,12 +582,12 @@ export function FeesPageContent() {
 
             <RulesBlock sections={localizedRuleSections.filter((s) => s.id !== "withdraw-calc")} />
 
-            <section className="mt-10" aria-labelledby="fees-examples-heading">
+            <section className="mt-12" aria-labelledby="fees-examples-heading">
               <h2 id="fees-examples-heading" className="text-lg font-semibold tracking-tight text-neutral-900">
                 {t("fees.examples.title")}
               </h2>
               <p className="mt-1 text-sm text-neutral-500">{t("fees.examples.subtitle")}</p>
-              <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <div className="mt-8 grid items-stretch gap-10 lg:grid-cols-3 lg:gap-8">
                 <ExampleCard
                   subtitle={t("fees.examples.primaryMarket")}
                   title={tf(t("fees.examples.buyTitle"), { amount: usdt.format(examples.buy.buyAmount) })}
@@ -629,19 +644,19 @@ export function FeesPageContent() {
               </div>
             </section>
 
-            <section className="mt-10" aria-labelledby="fees-sections-heading">
+            <section className="mt-12" aria-labelledby="fees-sections-heading">
               <h2 id="fees-sections-heading" className="text-lg font-semibold tracking-tight text-neutral-900">
                 {t("fees.sections.title")}
               </h2>
-              <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <div className="mt-8 grid gap-10 lg:grid-cols-3">
                 {sectionBlocks.map((block) => (
-                  <div key={block.id} className="rounded-xl border border-neutral-200/80 px-5 py-5">
+                  <div key={block.id}>
                     <h3 className="text-sm font-semibold text-neutral-900">{block.title}</h3>
                     <p className="mt-1 text-xs text-neutral-500">{block.subtitle}</p>
-                    <ul className="mt-4 space-y-2 text-xs leading-relaxed text-neutral-600 sm:text-sm">
+                    <ul className="mt-4 space-y-2.5 text-xs leading-relaxed text-neutral-600 sm:text-sm">
                       {block.bullets.map((b) => (
                         <li key={b} className="flex gap-2">
-                          <span className="mt-2 size-1.5 shrink-0 rounded-full bg-blue-600/70" aria-hidden />
+                          <span className="mt-2 size-1 shrink-0 rounded-full bg-neutral-900" aria-hidden />
                           <span>{b}</span>
                         </li>
                       ))}
@@ -658,7 +673,7 @@ export function FeesPageContent() {
             <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
               {t("fees.depositWithdrawal.title")}
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-neutral-600">
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-neutral-500">
               {t("fees.depositWithdrawal.description")}
             </p>
 
@@ -720,7 +735,7 @@ export function FeesPageContent() {
         {mainSection === "other" ? (
           <div className="mt-8">
             <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">{t("fees.program.title")}</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-neutral-600">{t("fees.program.description")}</p>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-neutral-500">{t("fees.program.description")}</p>
 
             <div className="mt-8">
               <FeesTable
@@ -734,20 +749,20 @@ export function FeesPageContent() {
               />
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href={ROUTES.referralProgram}
-                className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline-offset-2 transition hover:underline"
               >
                 {t("fees.program.referralProgram")}
-                <ExternalLink className="size-4 text-neutral-500" aria-hidden />
+                <ExternalLink className="size-4 text-neutral-400" aria-hidden />
               </Link>
               <Link
                 href={ROUTES.partnerProgram}
-                className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-100"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline-offset-2 transition hover:underline"
               >
                 {t("fees.program.partnerProgram")}
-                <ExternalLink className="size-4 text-neutral-500" aria-hidden />
+                <ExternalLink className="size-4 text-neutral-400" aria-hidden />
               </Link>
             </div>
 
@@ -764,7 +779,7 @@ export function FeesPageContent() {
         ) : null}
       </div>
 
-      <div className="border-t border-neutral-200/80 px-5 py-7 sm:px-8 sm:py-8">
+      <div className="mt-14 border-t border-neutral-200/90 pt-10">
         <h2 className="text-lg font-semibold tracking-tight text-neutral-900">{t("fees.faq.title")}</h2>
         <p className="mt-1 text-sm text-neutral-500">{t("fees.faq.subtitle")}</p>
         <FeesFaqList items={faqItems} defaultOpenId={faqItems[0]?.id ?? null} />

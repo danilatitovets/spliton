@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   DepositAddressPoolStatus,
   DepositAddressSource,
+  DepositAddressStatus,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { throwAdminError } from '../admin/common/admin-http.util';
@@ -50,28 +51,56 @@ export class DepositAddressPoolService {
     asset: string,
     network: string,
   ): Promise<string | null> {
-    return this.prisma.$transaction(async (tx) => {
-      const poolRow = await tx.depositAddressPool.findFirst({
-        where: {
-          asset,
-          network,
-          status: DepositAddressPoolStatus.AVAILABLE,
-        },
-        orderBy: { createdAt: 'asc' },
-      });
-      if (!poolRow) return null;
+    return this.prisma.$transaction(
+      async (tx) => {
+        const poolRows = await tx.$queryRaw<Array<{ address: string }>>`
+        UPDATE deposit_address_pool AS p
+        SET
+          status = 'ASSIGNED',
+          assigned_wallet_id = ${walletId}::uuid,
+          assigned_user_id = ${userId}::uuid,
+          assigned_at = NOW(),
+          updated_at = NOW()
+        WHERE p.id = (
+          SELECT id
+          FROM deposit_address_pool
+          WHERE asset = ${asset}
+            AND network = ${network}
+            AND status = 'AVAILABLE'
+          ORDER BY created_at ASC, id ASC
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
+        )
+        AND p.status = 'AVAILABLE'
+        RETURNING p.address
+      `;
+        const address = poolRows[0]?.address;
+        if (!address) return null;
 
-      await tx.depositAddressPool.update({
-        where: { id: poolRow.id },
-        data: {
-          status: DepositAddressPoolStatus.ASSIGNED,
-          assignedWalletId: walletId,
-          assignedUserId: userId,
-          assignedAt: new Date(),
-        },
-      });
-      return poolRow.address;
-    });
+        await tx.userDepositAddress.updateMany({
+          where: { walletId, status: DepositAddressStatus.ACTIVE },
+          data: {
+            status: DepositAddressStatus.ROTATED,
+            rotatedAt: new Date(),
+          },
+        });
+        await tx.userDepositAddress.create({
+          data: {
+            walletId,
+            address,
+            status: DepositAddressStatus.ACTIVE,
+            source: DepositAddressSource.ADMIN_POOL,
+          },
+        });
+        await tx.wallet.update({
+          where: { id: walletId },
+          data: { address },
+        });
+        return address;
+      },
+      // Concurrent claim red-team needs headroom to acquire connections + locks.
+      { maxWait: 20_000, timeout: 30_000 },
+    );
   }
 
   async getById(id: string): Promise<DepositAddressPoolRowDto> {
@@ -240,6 +269,13 @@ export class DepositAddressPoolService {
         'ADDRESS_NOT_DISABLED',
         'Only disabled addresses can be re-enabled',
         HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (row!.assignedWalletId) {
+      throwAdminError(
+        'ADDRESS_ALREADY_ASSIGNED',
+        'Assigned deposit addresses cannot return to the pool',
+        HttpStatus.CONFLICT,
       );
     }
     const updated = await this.prisma.depositAddressPool.update({

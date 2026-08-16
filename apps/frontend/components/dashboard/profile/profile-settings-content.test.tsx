@@ -38,11 +38,8 @@ vi.mock("@/components/providers/i18n-provider", () => ({
   useI18n: () => ({
     t,
     locale: "en",
+    setLocale: vi.fn(),
   }),
-}));
-
-vi.mock("@/components/i18n/language-selector", () => ({
-  LanguageSelector: () => <div data-testid="language-selector" />,
 }));
 
 describe("ProfileSettingsContent", () => {
@@ -71,37 +68,42 @@ describe("ProfileSettingsContent", () => {
     expect(screen.getByText("profile.settings.securityEmail.title")).toBeInTheDocument();
     expect(screen.getByText("profile.settings.securityEmail.locked")).toBeInTheDocument();
     expect(screen.getByText("profile.settings.inAppFinance.title")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "profile.settings.saveButton" })).not.toBeInTheDocument();
   });
 
-  it("saves account and notification preferences in live mode", async () => {
+  it("saves a notification toggle immediately in live mode", async () => {
     render(<ProfileSettingsContent />);
     await waitFor(() => expect(mockFetchUserMe).toHaveBeenCalled());
 
-    fireEvent.click(screen.getByRole("button", { name: "profile.settings.saveButton" }));
+    const marketToggle = await waitFor(() => {
+      const switches = screen.getAllByRole("switch");
+      expect(switches[1]).not.toBeDisabled();
+      return switches[1];
+    });
+    fireEvent.click(marketToggle);
 
     await waitFor(() => {
-      expect(mockPatchUserPreferences).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.objectContaining({
-          displayName: "Alice",
-          timezone: "Europe/Moscow",
-          preferredLocale: "en",
-        }),
-      );
-      expect(mockPatchNotificationPreferences).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.objectContaining({
-          emailFinance: true,
-          emailMarket: false,
-          emailNews: true,
-          emailSupport: true,
-          emailSecurity: true,
-          inAppFinance: true,
-          inAppMarket: true,
-          inAppSupport: false,
-          inAppNews: true,
-        }),
-      );
+      expect(mockPatchNotificationPreferences).toHaveBeenCalledWith(expect.any(Function), {
+        emailMarket: true,
+      });
+    });
+    expect(mockPatchUserPreferences).not.toHaveBeenCalled();
+  });
+
+  it("saves display name when confirming the editor", async () => {
+    render(<ProfileSettingsContent />);
+    await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
+
+    fireEvent.click(screen.getAllByRole("button", { name: "profile.okx.change" })[0]);
+    fireEvent.change(screen.getByDisplayValue("Alice"), {
+      target: { value: "Bob" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "profile.settings.done" }));
+
+    await waitFor(() => {
+      expect(mockPatchUserPreferences).toHaveBeenCalledWith(expect.any(Function), {
+        displayName: "Bob",
+      });
     });
   });
 });

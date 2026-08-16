@@ -5,6 +5,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UserWalletService } from './user-wallet.service';
 import { DepositAddressProvider } from './deposit-address.provider';
 import { DepositNetworkSettingsService } from '../treasury/deposit-network-settings.service';
+import { EligibilityService } from '../compliance/eligibility.service';
+import { FeatureFlagsService } from '../../common/platform/feature-flags/feature-flags.service';
 
 jest.mock('qrcode', () => ({
   toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,abc'),
@@ -44,6 +46,14 @@ describe('UserDepositsService', () => {
         { provide: UserWalletService, useValue: wallets },
         { provide: DepositAddressProvider, useValue: depositAddress },
         { provide: DepositNetworkSettingsService, useValue: networkSettings },
+        {
+          provide: EligibilityService,
+          useValue: { assertAllowed: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: FeatureFlagsService,
+          useValue: { assertEnabled: jest.fn() },
+        },
       ],
     }).compile();
     service = module.get(UserDepositsService);

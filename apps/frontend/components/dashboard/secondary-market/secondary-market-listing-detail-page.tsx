@@ -99,7 +99,7 @@ export function SecondaryMarketListingDetailPage({ listingId }: { listingId: str
         <p className="mt-2 max-w-md text-sm text-zinc-500">{t("secondaryMarket.listingDetail.notFoundDesc")}</p>
         <Link
           href={secondaryMarketHref("market")}
-          className="mt-6 text-sm text-[#B7F500] hover:underline"
+          className="mt-6 text-sm text-white hover:underline"
         >
           {t("secondaryMarket.listingDetail.backToMarket")}
         </Link>

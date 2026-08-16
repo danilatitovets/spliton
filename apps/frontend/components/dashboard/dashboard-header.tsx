@@ -36,6 +36,7 @@ import { SplitonLogo } from "@/components/dashboard/revshare-logo";
 import { LanguageSelector } from "@/components/i18n/language-selector";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { DASHBOARD_MISC_PATHS, ROUTES } from "@/constants/routes";
+import { CabinetDemoDataToggle } from "@/components/dashboard/cabinet-demo-data-toggle";
 import { useHeaderWalletBalance } from "@/hooks/use-header-wallet-balance";
 import { useLocalizedNavItems } from "@/hooks/use-localized-nav";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -45,10 +46,13 @@ import { cn } from "@/lib/utils";
 const DEPOSIT_HREF = `${ROUTES.dashboardPayouts}/deposit`;
 const PAYOUTS_HISTORY_HREF = ROUTES.dashboardPayoutsHistory;
 
+/** Desktop chrome (full nav + utilities) — tablets stay on compact/mobile header. */
+const HEADER_DESKTOP_MQ = "(min-width: 1280px)";
+
 function HeaderDivider({ className }: { className?: string }) {
   return (
     <span
-      className={cn("hidden h-5 w-px shrink-0 bg-white/12 lg:block", className)}
+      className={cn("hidden h-5 w-px shrink-0 bg-white/12 xl:block", className)}
       aria-hidden
     />
   );
@@ -132,7 +136,7 @@ function NavTrigger({
   const hasMenu = Boolean(item.children?.length);
 
   const shellDesktop =
-    "flex shrink-0 items-center rounded-md text-[11px] font-semibold uppercase tracking-[0.1em] leading-[1.15] transition-colors lg:px-0";
+    "flex shrink-0 items-center rounded-md text-[11px] font-semibold uppercase tracking-[0.1em] leading-[1.15] transition-colors xl:px-0";
   const shellMobile = "flex w-full min-w-0 items-center rounded-md text-[11px] font-medium";
   const shell = size === "desktop" ? shellDesktop : shellMobile;
   const activeShell = isActive
@@ -140,7 +144,7 @@ function NavTrigger({
     : "text-white/80 hover:bg-white/8 hover:text-white";
   const linkPad =
     size === "desktop"
-      ? "flex items-center rounded-l-md px-2.5 py-2 lg:pl-3 lg:pr-1.5"
+      ? "flex items-center rounded-l-md px-2.5 py-2 xl:pl-3 xl:pr-1.5"
       : "flex min-w-0 flex-1 items-center justify-center rounded-l-md px-2 py-1.5 pr-1";
   const btnPad =
     size === "desktop" ? "flex items-center justify-center rounded-r-md py-2 pr-2 pl-0.5" : "flex items-center rounded-r-md py-1.5 pr-2 pl-0.5";
@@ -151,7 +155,7 @@ function NavTrigger({
         href={item.href}
         className={cn(
           size === "desktop"
-            ? "flex shrink-0 items-center gap-1 rounded-md px-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] leading-[1.15] text-white/80 transition-colors lg:px-3"
+            ? "flex shrink-0 items-center gap-1 rounded-md px-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] leading-[1.15] text-white/80 transition-colors xl:px-3"
             : "flex min-w-0 w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-white/80",
           isActive ? "bg-white/12 text-white" : "hover:bg-white/8 hover:text-white",
         )}
@@ -196,18 +200,15 @@ function NavTrigger({
         </button>
       </div>
 
-      {isSplitMegamenuId(item.id) && isOpen && isDesktop && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              className="fixed left-1/2 top-[4.5rem] z-[120] -translate-x-1/2"
-              onMouseEnter={onFlyoutEnter}
-              onMouseLeave={onFlyoutLeave}
-            >
-              <SplitMegamenuFlyout openItem={item} onNavigate={onNavigate} />
-            </div>,
-            document.body,
-          )
-        : null}
+      {isSplitMegamenuId(item.id) && isOpen && isDesktop ? (
+        <div
+          className="absolute left-0 top-full z-[120] hidden pt-2 xl:block"
+          onMouseEnter={onFlyoutEnter}
+          onMouseLeave={onFlyoutLeave}
+        >
+          <SplitMegamenuFlyout openItem={item} onNavigate={onNavigate} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -296,7 +297,7 @@ export function DashboardHeader({
   }, []);
 
   React.useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
+    const mq = window.matchMedia(HEADER_DESKTOP_MQ);
     const sync = () => setIsDesktop(mq.matches);
     sync();
     mq.addEventListener("change", sync);
@@ -499,17 +500,17 @@ export function DashboardHeader({
         onMouseLeave={scheduleCloseMenu}
       >
       <div className="w-full">
-      <div className="flex h-12 w-full items-center gap-2 px-3 sm:h-14 sm:gap-3 sm:px-4 lg:h-[64px] lg:px-5">
+      <div className="flex h-12 w-full items-center gap-2 px-3 sm:h-14 sm:gap-3 sm:px-4 xl:h-[64px] xl:px-5">
         {/* Brand + nav */}
         <div className="flex min-w-0 flex-1 items-center gap-0 sm:gap-1">
           <div className="flex shrink-0 items-center pr-0">
             <SplitonLogo />
           </div>
 
-          <HeaderDivider className="mx-1 hidden lg:block" />
+          <HeaderDivider className="mx-1 hidden xl:block" />
 
           <nav
-            className="hidden min-w-0 items-center gap-0.5 overflow-x-auto overflow-y-visible lg:flex lg:overflow-visible lg:gap-1"
+            className="hidden min-w-0 items-center gap-0.5 overflow-x-auto overflow-y-visible xl:flex xl:gap-1 2xl:overflow-visible"
             aria-label={t("navigation.header.mainNav")}
           >
             {navItems.map((item) => (
@@ -536,30 +537,28 @@ export function DashboardHeader({
 
         {/* Actions + utilities */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+          <CabinetDemoDataToggle />
           {wallet.isAuthenticated ? (
             <Link
               href={DEPOSIT_HREF}
-              className="hidden h-9 shrink-0 items-center rounded-full bg-white/10 px-4 text-[12px] font-medium text-white transition hover:bg-white/16 active:scale-[0.98] lg:inline-flex"
+              className="hidden h-9 shrink-0 items-center rounded-full bg-white/10 px-4 text-[12px] font-medium text-white transition hover:bg-white/16 active:scale-[0.98] xl:inline-flex"
             >
               {t("navigation.header.depositUsdt")}
             </Link>
           ) : (
             <Link
               href={ROUTES.login}
-              className="hidden h-9 shrink-0 items-center rounded-lg bg-white/10 px-3.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-white/16 lg:inline-flex"
+              className="hidden h-9 shrink-0 items-center rounded-lg bg-white/10 px-3.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-white/16 xl:inline-flex"
             >
               {t("navigation.header.login")}
             </Link>
           )}
 
           {wallet.isAuthenticated ? (
-            <details className="relative hidden lg:block">
+            <details className="relative hidden 2xl:block">
               <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-white/85 transition-colors marker:hidden hover:bg-white/8 [&::-webkit-details-marker]:hidden">
-                <span className="hidden max-w-[8rem] truncate tabular-nums lg:inline">
+                <span className="max-w-[8rem] truncate tabular-nums">
                   {wallet.balanceShort ?? (wallet.error ? "—" : "…")}
-                </span>
-                <span className="max-w-[5rem] truncate tabular-nums lg:hidden">
-                  {wallet.balanceShort ?? "…"}
                 </span>
                 <span className="text-white/65">USDT</span>
                 <ChevronDown className="size-3.5 text-white/65" strokeWidth={2} aria-hidden />
@@ -597,7 +596,7 @@ export function DashboardHeader({
               type="button"
               className={cn(
                 headerIconShellClass,
-                "lg:hidden",
+                "xl:hidden",
                 mobileProfileDrawerOpen && "bg-white/12 text-white",
               )}
               aria-label={t("navigation.header.profile")}
@@ -614,20 +613,20 @@ export function DashboardHeader({
           ) : (
             <Link
               href={ROUTES.login}
-              className={cn(headerIconShellClass, "lg:hidden")}
+              className={cn(headerIconShellClass, "xl:hidden")}
               aria-label={t("navigation.header.login")}
             >
               <User className="size-[18px]" strokeWidth={1.75} aria-hidden />
             </Link>
           )}
 
-          <div className="h-4 w-px bg-white/10 lg:hidden" aria-hidden />
+          <div className="h-4 w-px bg-white/10 xl:hidden" aria-hidden />
 
           <button
             type="button"
             className={cn(
               headerIconShellClass,
-              "lg:hidden",
+              "xl:hidden",
               mobileMenuOpen && "bg-white/12 text-white",
             )}
             aria-label={
@@ -647,7 +646,7 @@ export function DashboardHeader({
           </button>
 
           <div
-            className="relative hidden shrink-0 lg:block"
+            className="relative hidden shrink-0 xl:block"
             onMouseEnter={() => {
               cancelCloseMenuTimer();
               setExpandedKey(null);
@@ -683,14 +682,14 @@ export function DashboardHeader({
             {profileOpen && isDesktop ? (
               <ProfileMegamenuFlyout
                 onNavigate={closeSubnav}
-                className="absolute right-0 top-full z-[120] hidden pt-2 lg:block"
+                className="absolute right-0 top-full z-[120] hidden pt-2 xl:block"
               />
             ) : null}
           </div>
 
-          <HeaderDivider className="mx-0.5 hidden lg:block" />
+          <HeaderDivider className="mx-0.5 hidden xl:block" />
 
-          <div className="hidden items-center lg:flex">
+          <div className="hidden items-center xl:flex">
             <NotificationBell
               apiBasePath="/api/v1/notifications"
               allHref={ROUTES.dashboardNotifications}
@@ -727,11 +726,15 @@ export function DashboardHeader({
               {supportOpen && isDesktop ? (
                 <SupportMegamenuFlyout
                   onNavigate={closeSubnav}
-                  className="absolute right-0 top-full z-[120] hidden pt-2 lg:block"
+                  className="absolute right-0 top-full z-[120] hidden pt-2 xl:block"
                 />
               ) : null}
             </div>
-            <LanguageSelector variant="dark" buttonClassName="border-0 bg-transparent hover:bg-white/8" />
+            <LanguageSelector
+              variant="dark"
+              hideLocaleName
+              buttonClassName="border-0 bg-transparent hover:bg-white/8"
+            />
           </div>
         </div>
       </div>

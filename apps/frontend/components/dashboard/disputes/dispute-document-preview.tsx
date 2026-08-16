@@ -1,5 +1,7 @@
 "use client";
 
+import "./disputes-page.css";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Check, ChevronRight } from "@/lib/lucide";
@@ -11,7 +13,6 @@ import { formatDate } from "@/lib/i18n/formatters";
 import { cn } from "@/lib/utils";
 
 const LOGO_MINI = "/images/LOGO/mini-logo.png";
-const LOGO_FULL = "/images/LOGO/black-logo-nofon.png";
 
 function maskEmail(email: string) {
   const [local, domain] = email.split("@");
@@ -51,15 +52,15 @@ export function DisputeStatusSteps({ status }: { status: string }) {
             <span
               className={cn(
                 "dsp-step flex size-7 items-center justify-center rounded-full text-[10px] font-bold sm:size-8",
-                done && !rejected && "bg-neutral-900 text-white",
-                rejected && step.id === 4 && "bg-red-600 text-white",
-                isActive && "bg-[#B7F500] text-black dsp-step--active",
-                !done && !isActive && !(rejected && step.id === 4) && "bg-neutral-100 text-neutral-400",
+                done && !rejected && "bg-white text-black",
+                rejected && step.id === 4 && "bg-rose-500 text-white",
+                isActive && "bg-white text-black dsp-step--active",
+                !done && !isActive && !(rejected && step.id === 4) && "bg-white/[0.08] text-zinc-500",
               )}
             >
               {done || (rejected && step.id === 4) ? <Check className="size-3.5" strokeWidth={3} /> : step.id}
             </span>
-            <span className="text-[9px] leading-tight text-neutral-500 sm:text-[10px]">{step.label}</span>
+            <span className="text-[9px] leading-tight text-zinc-500 sm:text-[10px]">{step.label}</span>
           </div>
         );
       })}
@@ -139,43 +140,38 @@ export function DisputeDocumentPreview({
   return (
     <div
       className={cn(
-        "dsp-doc relative overflow-hidden rounded-2xl bg-white shadow-[0_16px_48px_-28px_rgba(0,0,0,0.35)]",
+        "dsp-doc relative overflow-hidden rounded-2xl bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]",
         processing && "dsp-doc--processing",
         !draft && disputeStatus && ["resolved", "closed"].includes(disputeStatus) && "dsp-doc--resolved",
       )}
     >
       <div className="dsp-doc-watermark pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-        <Image src={LOGO_MINI} alt="" width={120} height={120} className="size-30 object-contain opacity-[0.04]" unoptimized />
+        <Image src={LOGO_MINI} alt="" width={120} height={120} className="size-30 object-contain opacity-[0.06]" unoptimized />
       </div>
 
-      <div className="dsp-doc-accent absolute inset-x-0 top-0 h-1 bg-[#B7F500]" aria-hidden />
+      <div className="dsp-doc-accent absolute inset-x-0 top-0 h-px bg-white/25" aria-hidden />
 
-      <header className="relative bg-neutral-50/70 px-4 py-4 sm:px-6 sm:py-5">
+      <header className="relative bg-white/[0.03] px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Image
-              src={LOGO_FULL}
+              src="/images/LOGO/white-logo-nofon.png"
               alt="Spliton"
               width={320}
               height={76}
               className="h-8 w-auto max-w-44 object-contain object-left sm:h-9 sm:max-w-52"
               unoptimized
             />
-            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
               {t("disputes.doc.centerLabel")}
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {t("disputes.doc.ticketLabel")}
             </p>
-            <p className="mt-0.5 font-mono text-xs font-semibold text-neutral-900">{reference}</p>
-            <p
-              className={cn(
-                "mt-1 text-[10px]",
-                submittedAtIsPlaceholder ? "text-neutral-400" : "text-neutral-500",
-              )}
-            >
+            <p className="mt-0.5 font-mono text-xs font-semibold text-white">{reference}</p>
+            <p className={cn("mt-1 text-[10px]", submittedAtIsPlaceholder ? "text-zinc-600" : "text-zinc-500")}>
               {submittedAt}
             </p>
           </div>
@@ -185,100 +181,75 @@ export function DisputeDocumentPreview({
       <div className="relative px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-neutral-900 sm:text-lg">{t("disputes.doc.heading")}</h3>
-            <p className="mt-1 text-xs text-neutral-500">{typeLabel}</p>
+            <h3 className="text-base font-semibold tracking-tight text-white sm:text-lg">{t("disputes.doc.heading")}</h3>
+            <p className="mt-1 text-xs text-zinc-500">{typeLabel}</p>
           </div>
           <span
             className={cn(
               "dsp-doc-stamp inline-flex rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]",
-              tone === "emerald" && "bg-emerald-50 text-emerald-800",
-              tone === "amber" && "bg-amber-50 text-amber-900",
-              tone === "red" && "bg-red-50 text-red-800",
-              tone === "neutral" && "bg-neutral-100 text-neutral-600",
+              tone === "emerald" && "bg-emerald-400/15 text-emerald-200",
+              tone === "amber" && "bg-amber-400/15 text-amber-200",
+              tone === "red" && "bg-rose-400/15 text-rose-200",
+              tone === "neutral" && "bg-white/[0.08] text-zinc-300",
             )}
           >
             {label}
           </span>
         </div>
 
-        <dl className="dsp-doc-meta mt-4 grid gap-3 rounded-xl bg-neutral-50 px-3 py-3 sm:grid-cols-2 sm:gap-x-4 sm:px-4">
+        <dl className="dsp-doc-meta mt-4 grid gap-3 rounded-xl bg-white/[0.04] px-3 py-3 ring-1 ring-white/[0.06] sm:grid-cols-2 sm:gap-x-4 sm:px-4">
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{t("disputes.doc.applicant")}</dt>
-            <dd
-              className={cn(
-                "mt-0.5 text-sm font-medium",
-                holderIsPlaceholder ? "text-neutral-400" : "text-neutral-900",
-              )}
-            >
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{t("disputes.doc.applicant")}</dt>
+            <dd className={cn("mt-0.5 text-sm font-medium", holderIsPlaceholder ? "text-zinc-600" : "text-white")}>
               {holder}
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{t("disputes.doc.category")}</dt>
-            <dd className="mt-0.5 text-sm font-medium text-neutral-900">{typeLabel}</dd>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{t("disputes.doc.category")}</dt>
+            <dd className="mt-0.5 text-sm font-medium text-white">{typeLabel}</dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{t("disputes.doc.submittedAt")}</dt>
-            <dd
-              className={cn(
-                "mt-0.5 text-sm",
-                submittedAtIsPlaceholder ? "text-neutral-400" : "font-mono text-neutral-800",
-              )}
-            >
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{t("disputes.doc.submittedAt")}</dt>
+            <dd className={cn("mt-0.5 text-sm", submittedAtIsPlaceholder ? "text-zinc-600" : "font-mono text-zinc-200")}>
               {submittedAt}
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{t("disputes.doc.responseDue")}</dt>
-            <dd className="mt-0.5 font-mono text-sm text-neutral-800">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{t("disputes.doc.responseDue")}</dt>
+            <dd className="mt-0.5 font-mono text-sm text-zinc-200">
               {dueAt ? formatDocDate(dueAt) : t("disputes.doc.responseDueDefault")}
             </dd>
           </div>
         </dl>
 
-        <div className="dsp-doc-body dsp-ticket-in mt-4 overflow-hidden rounded-xl bg-neutral-50">
-          <div className="bg-neutral-900 px-3 py-2 sm:px-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90">{t("disputes.doc.contentHeading")}</p>
+        <div className="dsp-doc-body dsp-ticket-in mt-4 overflow-hidden rounded-xl bg-white/[0.03] ring-1 ring-white/[0.06]">
+          <div className="bg-white/[0.06] px-3 py-2 sm:px-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-300">{t("disputes.doc.contentHeading")}</p>
           </div>
           <div className="space-y-3 px-3 py-3 sm:px-4 sm:py-4">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{t("disputes.doc.subjectLabel")}</p>
-              <p
-                className={cn(
-                  "mt-1 text-sm",
-                  subjectIsPlaceholder ? "font-normal text-neutral-400" : "font-semibold text-neutral-900",
-                )}
-              >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{t("disputes.doc.subjectLabel")}</p>
+              <p className={cn("mt-1 text-sm", subjectIsPlaceholder ? "font-normal text-zinc-600" : "font-semibold text-white")}>
                 {subjectText}
               </p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{t("disputes.doc.descriptionLabel")}</p>
-              <p
-                className={cn(
-                  "mt-1 text-xs leading-relaxed sm:text-sm",
-                  descriptionIsPlaceholder ? "text-neutral-400" : "text-neutral-600",
-                )}
-              >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{t("disputes.doc.descriptionLabel")}</p>
+              <p className={cn("mt-1 text-xs leading-relaxed sm:text-sm", descriptionIsPlaceholder ? "text-zinc-600" : "text-zinc-400")}>
                 {descriptionText}
               </p>
             </div>
             <table className="w-full text-left text-xs sm:text-sm">
               <tbody>
                 <tr>
-                  <td className="py-2 pr-3 text-neutral-600">{t("disputes.doc.amountLabel")}</td>
-                  <td
-                    className={cn(
-                      "py-2 text-right text-sm",
-                      amountIsPlaceholder ? "text-neutral-400" : "font-mono font-semibold text-neutral-900",
-                    )}
-                  >
+                  <td className="py-2 pr-3 text-zinc-500">{t("disputes.doc.amountLabel")}</td>
+                  <td className={cn("py-2 text-right text-sm", amountIsPlaceholder ? "text-zinc-600" : "font-mono font-semibold text-white")}>
                     {amountText}
                   </td>
                 </tr>
-                <tr className="bg-white/70">
-                  <td className="py-2 pr-3 text-neutral-600">{t("disputes.doc.ticketNumberLabel")}</td>
-                  <td className="py-2 text-right font-mono font-semibold text-neutral-900">{reference}</td>
+                <tr className="bg-white/[0.03]">
+                  <td className="py-2 pr-3 text-zinc-500">{t("disputes.doc.ticketNumberLabel")}</td>
+                  <td className="py-2 text-right font-mono font-semibold text-white">{reference}</td>
                 </tr>
               </tbody>
             </table>
@@ -289,33 +260,33 @@ export function DisputeDocumentPreview({
           <div className="mt-4 space-y-3">
             <DisputeStatusSteps status={stepsStatus} />
             {processing ? (
-              <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
-                <div className="dsp-progress h-full rounded-full bg-[#B7F500]" />
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div className="dsp-progress h-full rounded-full bg-white" />
               </div>
             ) : null}
             {["resolved", "closed"].includes(disputeStatus) ? (
-              <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+              <p className="rounded-lg bg-emerald-400/10 px-3 py-2 text-xs font-medium text-emerald-200">
                 {t("disputes.doc.closedNotice")}
               </p>
             ) : processing ? (
-              <p className="flex items-center gap-2 text-xs text-neutral-600">
+              <p className="flex items-center gap-2 text-xs text-zinc-400">
                 <SplitonLoader size="xxs" variant="light" className="shrink-0" />
                 {t("disputes.doc.processingNotice")}
               </p>
             ) : disputeStatus === "waiting_for_user" ? (
-              <p className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-700">
+              <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-zinc-300">
                 {t("disputes.doc.waitingUserNotice")}
               </p>
             ) : null}
           </div>
         ) : (
-          <p className="mt-4 text-xs leading-relaxed text-neutral-500">{t("disputes.doc.draftHint")}</p>
+          <p className="mt-4 text-xs leading-relaxed text-zinc-500">{t("disputes.doc.draftHint")}</p>
         )}
 
         {conversationHref ? (
           <Link
             href={conversationHref}
-            className="dsp-doc-action mt-4 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-neutral-900 text-xs font-semibold text-white transition hover:bg-neutral-800 sm:text-sm"
+            className="dsp-doc-action mt-4 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-xs font-semibold text-black transition hover:bg-[#e8e8e8] sm:text-sm"
           >
             {t("disputes.doc.openConversation")}
             <ChevronRight className="size-3.5" />
@@ -323,15 +294,15 @@ export function DisputeDocumentPreview({
         ) : null}
       </div>
 
-      <footer className="relative bg-neutral-50/80 px-4 py-3 sm:px-6">
+      <footer className="relative bg-white/[0.03] px-4 py-3 sm:px-6">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[9px] leading-relaxed text-neutral-500">{t("disputes.doc.footer")}</p>
-            <p className="mt-1 font-mono text-[9px] text-neutral-400">spliton.io · disputes@spliton.io</p>
+            <p className="text-[9px] leading-relaxed text-zinc-500">{t("disputes.doc.footer")}</p>
+            <p className="mt-1 font-mono text-[9px] text-zinc-600">spliton.io · disputes@spliton.io</p>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-2 py-1.5 shadow-[0_4px_16px_-12px_rgba(0,0,0,0.25)]">
+          <div className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2 py-1.5 ring-1 ring-white/10">
             <Image src={LOGO_MINI} alt="" width={20} height={20} className="size-5 object-contain" unoptimized />
-            <span className="text-[9px] font-semibold text-neutral-700">Spliton</span>
+            <span className="text-[9px] font-semibold text-zinc-200">Spliton</span>
           </div>
         </div>
       </footer>

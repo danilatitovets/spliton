@@ -37,6 +37,9 @@ export function useSecondaryMarketCatalog(query: MarketListingsQuery = DEFAULT_M
   const live = getWalletDataSource() === "live" && isAuthenticated;
   const [listings, setListings] = useState<AdaptedListing[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPageMeta] = useState(1);
+  const [pageSize, setPageSizeMeta] = useState(query.limit ?? 20);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryKey = useMemo(() => marketListingsQueryKey(query), [query]);
@@ -49,10 +52,15 @@ export function useSecondaryMarketCatalog(query: MarketListingsQuery = DEFAULT_M
       const res = await fetchMarketListings(authorizedFetch, query);
       setListings(res.items.map(adaptRichListing));
       setTotal(res.total);
+      setPageMeta(res.page);
+      setPageSizeMeta(res.pageSize);
+      setHasMore(res.hasMore);
     } catch (e) {
       setError(walletErrorMessage(e));
       setListings([]);
       setTotal(0);
+      setPageMeta(1);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -71,7 +79,18 @@ export function useSecondaryMarketCatalog(query: MarketListingsQuery = DEFAULT_M
     [authorizedFetch, load],
   );
 
-  return { live, loading, error, listings, total, reload: load, buy };
+  return {
+    live,
+    loading,
+    error,
+    listings,
+    total,
+    page,
+    pageSize,
+    hasMore,
+    reload: load,
+    buy,
+  };
 }
 
 export function useSecondaryMarketMyOrders() {

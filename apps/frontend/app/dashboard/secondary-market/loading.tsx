@@ -1,5 +1,3 @@
-import { RouteLoadingShell } from "@/components/layout/route-loading-shell";
-
 export default function SecondaryMarketLoading() {
-  return <RouteLoadingShell variant="dark" />;
+  return <div className="min-h-[24vh] bg-black" aria-hidden />;
 }

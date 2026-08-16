@@ -31,7 +31,8 @@ const WIDGET_FILES_NO_RU_RU = [
   "components/dashboard/assets/positions-structure-cards.tsx",
   "components/dashboard/assets/top-positions-card.tsx",
   "components/dashboard/assets/top-position-cards-grid.tsx",
-  "components/dashboard/assets/position-actions-modal.tsx",
+  "components/dashboard/assets/assets-position-holding-bar.tsx",
+  "components/dashboard/assets/assets-position-detail-content.tsx",
   "components/dashboard/assets/overview-etf-flows-chart.tsx",
   "components/dashboard/assets/payouts-balance-scale.tsx",
   "components/dashboard/assets/calculator-page-content.tsx",
@@ -105,7 +106,7 @@ describe("P2 financial widget renders", () => {
   it.each(LOCALES)("ActivitySummaryCards renders without raw keys (%s)", (locale) => {
     renderWithLocale(
       locale,
-      <ActivitySummaryCards totalOps="12" deposits="3" secondaryTrades="5" latest="2h" />,
+      <ActivitySummaryCards totalOps="12" deposits="+450 USDT" latest="2h" />,
     );
     const label = DICTIONARIES[locale]["activity.widgets.summaryTotalOps"];
     expect(screen.getByText(label)).toBeInTheDocument();

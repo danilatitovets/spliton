@@ -12,6 +12,10 @@ import type { ReleaseAnalyticsYieldDynamicsPoint } from "@/services/release-anal
 import { cn } from "@/lib/utils";
 import type { ReleaseAnalyticsPeriod } from "@/types/analytics/releases";
 
+import { AnalyticsChartEmpty } from "./analytics-chart-empty";
+
+const LINE = "#6B7CFF";
+
 function xAxisTicks(len: number, period: ReleaseAnalyticsPeriod, chartX: number, chartW: number) {
   if (len <= 1) return [{ idx: 0, label: "сейчас", x: chartX }];
   const raw = [0, Math.round((len - 1) * 0.25), Math.round((len - 1) * 0.5), Math.round((len - 1) * 0.75), len - 1];
@@ -48,20 +52,39 @@ function fmtSignedPp(n: number, fractionDigits = 2) {
   return s;
 }
 
+/** Shape a volatile path around a center value (for flat live series). */
+function synthesizeAround(center: number, period: ReleaseAnalyticsPeriod): number[] {
+  const source =
+    period === "7d"
+      ? MOCK_YIELD_SERIES.slice(-8)
+      : period === "30d"
+        ? MOCK_YIELD_SERIES.slice(-18)
+        : period === "90d"
+          ? MOCK_YIELD_SERIES.slice(-30)
+          : MOCK_YIELD_SERIES;
+  const baseMean = source.reduce((a, b) => a + b, 0) / source.length;
+  const shifted = source.map((v) => Number((center + (v - baseMean) * 0.85).toFixed(2)));
+  const detailStep = period === "7d" ? 7 : period === "30d" ? 6 : period === "90d" ? 5 : 4;
+  return buildDetailedSeries(shifted, detailStep);
+}
+
 export function YieldDynamicsChart({
   period,
   yieldDynamics,
   mockMode = false,
+  onRetry,
 }: {
   period: ReleaseAnalyticsPeriod;
   yieldDynamics?: ReleaseAnalyticsYieldDynamicsPoint[] | null;
   mockMode?: boolean;
+  onRetry?: () => void;
 }) {
   const { t } = useI18n();
   const uid = React.useId().replace(/:/g, "");
-  const glowId = `yield-line-glow-${uid}`;
-  const glowNeonId = `yield-line-glow-neon-${uid}`;
-  const clipId = `yield-chart-clip-${uid}`;
+  const clipId = `yield-clip-${uid}`;
+  const areaId = `yield-area-${uid}`;
+  const lineRef = React.useRef<SVGPathElement>(null);
+  const [drawn, setDrawn] = React.useState(false);
 
   const rawValues = React.useMemo(
     () =>
@@ -71,27 +94,24 @@ export function YieldDynamicsChart({
     [yieldDynamics],
   );
 
+  const rawSpan = rawValues.length ? Math.max(...rawValues) - Math.min(...rawValues) : 0;
+  const useSynthetic = mockMode || rawValues.length < 2 || rawSpan < 0.25;
+
   const activeSeries = React.useMemo(() => {
-    if (mockMode) {
-      const source =
-        period === "7d"
-          ? MOCK_YIELD_SERIES.slice(-8)
-          : period === "30d"
-            ? MOCK_YIELD_SERIES.slice(-18)
-            : period === "90d"
-              ? MOCK_YIELD_SERIES.slice(-30)
-              : MOCK_YIELD_SERIES;
-      const detailStep = period === "7d" ? 7 : period === "30d" ? 6 : period === "90d" ? 5 : 4;
-      return buildDetailedSeries(source, detailStep);
+    if (useSynthetic) {
+      const center =
+        rawValues.length > 0
+          ? rawValues.reduce((a, b) => a + b, 0) / rawValues.length
+          : MOCK_YIELD_SERIES[MOCK_YIELD_SERIES.length - 1]!;
+      return synthesizeAround(center, period);
     }
     return buildYieldChartSeries(rawValues, period);
-  }, [mockMode, period, rawValues]);
+  }, [useSynthetic, period, rawValues]);
 
-  const statsSeries = mockMode || rawValues.length === 0 ? activeSeries : rawValues;
+  const statsSeries = activeSeries;
 
   const [containerWidth, setContainerWidth] = React.useState(0);
   const [hoverIdx, setHoverIdx] = React.useState<number | null>(null);
-  const [zoom, setZoom] = React.useState(1);
   const wrapRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -106,21 +126,35 @@ export function YieldDynamicsChart({
     return () => ro.disconnect();
   }, []);
 
-  const svgW = Math.max(containerWidth || 720, 400);
-  const svgH = 400;
-  const chartX = 52;
-  const chartY = 36;
-  const chartW = Math.max(svgW - chartX - 16, 160);
-  const chartH = 286;
-  const chartBottom = chartY + chartH;
-  const axisLabelY = chartBottom + 22;
+  // OKX-style draw animation whenever series / period changes.
+  React.useEffect(() => {
+    setDrawn(false);
+    const path = lineRef.current;
+    if (!path) return;
+    const length = path.getTotalLength();
+    path.style.transition = "none";
+    path.style.strokeDasharray = `${length}`;
+    path.style.strokeDashoffset = `${length}`;
+    // Force reflow then animate.
+    void path.getBoundingClientRect();
+    path.style.transition = "stroke-dashoffset 1.15s cubic-bezier(0.22, 1, 0.36, 1)";
+    path.style.strokeDashoffset = "0";
+    const t = window.setTimeout(() => setDrawn(true), 1180);
+    return () => window.clearTimeout(t);
+  }, [activeSeries, period, containerWidth]);
 
-  const baseDomain = mockMode ? paddedChartDomain(activeSeries) : yieldChartDomain(statsSeries);
-  const center = (baseDomain.max + baseDomain.min) / 2;
-  const zoomHalfSpan = (baseDomain.max - baseDomain.min) / 2 / zoom;
-  const domainMin = center - zoomHalfSpan;
-  const domainMax = center + zoomHalfSpan;
-  const domain = { min: domainMin, max: domainMax };
+  const svgW = Math.max(containerWidth || 720, 400);
+  const svgH = 360;
+  const chartX = 48;
+  const chartY = 28;
+  const chartW = Math.max(svgW - chartX - 12, 160);
+  const chartH = 260;
+  const chartBottom = chartY + chartH;
+  const axisLabelY = chartBottom + 20;
+
+  const domain = useSynthetic ? paddedChartDomain(activeSeries) : yieldChartDomain(statsSeries);
+  const domainMin = domain.min;
+  const domainMax = domain.max;
   const last = statsSeries[statsSeries.length - 1] ?? 0;
   const prev = statsSeries[statsSeries.length - 2] ?? last;
   const delta = last - prev;
@@ -129,13 +163,17 @@ export function YieldDynamicsChart({
   const lo = Math.min(...statsSeries);
   const range = hi - lo;
 
-  const activeLine = buildLinePath(activeSeries, chartW, chartH, 0, 0, domain)
+  const linePts = buildLinePath(activeSeries, chartW, chartH, 0, 0, domain)
     .split(" ")
     .map((pt) => {
       const [x, y] = pt.split(",").map(Number);
       return `${(x + chartX).toFixed(2)},${(y + chartY).toFixed(2)}`;
-    })
+    });
+  const activeLine = linePts.join(" ");
+  const pathD = linePts
+    .map((pt, i) => `${i === 0 ? "M" : "L"}${pt}`)
     .join(" ");
+  const areaD = `${pathD} L${chartX + chartW},${chartBottom} L${chartX},${chartBottom} Z`;
 
   const pointCoords = activeSeries.map((v, i) => {
     const span = domainMax - domainMin || 1;
@@ -145,16 +183,20 @@ export function YieldDynamicsChart({
     return { x, y, value: v, i };
   });
 
+  // Hollow dots like OKX — every Nth point so it stays readable.
+  const markerStep = Math.max(1, Math.floor(pointCoords.length / 18));
+  const markerPoints = pointCoords.filter((_, i) => i % markerStep === 0 || i === pointCoords.length - 1);
+
   const ySpan = domainMax - domainMin || 1;
-  const yTickFormat = ySpan < 2 ? (v: number) => v.toFixed(1) : (v: number) => v.toFixed(0);
+  const yTickFormat = ySpan < 2 ? (v: number) => v.toFixed(2) : (v: number) => v.toFixed(1);
   const yTicks = [domainMax, domainMin + ySpan * 0.66, domainMin + ySpan * 0.33, domainMin];
   const xTicks = React.useMemo(
     () => xAxisTicks(activeSeries.length, period, chartX, chartW),
     [activeSeries.length, period, chartX, chartW],
   );
 
-  const spanY = domainMax - domainMin || 1;
   const idxDenom = Math.max(activeSeries.length - 1, 1);
+  const spanY = domainMax - domainMin || 1;
 
   const handleSvgPointer = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.type === "pointerleave" || e.type === "pointercancel") {
@@ -172,17 +214,14 @@ export function YieldDynamicsChart({
     const idx = Math.round(t * idxDenom);
     setHoverIdx(Math.max(0, Math.min(activeSeries.length - 1, idx)));
   };
+
   const hoverX = hoverIdx !== null ? chartX + (hoverIdx / idxDenom) * chartW : null;
   const hY =
     hoverIdx !== null
       ? chartY +
-        (1 - (Math.max(domainMin, Math.min(domainMax, activeSeries[hoverIdx])) - domainMin) / spanY) * chartH
+        (1 - (Math.max(domainMin, Math.min(domainMax, activeSeries[hoverIdx]!)) - domainMin) / spanY) * chartH
       : null;
-  const hoverDelta =
-    hoverIdx !== null && hoverIdx > 0 ? activeSeries[hoverIdx]! - activeSeries[hoverIdx - 1]! : delta;
 
-  const startPt = pointCoords[0];
-  const endPt = pointCoords[pointCoords.length - 1];
   const activePoint =
     hoverIdx !== null ? pointCoords[hoverIdx] : pointCoords.length ? pointCoords[pointCoords.length - 1] : null;
   const activeIndex = hoverIdx ?? Math.max(activeSeries.length - 1, 0);
@@ -192,42 +231,50 @@ export function YieldDynamicsChart({
   const windowPctDen = Math.max(Math.abs(baselineValue), 1e-6);
   const windowPct = (windowDelta / windowPctDen) * 100;
 
-  const handleWheelZoom = (e: React.WheelEvent<SVGSVGElement>) => {
-    if (!e.ctrlKey) return;
-    e.preventDefault();
-    const step = e.deltaY < 0 ? 0.12 : -0.12;
-    setZoom((z) => Math.max(0.7, Math.min(3, Number((z + step).toFixed(2)))));
-  };
+  // Approximate date label for tooltip.
+  const spanDays = period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 140;
+  const tipDaysBack = Math.round((1 - activeIndex / idxDenom) * spanDays);
+  const tipDate = tipDaysBack <= 0 ? "сейчас" : `−${tipDaysBack}д`;
 
-  if (!mockMode && activeSeries.length === 0) {
+  if (activeSeries.length === 0) {
     return (
-      <div className="w-full min-w-0 rounded-2xl bg-[#0d0d0d] p-8 text-center shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-10">
-        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
-          Динамика доходности
-        </div>
-        <p className="mt-3 font-sans text-sm text-zinc-400">
-          Недостаточно данных для графика за выбранный период.
-        </p>
-        <p className="mt-1 font-mono text-[11px] text-zinc-600">
-          {releaseAnalyticsPeriodLabel(period)} · данные появятся после накопления метрик
-        </p>
+      <div className="w-full min-w-0 rounded-xl bg-[#0d0d0d]">
+        <AnalyticsChartEmpty
+          title={t("analytics.yieldChart.emptyTitle")}
+          body={`${t("analytics.yieldChart.emptyBody")} · ${releaseAnalyticsPeriodLabel(period)}`}
+          onRetry={onRetry}
+          retryLabel={t("analytics.releases.charts.retry")}
+        />
       </div>
     );
   }
 
   return (
-    <div
-      ref={wrapRef}
-      className="w-full min-w-0 rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5"
-    >
-      <div className="flex flex-col gap-1 pb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+    <div ref={wrapRef} className="w-full min-w-0 rounded-2xl bg-black p-4 md:p-5">
+      <div className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0">
-          <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-600">Доходность</div>
-          <div className="mt-1 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{fmtYieldPct(headValue, 1)}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[15px] font-semibold tracking-tight text-white">Динамика доходности</h3>
+            <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+              Релизы
+            </span>
+            {useSynthetic ? (
+              <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
+                демо-серия
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-block size-2 rounded-full" style={{ background: LINE }} aria-hidden />
+            <span className="text-[12px] text-zinc-500">Средняя доходность</span>
+          </div>
+          <div className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-[34px]">
+            {fmtYieldPct(headValue, 2)}
+          </div>
           <div
             className={cn(
-              "mt-1 font-mono text-sm font-semibold tabular-nums sm:text-[15px]",
-              windowDelta > 0 ? "text-[#B7F500]" : windowDelta < 0 ? "text-rose-400" : "text-sky-400",
+              "mt-1 font-mono text-sm font-semibold tabular-nums",
+              windowDelta > 0 ? "text-[#22C55E]" : windowDelta < 0 ? "text-[#EF4444]" : "text-zinc-400",
             )}
           >
             {fmtSignedPp(windowDelta, 2)} п.п.{" "}
@@ -242,13 +289,10 @@ export function YieldDynamicsChart({
               )
             </span>
           </div>
-          <div className="mt-1 font-mono text-[11px] text-zinc-600">
-            Относительно левой границы графика{hoverIdx !== null ? " · точка по курсору" : ""}
-          </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:pt-1">
-          <div className="rounded-full bg-[#111111] px-3 py-1.5 font-mono text-[11px] font-semibold text-zinc-200 ring-1 ring-white/10">
+          <div className="rounded-lg border border-white/10 bg-[#111] px-3 py-1.5 text-[12px] font-medium text-zinc-200">
             {releaseAnalyticsPeriodLabel(period)}
           </div>
         </div>
@@ -258,59 +302,19 @@ export function YieldDynamicsChart({
         <svg
           viewBox={`0 0 ${svgW} ${svgH}`}
           preserveAspectRatio="xMidYMid meet"
-          className="block h-[46vh] min-h-[280px] w-full max-h-[520px] touch-none select-none sm:min-h-[300px]"
+          className="block h-[42vh] min-h-[260px] w-full max-h-[480px] touch-none select-none"
           role="img"
           aria-label={t("analytics.yieldChart.aria")}
           onPointerMove={handleSvgPointer}
           onPointerDown={handleSvgPointer}
           onPointerLeave={handleSvgPointer}
           onPointerCancel={handleSvgPointer}
-          onWheel={handleWheelZoom}
         >
           <defs>
-            <filter id={glowNeonId} x="-55%" y="-55%" width="210%" height="210%">
-              <feGaussianBlur stdDeviation="6.5" result="blurWide" />
-              <feColorMatrix
-                in="blurWide"
-                type="matrix"
-                values="0 0 0 0 0.72
-                        0 0 0 0 0.98
-                        0 0 0 0 0.12
-                        0 0 0 0.72 0"
-                result="glowWide"
-              />
-              <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blurCore" />
-              <feColorMatrix
-                in="blurCore"
-                type="matrix"
-                values="0 0 0 0 0.78
-                        0 0 0 0 1
-                        0 0 0 0 0.22
-                        0 0 0 0.9 0"
-                result="glowCore"
-              />
-              <feMerge>
-                <feMergeNode in="glowWide" />
-                <feMergeNode in="glowCore" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id={glowId} x="-45%" y="-45%" width="190%" height="190%">
-              <feGaussianBlur stdDeviation="3.2" result="blur" />
-              <feColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.78
-                        0 0 0 0 1
-                        0 0 0 0 0.18
-                        0 0 0 0.72 0"
-                result="glow"
-              />
-              <feMerge>
-                <feMergeNode in="glow" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
+            <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={LINE} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={LINE} stopOpacity="0" />
+            </linearGradient>
             <clipPath id={clipId}>
               <rect x={chartX} y={chartY} width={chartW} height={chartH} />
             </clipPath>
@@ -328,75 +332,43 @@ export function YieldDynamicsChart({
                   stroke="rgba(255,255,255,0.06)"
                   strokeWidth="1"
                 />
-                <text x={10} y={y + 4} fill="rgba(161,161,170,0.88)" fontSize="11" className="tabular-nums">
+                <text x={8} y={y + 3} fill="#6B7280" fontSize="10" className="tabular-nums">
                   {yTickFormat(tick)}
                 </text>
               </g>
             );
           })}
 
-          {startPt ? (
-            <text
-              x={chartX + 4}
-              y={chartY + 16}
-              fill="rgba(161,161,170,0.9)"
-              fontSize="10"
-              className="tabular-nums"
-            >
-              {startPt.value.toFixed(1)}
-            </text>
-          ) : null}
-          {endPt ? (
-            <text
-              x={chartX + chartW - 4}
-              y={chartY + 16}
-              textAnchor="end"
-              fill="rgba(161,161,170,0.9)"
-              fontSize="10"
-              className="tabular-nums"
-            >
-              {endPt.value.toFixed(1)}
-            </text>
-          ) : null}
-
           <g clipPath={`url(#${clipId})`}>
-            <polyline
-              points={activeLine}
+            <path
+              d={areaD}
+              fill={`url(#${areaId})`}
+              className={cn("transition-opacity duration-700", drawn ? "opacity-100" : "opacity-0")}
+            />
+            <path
+              ref={lineRef}
+              d={pathD}
               fill="none"
-              stroke="#B7F500"
-              strokeWidth="5.5"
+              stroke={LINE}
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              opacity="0.16"
             />
-            <polyline
-              points={activeLine}
-              fill="none"
-              stroke="#B7F500"
-              strokeWidth="9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.22"
-              filter={`url(#${glowNeonId})`}
-            />
-            <polyline
-              points={activeLine}
-              fill="none"
-              stroke="#B7F500"
-              strokeWidth="2.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              filter={`url(#${glowId})`}
-            />
-            <polyline
-              points={activeLine}
-              fill="none"
-              stroke="#e8ff9a"
-              strokeWidth="1.15"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.55"
-            />
+            {drawn
+              ? markerPoints.map((p) => (
+                  <circle
+                    key={`m-${p.i}`}
+                    cx={p.x}
+                    cy={p.y}
+                    r="3.2"
+                    fill="#000"
+                    stroke={LINE}
+                    strokeWidth="1.5"
+                    opacity={drawn ? 1 : 0}
+                    style={{ transition: "opacity 0.35s ease" }}
+                  />
+                ))
+              : null}
           </g>
 
           {hoverX !== null && hY !== null ? (
@@ -406,52 +378,31 @@ export function YieldDynamicsChart({
                 y1={chartY}
                 x2={hoverX}
                 y2={chartBottom}
-                stroke="rgba(255,255,255,0.22)"
+                stroke="rgba(255,255,255,0.55)"
                 strokeWidth="1"
-                strokeDasharray="4 4"
+                strokeDasharray="3 4"
               />
-              <circle cx={hoverX} cy={hY} r="4.5" fill="#B7F500" stroke="#0d0d0d" strokeWidth="2" />
+              <circle cx={hoverX} cy={hY} r="4" fill="#000" stroke={LINE} strokeWidth="2" />
             </g>
-          ) : (
-            <circle
-              cx={Number(activeLine.split(" ").at(-1)?.split(",")[0] ?? chartX + chartW)}
-              cy={Number(activeLine.split(" ").at(-1)?.split(",")[1] ?? chartBottom)}
-              r="4"
-              fill="#B7F500"
-              stroke="#0d0d0d"
-              strokeWidth="2"
-            />
-          )}
+          ) : null}
 
-          {activePoint ? (
+          {activePoint && hoverIdx !== null ? (
             <g
-              transform={`translate(${Math.min(activePoint.x + 10, chartX + chartW - 148)},${Math.max(activePoint.y - 54, chartY + 6)})`}
+              transform={`translate(${Math.min(Math.max(activePoint.x + 12, chartX + 4), chartX + chartW - 168)},${Math.max(activePoint.y - 58, chartY + 4)})`}
             >
-              <rect width="140" height="48" rx="10" fill="#0a0a0a" stroke="rgba(255,255,255,0.1)" />
-              <text x="10" y="17" fill="rgba(161,161,170,0.92)" fontSize="10" fontWeight="600">
-                T-{Math.max(0, activeSeries.length - 1 - activeIndex)}
+              <rect width="160" height="52" rx="6" fill="#111111" stroke="rgba(255,255,255,0.12)" />
+              <text x="10" y="18" fill="#9CA3AF" fontSize="11">
+                {tipDate}
               </text>
-              <text x="10" y="34" fill="white" fontSize="13" fontWeight="700" className="tabular-nums">
-                {activePoint.value.toFixed(1)}
-              </text>
-              <text x="10" y="46" fill="rgba(161,161,170,0.88)" fontSize="10" className="tabular-nums">
-                Δ {hoverDelta >= 0 ? "+" : ""}
-                {hoverDelta.toFixed(2)}
+              <text x="10" y="38" fill="#fff" fontSize="12" fontWeight="600">
+                Доходность: {activePoint.value.toFixed(2)}%
               </text>
             </g>
           ) : null}
 
           {xTicks.map(({ idx, label, x }) => (
             <g key={`${idx}-${label}`}>
-              <line x1={x} y1={chartBottom} x2={x} y2={chartBottom + 5} stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-              <text
-                x={x}
-                y={axisLabelY}
-                fill="rgba(161,161,170,0.88)"
-                fontSize="10"
-                textAnchor="middle"
-                className="tabular-nums"
-              >
+              <text x={x} y={axisLabelY} fill="#6B7280" fontSize="10" textAnchor="middle" className="tabular-nums">
                 {label}
               </text>
             </g>
@@ -459,17 +410,17 @@ export function YieldDynamicsChart({
         </svg>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label={t("analytics.yieldChart.stat.last")} value={last.toFixed(1)} />
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3 sm:grid-cols-3 lg:grid-cols-6">
+        <Stat label={t("analytics.yieldChart.stat.last")} value={last.toFixed(2)} />
         <Stat
           label={t("analytics.yieldChart.stat.deltaStep")}
           value={`${delta >= 0 ? "+" : ""}${delta.toFixed(2)}`}
-          valueClass={delta >= 0 ? "text-[#B7F500]" : "text-fuchsia-400"}
+          valueClass={delta >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}
         />
-        <Stat label={t("analytics.yieldChart.stat.avg")} value={avg.toFixed(1)} />
-        <Stat label={t("analytics.yieldChart.stat.max")} value={hi.toFixed(1)} />
-        <Stat label={t("analytics.yieldChart.stat.min")} value={lo.toFixed(1)} />
-        <Stat label={t("analytics.yieldChart.stat.range")} value={range.toFixed(1)} />
+        <Stat label={t("analytics.yieldChart.stat.avg")} value={avg.toFixed(2)} />
+        <Stat label={t("analytics.yieldChart.stat.max")} value={hi.toFixed(2)} />
+        <Stat label={t("analytics.yieldChart.stat.min")} value={lo.toFixed(2)} />
+        <Stat label={t("analytics.yieldChart.stat.range")} value={range.toFixed(2)} />
       </div>
     </div>
   );
@@ -485,7 +436,7 @@ function Stat({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl bg-[#090909] px-2.5 py-2">
+    <div className="px-1 py-1">
       <div className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">{label}</div>
       <div className={cn("mt-1 font-mono text-sm font-semibold tabular-nums text-white", valueClass)}>{value}</div>
     </div>

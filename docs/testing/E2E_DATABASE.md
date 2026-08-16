@@ -8,39 +8,37 @@ Backend e2e registers users, posts ledger entries, and deletes `@example.com` us
 - pooler timeouts under parallel load,
 - accidental coupling to manual QA data.
 
-Use `TEST_DATABASE_URL` pointing at a dedicated project (or local Postgres).
+Use `TEST_DATABASE_URL` pointing at **local Docker** (preferred for destructive resets) or a dedicated Supabase e2e project. Do **not** rely on `ALLOW_E2E_ON_DATABASE_URL=1` except as a last-resort local override.
 
-## Setup
+## Nest connection rule (same as runtime)
 
-1. Create Supabase project `spliton-e2e` (or local Postgres).
-2. Add to root `.env` (never commit):
+When e2e maps `TEST_DATABASE_URL` → Nest `DATABASE_URL`, that URL must support interactive Prisma `$transaction`:
 
-```env
-TEST_DATABASE_URL=postgresql://...pooler.../postgres?pgbouncer=true
-TEST_DIRECT_URL=postgresql://...db.host...:5432/postgres
-JWT_SECRET=local-test-jwt-min-32-chars-long!!
-JWT_REFRESH_SECRET=local-test-refresh-min-32-chars!!
-```
+- Local Docker: `postgresql://postgres:spliton_e2e@127.0.0.1:5433/spliton_e2e`
+- Supabase e2e project: **session** pooler `:5432` **without** `pgbouncer=true` (not transaction `:6543`)
 
-3. Apply schema:
+See `docs/production/SUPABASE_POOL_TUNING.md`.
+
+## Local Docker setup
 
 ```powershell
+docker compose -f docker-compose.test.yml up -d
+# If port 5433 is already used by an older container (e.g. spliton-e2e-pg), reuse it.
+
+# Root .env (never commit):
+# TEST_DATABASE_URL=postgresql://postgres:spliton_e2e@127.0.0.1:5433/spliton_e2e
+# TEST_DIRECT_URL=postgresql://postgres:spliton_e2e@127.0.0.1:5433/spliton_e2e
+
 npm run test:db:setup:seed
 ```
+
+If migrate deploy fails with **P3005** (schema present, no `_prisma_migrations`), it is safe to **DROP SCHEMA public CASCADE** only on this local Docker DB, then re-run `npm run test:db:setup`. Never do that on Supabase.
 
 ## Run e2e
 
 ```powershell
 # Jest reads TEST_DATABASE_URL via apps/backend/test/jest-e2e.setup.ts
 npm run backend:test:e2e
-```
-
-Or explicit:
-
-```powershell
-$env:TEST_DATABASE_URL="postgresql://..."
-cd apps/backend
-npm run test:e2e
 ```
 
 ## Cleanup

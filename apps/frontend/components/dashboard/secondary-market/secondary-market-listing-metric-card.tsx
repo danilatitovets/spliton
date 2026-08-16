@@ -10,20 +10,20 @@ export type ListingMetricTrend = "up" | "down" | "flat" | null;
 
 const TONE_VALUE: Record<ListingMetricTone, string> = {
   neutral: "text-white",
-  positive: "text-[#B7F500]",
-  negative: "text-fuchsia-300",
-  buy: "text-[#d4f570]",
-  sell: "text-fuchsia-200",
+  positive: "text-white",
+  negative: "text-zinc-400",
+  buy: "text-white",
+  sell: "text-zinc-400",
   muted: "text-zinc-400",
   warning: "text-amber-200",
 };
 
 const TONE_ICON_WRAP: Record<ListingMetricTone, string> = {
   neutral: "bg-white/6 text-zinc-300",
-  positive: "bg-[#B7F500]/12 text-[#B7F500]",
-  negative: "bg-fuchsia-500/12 text-fuchsia-300",
-  buy: "bg-[#B7F500]/12 text-[#B7F500]",
-  sell: "bg-fuchsia-500/12 text-fuchsia-300",
+  positive: "bg-white/12 text-white",
+  negative: "bg-white/5 text-zinc-400",
+  buy: "bg-white/12 text-white",
+  sell: "bg-white/5 text-zinc-400",
   muted: "bg-white/4 text-zinc-500",
   warning: "bg-amber-500/12 text-amber-300",
 };

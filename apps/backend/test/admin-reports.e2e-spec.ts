@@ -41,7 +41,12 @@ async function staffToken(app: E2eApp, role: UserRoleCode) {
   return login.body.tokens.accessToken as string;
 }
 
-type ReportJobPollBody = { status: string };
+type ReportJobPollBody = {
+  status: string;
+  fileSizeBytes?: number;
+  expiresAt?: string | null;
+  errorMessage?: string | null;
+};
 
 async function waitForReportStatus(
   app: E2eApp,

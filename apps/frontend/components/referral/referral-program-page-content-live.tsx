@@ -9,6 +9,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ReferralFaqList } from "@/components/referral/referral-faq-list";
 import { ReferralHowScene } from "@/components/referral/referral-how-scene";
+import { ReferralPromoTiles } from "@/components/referral/referral-promo-tiles";
 import { referralFaqItems, type ReferralRewardStatus } from "@/components/referral/referral-mock-data";
 import { useReferralProgramData } from "@/components/referral/use-referral-program-data";
 import { Button } from "@/components/ui/button";
@@ -26,12 +27,23 @@ const usdt = new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumF
 
 const REFERRAL_BTN_SECONDARY =
   "border-0 bg-white/[0.08] text-zinc-100 hover:bg-white/[0.14] disabled:opacity-50";
-const REFERRAL_BTN_PRIMARY = "border-0 bg-[#B7F500] text-black hover:bg-[#c8ff3d] disabled:opacity-50";
+const REFERRAL_BTN_PRIMARY = "border-0 bg-white text-black hover:bg-[#e8e8e8] disabled:opacity-50";
+
+const PANEL = "rounded-2xl bg-[#111111] sm:rounded-[1.35rem]";
 
 const REWARD_FILTER_IDS = ["all", "pending", "available", "paid", "rejected", "cancelled"] as const;
 
+const REWARDS_GIFT_GLASS = "/images/referral/rewards-gift-glass.png";
+
 function statusPillClass(s: ReferralRewardStatus) {
-  return "border-white/10 bg-white/5 text-zinc-200";
+  const map: Record<ReferralRewardStatus, string> = {
+    pending: "bg-amber-500/15 text-amber-100/90",
+    available: "bg-[#B7F500]/15 text-[#B7F500]",
+    paid: "bg-white/10 text-zinc-100",
+    rejected: "bg-fuchsia-500/15 text-fuchsia-200/90",
+    cancelled: "bg-zinc-600/30 text-zinc-400",
+  };
+  return map[s];
 }
 
 function useCopyFeedback() {
@@ -65,7 +77,7 @@ function CopyField({
     <div className="space-y-2">
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{label}</p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="min-w-0 flex-1 rounded-xl bg-black/40 px-3 py-2.5 font-mono text-xs text-zinc-200 sm:text-sm">
+        <div className="min-w-0 flex-1 rounded-full bg-white/[0.06] px-4 py-2.5 font-mono text-xs text-zinc-200 sm:text-sm">
           <span className="break-all">{value}</span>
         </div>
         <Button
@@ -235,18 +247,31 @@ export function ReferralProgramPageContent({ activeTab, onRequestProgramTab }: R
     }
   }, [applyCode, authorizedFetch, refresh, t]);
 
-  const surfaceCard = "rounded-2xl bg-[#111111]";
+  const surfaceCard = PANEL;
 
   return (
     <div className="space-y-8 pb-12">
       {activeTab === "program" ? (
-        <div className="space-y-10">
-          <section className="relative overflow-hidden rounded-3xl px-6 py-8 sm:px-8 sm:py-10">
-            <Image src="/images/partner-programtab=about/back.jpg" alt="" fill className="object-cover opacity-42" sizes="1200px" />
-            <div className="pointer-events-none absolute inset-0 bg-black/56" aria-hidden />
-            <div className="relative mx-auto max-w-3xl text-center">
-              <h2 className="text-3xl font-semibold text-white sm:text-4xl">{t("referral.program.hero.title")}</h2>
-              <p className="mt-3 text-sm text-zinc-300 sm:text-base">{t("referral.program.hero.subtitle")}</p>
+        <div className="space-y-6 sm:space-y-8">
+          <section className="relative isolate overflow-hidden rounded-2xl sm:rounded-[1.35rem]">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <Image
+                src="/images/partner-programtab=about/back.jpg"
+                alt=""
+                fill
+                className="object-cover object-center opacity-70"
+                sizes="(max-width: 1400px) 100vw, 1400px"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/55 to-black/75" />
+            </div>
+            <div className="relative z-10 mx-auto max-w-3xl px-5 py-8 text-center sm:px-8 sm:py-10">
+              <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                {t("referral.program.hero.title")}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-white/65 sm:text-base">
+                {t("referral.program.hero.subtitle")}
+              </p>
               {user && qrSrc ? (
                 <div className="mx-auto mt-6 w-fit rounded-2xl bg-white p-2.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -255,11 +280,11 @@ export function ReferralProgramPageContent({ activeTab, onRequestProgramTab }: R
               ) : null}
               {!user ? (
                 <p className="mt-6 text-sm text-zinc-300">
-                  <Link href={ROUTES.login} className="text-[#d4f570] hover:underline">
+                  <Link href={ROUTES.login} className="font-medium text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/60">
                     {t("referral.program.signIn")}
                   </Link>{" "}
                   {t("referral.program.or")}{" "}
-                  <Link href={ROUTES.register} className="text-[#d4f570] hover:underline">
+                  <Link href={ROUTES.register} className="font-medium text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/60">
                     {t("referral.program.register")}
                   </Link>{" "}
                   {t("referral.program.signInForLink")}
@@ -267,7 +292,7 @@ export function ReferralProgramPageContent({ activeTab, onRequestProgramTab }: R
               ) : loading ? (
                 <p className="mt-6 text-sm text-zinc-400">{t("referral.program.loading")}</p>
               ) : error ? (
-                <p className="mt-6 text-sm text-red-300">{error}</p>
+                <p className="mt-6 text-sm text-rose-200">{error}</p>
               ) : (
                 <div className="mt-7 space-y-4 text-left">
                   <CopyField
@@ -309,8 +334,10 @@ export function ReferralProgramPageContent({ activeTab, onRequestProgramTab }: R
 
           <ReferralHowScene />
 
-          <section className="rounded-3xl bg-[#121212] p-6 sm:p-8">
-            <h2 className="text-2xl font-semibold text-white">{t("referral.summary.title")}</h2>
+          <ReferralPromoTiles />
+
+          <section className={cn(PANEL, "p-6 sm:p-8")}>
+            <h2 className="text-2xl font-semibold tracking-tight text-white">{t("referral.summary.title")}</h2>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { label: t("referral.summary.invited"), value: user ? String(me?.invitedUsersCount ?? 0) : t("referral.summary.empty") },
@@ -324,43 +351,49 @@ export function ReferralProgramPageContent({ activeTab, onRequestProgramTab }: R
                   value: user ? `${usdt.format(Number(me?.paidRewards ?? 0))} USDT` : t("referral.summary.empty"),
                 },
               ].map((c) => (
-                <div key={c.label} className="rounded-2xl bg-zinc-900/55 px-4 py-4">
-                  <p className="text-[10px] uppercase text-zinc-500">{c.label}</p>
-                  <p className="mt-2 text-xl font-semibold text-white">{c.value}</p>
+                <div key={c.label} className="rounded-2xl bg-white/[0.04] px-4 py-4 ring-1 ring-white/[0.06]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">{c.label}</p>
+                  <p className="mt-2 font-mono text-xl font-semibold tabular-nums text-white">{c.value}</p>
                 </div>
               ))}
             </div>
           </section>
 
           {user ? (
-            <section className="rounded-3xl bg-[#121212] p-6 sm:p-8">
-              <h2 className="text-lg font-semibold text-white">{t("referral.applyCode.title")}</h2>
-              <p className="mt-1 text-xs text-zinc-500">{t("referral.applyCode.hint")}</p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <input
-                  value={applyCode}
-                  onChange={(e) => setApplyCode(e.target.value.toUpperCase())}
-                  placeholder={t("referral.applyCode.placeholder")}
-                  className="flex-1 rounded-xl border-0 bg-black/40 px-3 py-2 font-mono text-sm text-white placeholder:text-zinc-500 focus:bg-black/55 focus:outline-none"
-                />
-                <Button
-                  type="button"
-                  disabled={applying || !applyCode.trim()}
-                  onClick={() => void submitApplyCode()}
-                  className={REFERRAL_BTN_PRIMARY}
-                >
-                  {applying ? t("referral.applyCode.submitting") : t("referral.applyCode.submit")}
-                </Button>
+            <section className="px-1 py-2 sm:px-0">
+              <div className="mx-auto max-w-xl text-center">
+                <h2 className="text-lg font-semibold tracking-tight text-white">{t("referral.applyCode.title")}</h2>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-500">{t("referral.applyCode.hint")}</p>
+                <div className="mt-4 flex items-center gap-2">
+                  <input
+                    value={applyCode}
+                    onChange={(e) => setApplyCode(e.target.value.toUpperCase())}
+                    placeholder={t("referral.applyCode.placeholder")}
+                    className={cn(
+                      "h-11 min-w-0 flex-1 appearance-none rounded-full border-0 bg-white/[0.06] px-4 font-mono text-sm text-white shadow-none outline-none ring-0",
+                      "placeholder:text-zinc-600 transition-[background-color]",
+                      "hover:bg-white/[0.08] focus:bg-white/[0.1]",
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    disabled={applying || !applyCode.trim()}
+                    onClick={() => void submitApplyCode()}
+                    className={cn("h-11 shrink-0 rounded-full px-5", REFERRAL_BTN_PRIMARY)}
+                  >
+                    {applying ? t("referral.applyCode.submitting") : t("referral.applyCode.submit")}
+                  </Button>
+                </div>
+                {applyError ? <p className="mt-2 text-sm text-rose-200">{applyError}</p> : null}
+                {applyOk ? <p className="mt-2 text-sm text-zinc-200">{t("referral.applyCode.success")}</p> : null}
               </div>
-              {applyError ? <p className="mt-2 text-sm text-red-300">{applyError}</p> : null}
-              {applyOk ? <p className="mt-2 text-sm text-[#d4f570]">{t("referral.applyCode.success")}</p> : null}
             </section>
           ) : null}
 
           {user ? (
-            <section className="rounded-3xl bg-[#121212] p-6 sm:p-8">
+            <section className={cn(PANEL, "p-6 sm:p-8")}>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-2xl font-semibold text-white">{t("referral.invites.title")}</h2>
+                <h2 className="text-2xl font-semibold tracking-tight text-white">{t("referral.invites.title")}</h2>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -427,99 +460,156 @@ export function ReferralProgramPageContent({ activeTab, onRequestProgramTab }: R
             </section>
           ) : null}
 
-          <section className={cn("p-6 sm:p-8", surfaceCard)}>
-            <h2 className="text-lg font-semibold text-white">{t("referral.faq.title")}</h2>
+          <section className={cn(PANEL, "p-6 sm:p-8")}>
+            <h2 className="text-lg font-semibold tracking-tight text-white">{t("referral.faq.title")}</h2>
             <ReferralFaqList items={referralFaqItems} defaultOpenId={referralFaqItems[0]?.id ?? null} />
           </section>
         </div>
       ) : null}
 
       {activeTab === "rewards" ? (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
+          <header className="flex flex-col items-center px-2 pb-2 pt-4 text-center sm:pt-6">
+            <div className="relative mx-auto aspect-square w-[min(72vw,280px)] sm:w-[320px]">
+              <Image
+                src={REWARDS_GIFT_GLASS}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 72vw, 320px"
+                className="object-contain drop-shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
+                unoptimized
+                priority
+                aria-hidden
+              />
+            </div>
+            <h1 className="mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              {t("referral.rewards.summary.title")}
+            </h1>
+            <p className="mt-2 max-w-[42ch] text-[14px] leading-relaxed text-zinc-400 sm:text-[15px]">
+              {t("referral.rewards.summary.subtitle")}
+            </p>
+          </header>
+
           {!user ? (
             <p className="text-center text-sm text-zinc-400">
-              <Link href={ROUTES.login} className="text-[#d4f570] hover:underline">
+              <Link
+                href={ROUTES.login}
+                className="font-medium text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/60"
+              >
                 {t("referral.rewards.signIn")}
               </Link>{" "}
               {t("referral.rewards.signInPrompt")}
             </p>
           ) : loading ? (
-            <p className="text-sm text-zinc-400">{t("referral.rewards.loading")}</p>
+            <p className="text-center text-sm text-zinc-400">{t("referral.rewards.loading")}</p>
           ) : (
             <>
-              <section className="rounded-3xl bg-[#121212] p-6 sm:p-8">
-                <h2 className="text-2xl font-semibold text-white">{t("referral.rewards.summary.title")}</h2>
-                <div className="mt-6 grid gap-3 sm:grid-cols-4">
+              <section className={cn(PANEL, "p-5 sm:p-7")}>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                   {[
                     { label: t("referral.rewards.summary.total"), value: rewardSummary.total },
                     { label: t("referral.rewards.summary.pending"), value: rewardSummary.pending },
                     { label: t("referral.rewards.summary.available"), value: rewardSummary.available },
                     { label: t("referral.rewards.summary.paid"), value: rewardSummary.paid },
                   ].map((c) => (
-                    <div key={c.label} className="rounded-2xl bg-zinc-900/55 px-4 py-4">
-                      <p className="text-[10px] uppercase text-zinc-500">{c.label}</p>
-                      <p className="mt-2 font-mono text-lg text-white">{usdt.format(c.value)} USDT</p>
+                    <div key={c.label} className="rounded-2xl bg-white/[0.05] px-3.5 py-4 sm:px-4 sm:py-5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{c.label}</p>
+                      <p className="mt-2 font-mono text-[15px] font-semibold tabular-nums tracking-tight text-white sm:text-lg">
+                        {usdt.format(c.value)} USDT
+                      </p>
                     </div>
                   ))}
                 </div>
               </section>
-              <section className="rounded-3xl bg-[#121212] p-6 sm:p-8">
-                <div className="flex flex-wrap gap-2">
+
+              <section className={cn(PANEL, "p-5 sm:p-7")}>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                      {t("referral.rewards.history.title")}
+                    </h2>
+                    <p className="mt-1 text-[13px] text-zinc-500">{t("referral.rewards.history.subtitle")}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-1.5" role="tablist" aria-label={t("referral.rewards.filter.aria")}>
                   {filterOptions.map((f) => (
                     <button
                       key={f.id}
                       type="button"
+                      role="tab"
+                      aria-selected={rewardFilter === f.id}
                       onClick={() => setRewardFilter(f.id)}
                       className={cn(
-                        "rounded-full px-3 py-1.5 text-xs transition-colors",
+                        "shrink-0 rounded-full px-3 py-1.5 font-mono text-[12px] font-medium transition-colors",
                         rewardFilter === f.id
-                          ? "bg-white/14 text-white"
-                          : "bg-white/[0.04] text-zinc-400 hover:bg-white/8 hover:text-zinc-200",
+                          ? "bg-white text-black"
+                          : "bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-zinc-200",
                       )}
                     >
                       {f.label}
                     </button>
                   ))}
                 </div>
-                {filteredRewards.length === 0 ? (
-                  <p className="mt-8 text-center text-sm text-zinc-500">{t("referral.rewards.empty")}</p>
+
+                {rewards.length === 0 ? (
+                  <div className="mt-8 flex justify-center px-4 py-6">
+                    <Button
+                      type="button"
+                      className={cn("rounded-full px-6", REFERRAL_BTN_PRIMARY)}
+                      onClick={() => onRequestProgramTab?.()}
+                    >
+                      {t("referral.rewards.inviteFriends")}
+                    </Button>
+                  </div>
+                ) : filteredRewards.length === 0 ? (
+                  <div className="mt-10 flex flex-col items-center px-4 py-10 text-center">
+                    <p className="font-medium text-white">{t("referral.rewards.emptyFiltered.title")}</p>
+                    <p className="mt-2 text-sm text-zinc-500">{t("referral.rewards.emptyFiltered.text")}</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn("mt-5 rounded-full", REFERRAL_BTN_SECONDARY)}
+                      onClick={() => setRewardFilter("all")}
+                    >
+                      {t("referral.rewards.emptyFiltered.showAll")}
+                    </Button>
+                  </div>
                 ) : (
-                  <div className="mt-6 overflow-x-auto rounded-2xl bg-zinc-900/45">
-                    <table className="w-full min-w-[600px] text-sm">
+                  <div className="mt-6 overflow-x-auto rounded-2xl bg-white/[0.03]">
+                    <table className="w-full min-w-[600px] border-collapse text-sm">
                       <thead>
-                        <tr className="text-[10px] uppercase text-zinc-500">
-                          <th className="px-4 py-2">{t("referral.rewards.table.date")}</th>
-                          <th className="px-4 py-2">{t("referral.rewards.table.event")}</th>
-                          <th className="px-4 py-2">{t("referral.rewards.table.status")}</th>
-                          <th className="px-4 py-2 text-right">{t("referral.rewards.table.amount")}</th>
+                        <tr className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                          <th className="px-4 py-3 text-left font-medium">{t("referral.rewards.table.date")}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t("referral.rewards.table.event")}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t("referral.rewards.table.status")}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t("referral.rewards.table.amount")}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredRewards.map((row) => (
-                          <tr key={row.id} className="border-t border-white/6">
-                            <td className="px-4 py-2 font-mono text-xs">{formatDate(row.createdAt)}</td>
-                            <td className="px-4 py-2">{eventLabel(row.eventType)}</td>
-                            <td className="px-4 py-2">
-                              <span className={cn("rounded-full border px-2 py-0.5 text-[10px]", statusPillClass(row.status))}>
+                          <tr key={row.id} className="border-t border-white/[0.04] transition-colors hover:bg-white/[0.02]">
+                            <td className="px-4 py-3 font-mono text-xs text-zinc-400">{formatDate(row.createdAt)}</td>
+                            <td className="px-4 py-3 text-zinc-200">{eventLabel(row.eventType)}</td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-medium",
+                                  statusPillClass(row.status),
+                                )}
+                              >
                                 {row.statusLabel || statusLabel(row.status)}
                               </span>
                             </td>
-                            <td className="px-4 py-2 text-right font-mono">{usdt.format(row.amountUsdt)} USDT</td>
+                            <td className="px-4 py-3 text-right font-mono text-xs text-zinc-100">
+                              {usdt.format(row.amountUsdt)} USDT
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 )}
-                {rewards.length === 0 ? (
-                  <Button
-                    type="button"
-                    className={cn("mt-6", REFERRAL_BTN_PRIMARY)}
-                    onClick={() => onRequestProgramTab?.()}
-                  >
-                    {t("referral.rewards.inviteFriends")}
-                  </Button>
-                ) : null}
               </section>
             </>
           )}

@@ -9,11 +9,9 @@ import type {
   SafeUser,
   TwoFactorVerifyPayload,
 } from "@/types/auth";
-import {
-  clearAdminAccessVerified,
-  rekeyAdminAccessVerified,
-} from "@/features/admin/lib/admin-access-cache";
+import { clearAdminAccessVerified, rekeyAdminAccessVerified } from "@/features/admin/lib/admin-access-cache";
 import { invalidateAdminDataCache } from "@/features/admin/lib/admin-data-cache";
+import { invalidateClientCache } from "@/lib/client-data-cache";
 import { invalidateWalletBalanceCache } from "@/lib/wallet-balance-cache";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import {
@@ -50,7 +48,7 @@ type AuthContextValue = {
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
-import { clearSessionHintCookie, setSessionHintCookie } from "@/lib/auth/session-cookie";
+import { clearSessionHintCookie, hasClientSessionHint, setSessionHintCookie } from "@/lib/auth/session-cookie";
 import {
   broadcastLogout,
   broadcastSession,
@@ -73,11 +71,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     React.useState<PendingTwoFactorChallenge | null>(null);
   const accessTokenRef = React.useRef<string | null>(null);
   accessTokenRef.current = accessToken;
+  /** Same-tab single-flight — BroadcastChannel does not deliver to the sender tab. */
+  const refreshInFlightRef = React.useRef<Promise<string | null> | null>(null);
+  const userIdRef = React.useRef<string | null>(null);
+  userIdRef.current = user?.id ?? null;
 
   const clearAuth = React.useCallback(() => {
     clearAdminAccessVerified();
     invalidateAdminDataCache();
     invalidateWalletBalanceCache();
+    // Private portfolio/wallet/activity caches must not survive user switch.
+    invalidateClientCache();
     clearSessionHintCookie();
     setUser(null);
     setAccessToken(null);
@@ -102,31 +106,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [accessToken, clearAuth]);
 
   const refreshSession = React.useCallback(async (): Promise<string | null> => {
-    const refreshed = await coordinatedRefresh(async () => {
-      try {
-        const previousToken = accessTokenRef.current;
-        const response = await refreshSessionRequest();
-        const nextToken = response.tokens.accessToken;
-        rekeyAdminAccessVerified(previousToken, nextToken);
-        setSessionHintCookie();
-        return {
-          user: response.user,
-          accessToken: nextToken,
-          ts: Date.now(),
-        };
-      } catch {
-        return null;
-      }
-    });
-
-    if (!refreshed) {
-      clearAuth();
-      return null;
+    if (refreshInFlightRef.current) {
+      return refreshInFlightRef.current;
     }
 
-    setAccessToken(refreshed.accessToken);
-    setUser(refreshed.user);
-    return refreshed.accessToken;
+    const run = (async (): Promise<string | null> => {
+      let authRejected = false;
+
+      const refreshed = await coordinatedRefresh(async () => {
+        const runOnce = async () => {
+          try {
+            const previousToken = accessTokenRef.current;
+            const response = await refreshSessionRequest();
+            const nextToken = response.tokens.accessToken;
+            rekeyAdminAccessVerified(previousToken, nextToken);
+            setSessionHintCookie();
+            return {
+              user: response.user,
+              accessToken: nextToken,
+              ts: Date.now(),
+            };
+          } catch (error) {
+            if (error instanceof ApiError && error.status === 401) {
+              authRejected = true;
+              return null;
+            }
+            // Network / timeout — keep existing session when we still have a token.
+            return null;
+          }
+        };
+
+        const first = await runOnce();
+        if (first || authRejected) return first;
+        await new Promise((r) => window.setTimeout(r, 350));
+        return runOnce();
+      });
+
+      if (!refreshed) {
+        if (authRejected) {
+          clearAuth();
+          return null;
+        }
+        // Transient miss (lock wait / network): do not kick a live session.
+        return accessTokenRef.current;
+      }
+
+      setAccessToken(refreshed.accessToken);
+      setUser(refreshed.user);
+      return refreshed.accessToken;
+    })();
+
+    refreshInFlightRef.current = run;
+    try {
+      return await run;
+    } finally {
+      if (refreshInFlightRef.current === run) {
+        refreshInFlightRef.current = null;
+      }
+    }
   }, [clearAuth]);
 
   const register = React.useCallback(
@@ -139,6 +176,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const handleAuthSuccess = React.useCallback((nextUser: SafeUser, token: string) => {
+    // Switching accounts in the same browser tab must not show previous user's portfolio.
+    if (userIdRef.current && userIdRef.current !== nextUser.id) {
+      invalidateClientCache();
+      invalidateWalletBalanceCache();
+      invalidateAdminDataCache();
+    }
     setAccessToken(token);
     setUser(nextUser);
     setPendingTwoFactorChallenge(null);
@@ -206,6 +249,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [accessToken, clearAuth]);
 
+  const refreshSessionRef = React.useRef(refreshSession);
+  refreshSessionRef.current = refreshSession;
+
+  // Stable identity — favorites/watchlist must not re-hydrate on every token refresh.
   const authorizedFetch = React.useCallback(
     async (input: string, init?: RequestInit): Promise<Response> => {
       const target = input.startsWith("http") ? input : resolveUrl(input);
@@ -219,28 +266,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         });
 
-      let response = await doRequest(accessToken);
+      let response = await doRequest(accessTokenRef.current);
       if (response.status !== 401) {
         return response;
       }
 
-      const refreshedToken = await refreshSession();
+      const refreshedToken = await refreshSessionRef.current();
       if (!refreshedToken) {
         return response;
       }
 
-      response = await doRequest(refreshedToken);
-      if (response.status === 401) {
-        clearAuth();
-      }
-      return response;
+      return doRequest(refreshedToken);
     },
-    [accessToken, refreshSession, clearAuth],
+    [],
   );
 
   React.useEffect(() => {
     return subscribeAuthTabSync({
       onSession: (payload) => {
+        if (userIdRef.current && userIdRef.current !== payload.user.id) {
+          invalidateClientCache();
+          invalidateWalletBalanceCache();
+          invalidateAdminDataCache();
+        }
         setAccessToken(payload.accessToken);
         setUser(payload.user);
         setPendingTwoFactorChallenge(null);
@@ -258,11 +306,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     let active = true;
     (async () => {
-      const refreshed = await refreshSession();
-      if (!active) return;
-      if (active) {
-        setIsLoading(false);
+      // Guests: skip refresh round-trip (avoids 401 → clearAuth flicker on login).
+      if (!hasClientSessionHint()) {
+        if (active) setIsLoading(false);
+        return;
       }
+      await refreshSession();
+      if (active) setIsLoading(false);
     })();
     return () => {
       active = false;

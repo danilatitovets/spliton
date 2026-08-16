@@ -12,6 +12,8 @@ import { assertAdminArea } from '../common/admin-permissions';
 import { throwAdminError } from '../common/admin-http.util';
 import { buildPaginated } from '../common/types/paginated-response.type';
 import { AdminDepositSettlementService } from './admin-deposit-settlement.service';
+import { DepositIngestionService } from '../../deposit-ingestion/deposit-ingestion.service';
+import { DepositReconciliationService } from '../../deposit-ingestion/deposit-reconciliation.service';
 import type { AdminDepositsQueryDto } from './dto/admin-deposits-query.dto';
 import {
   apiDepositStatusToDb,
@@ -22,6 +24,10 @@ import {
   type AdminDepositDetailDto,
   type AdminDepositSummaryDto,
 } from './mappers/admin-deposit.mapper';
+import {
+  InvalidTronTxHashError,
+  normalizeTronTxHash,
+} from '../../deposit-ingestion/tron/tron-tx-hash';
 
 @Injectable()
 export class AdminDepositsService {
@@ -29,6 +35,8 @@ export class AdminDepositsService {
     private readonly prisma: PrismaService,
     private readonly audit: AdminAuditService,
     private readonly settlement: AdminDepositSettlementService,
+    private readonly ingestion: DepositIngestionService,
+    private readonly recon: DepositReconciliationService,
   ) {}
 
   private include() {
@@ -517,7 +525,7 @@ export class AdminDepositsService {
     meta: { ip: string | null; userAgent: string | null },
   ) {
     const dbStatus = apiDepositStatusToDb(status);
-    if (dbStatus === DepositStatus.CONFIRMED) {
+    if (dbStatus === DepositStatus.CREDITED) {
       return this.mutate(
         actorId,
         actorRoles,
@@ -584,6 +592,88 @@ export class AdminDepositsService {
       note,
       meta,
     );
+  }
+
+  async recoverByTxHash(
+    actorId: string,
+    actorRoles: string[],
+    txHash: string,
+    meta: { ip: string | null; userAgent: string | null },
+  ) {
+    assertAdminArea(actorRoles, 'deposits', 'mutate');
+    let hash: string;
+    try {
+      hash = normalizeTronTxHash(txHash);
+    } catch (err) {
+      if (err instanceof InvalidTronTxHashError) {
+        throwAdminError('TX_HASH_INVALID', 'txHash is not a valid TRON txid', HttpStatus.BAD_REQUEST);
+      }
+      throw err;
+    }
+    const result = await this.ingestion.recoverByTxHash(hash);
+    await this.audit.logOperatorAction({
+      actorUserId: actorId,
+      actorRoles,
+      entityType: 'deposit',
+      entityId: result.depositId ?? hash,
+      action: 'deposit.recover_by_txhash',
+      before: {},
+      after: result,
+      ...meta,
+    });
+    return result;
+  }
+
+  async recheck(
+    actorId: string,
+    actorRoles: string[],
+    id: string,
+    meta: { ip: string | null; userAgent: string | null },
+  ) {
+    assertAdminArea(actorRoles, 'deposits', 'mutate');
+    const status = await this.ingestion.recheckDeposit(id);
+    await this.audit.logOperatorAction({
+      actorUserId: actorId,
+      actorRoles,
+      entityType: 'deposit',
+      entityId: id,
+      action: 'deposit.recheck',
+      before: {},
+      after: { status },
+      ...meta,
+    });
+    return { id, status };
+  }
+
+  async unattributed(roles: string[]) {
+    assertAdminArea(roles, 'deposits', 'view');
+    const rows = await this.prisma.unattributedOnchainTransfer.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      chain: row.chain,
+      chainNetwork: row.chainNetwork,
+      assetCode: row.assetCode,
+      tokenContract: row.tokenContract,
+      blockchainTxid: row.blockchainTxid,
+      fromAddress: row.fromAddress,
+      toAddress: row.toAddress,
+      rawAmount: row.rawAmount,
+      amount: row.amount.toString(),
+      blockNumber: row.blockNumber.toString(),
+      confirmations: row.confirmations,
+      status: row.status,
+      reason: row.reason,
+      provider: row.provider,
+      createdAt: row.createdAt,
+    }));
+  }
+
+  async reconciliation(roles: string[]) {
+    assertAdminArea(roles, 'deposits', 'view');
+    return this.recon.run();
   }
 
   private parseNum(value?: string): number | null {

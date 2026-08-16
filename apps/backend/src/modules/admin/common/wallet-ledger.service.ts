@@ -23,15 +23,38 @@ export class WalletLedgerService {
   ) {}
 
   async getBalanceOrThrow(tx: TxClient, walletId: string) {
-    const balance = await tx.walletBalance.findUnique({ where: { walletId } });
-    if (!balance) {
+    // Row lock so concurrent debit/credit/lock cannot lost-update available.
+    const rows = await tx.$queryRaw<
+      Array<{
+        wallet_id: string;
+        available: Prisma.Decimal;
+        locked: Prisma.Decimal;
+        pending: Prisma.Decimal;
+        created_at: Date;
+        updated_at: Date;
+      }>
+    >`
+      SELECT wallet_id, available, locked, pending, created_at, updated_at
+      FROM wallet_balances
+      WHERE wallet_id = ${walletId}::uuid
+      FOR UPDATE
+    `;
+    const row = rows[0];
+    if (!row) {
       throwAdminError(
         'WALLET_BALANCE_NOT_FOUND',
         'Wallet balance not found',
         HttpStatus.NOT_FOUND,
       );
     }
-    return balance;
+    return {
+      walletId: row.wallet_id,
+      available: new Prisma.Decimal(row.available),
+      locked: new Prisma.Decimal(row.locked),
+      pending: new Prisma.Decimal(row.pending),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   }
 
   assertNonNegative(value: Prisma.Decimal, label: string): void {

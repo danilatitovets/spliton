@@ -270,6 +270,9 @@ export function mockPrimaryRoundRoutes(
           roundId,
           pricePerUnit: '10',
           availableUnits: '100',
+          minUnits: 1,
+          maxUnitsPerOrder: 100,
+          status: 'LIVE',
           primaryPurchaseFeePct: '2',
         }),
       });

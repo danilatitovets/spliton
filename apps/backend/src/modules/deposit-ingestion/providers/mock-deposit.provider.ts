@@ -1,24 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import type { DepositBlockchainProvider } from './deposit-blockchain-provider.interface';
+import { confirmationsFromBlocks } from '../tron/tron-amount';
+import { tryNormalizeTronTxHash } from '../tron/tron-tx-hash';
+import { resolveTronRuntimeConfig } from '../tron/tron-network.config';
 import type {
-  IncomingUsdtTransfer,
+  AddressScanCursor,
+  DepositBlockchainProvider,
   ProviderHealth,
-} from '../types/incoming-transfer.type';
+  Trc20TransferPage,
+  VerifiedTrc20Transfer,
+} from './deposit-blockchain-provider.interface';
 
-/** In-memory queue for e2e and local dev. */
+/** In-memory queue for e2e and local tests. Never used when TRON_PROVIDER_MODE=tron. */
 @Injectable()
 export class MockDepositProvider implements DepositBlockchainProvider {
   readonly mode = 'mock';
 
-  private readonly queue: IncomingUsdtTransfer[] = [];
+  nowBlock = 10_000n;
+  private readonly byHash = new Map<string, VerifiedTrc20Transfer[]>();
 
-  /** Test helper: enqueue a transfer to be picked up on next poll. */
-  enqueue(transfer: IncomingUsdtTransfer): void {
-    this.queue.push(transfer);
+  enqueue(transfer: VerifiedTrc20Transfer): void {
+    const hash = tryNormalizeTronTxHash(transfer.txHash);
+    if (!hash) return;
+    const canonical = { ...transfer, txHash: hash };
+    const existing = this.byHash.get(hash) ?? [];
+    existing.push(canonical);
+    this.byHash.set(hash, existing);
   }
 
   clear(): void {
-    this.queue.length = 0;
+    this.byHash.clear();
   }
 
   async health(): Promise<ProviderHealth> {
@@ -26,16 +36,59 @@ export class MockDepositProvider implements DepositBlockchainProvider {
     return {
       ok: true,
       mode: this.mode,
-      message: `${this.queue.length} queued`,
+      message: `${this.byHash.size} queued`,
+      lastBlock: this.nowBlock.toString(),
+      network: 'mock',
     };
   }
 
-  async fetchTransfersSince(
-    _fromBlock: bigint,
-  ): Promise<IncomingUsdtTransfer[]> {
+  async getNowBlock(): Promise<bigint> {
     await Promise.resolve();
-    void _fromBlock;
-    if (!this.queue.length) return [];
-    return this.queue.splice(0, this.queue.length);
+    return this.nowBlock;
+  }
+
+  async fetchTrc20Incoming(
+    address: string,
+    cursor: AddressScanCursor,
+  ): Promise<Trc20TransferPage> {
+    await Promise.resolve();
+    const overlap = BigInt(resolveTronRuntimeConfig().watermarkOverlapMs);
+    const minTs =
+      cursor.watermarkTimestamp > 0n
+        ? cursor.watermarkTimestamp > overlap
+          ? cursor.watermarkTimestamp - overlap
+          : 0n
+        : 0n;
+    const items = [...this.byHash.values()]
+      .flat()
+      .filter((item) => item.toAddress === address)
+      .filter((item) => minTs === 0n || item.blockTimestampMs >= minTs)
+      .map((item) => this.withConfirmations(item));
+    return { items, fingerprint: cursor.fingerprint, hasMore: false };
+  }
+
+  async getVerifiedTransfer(
+    txHash: string,
+  ): Promise<VerifiedTrc20Transfer | null> {
+    const transfers = await this.getVerifiedTransfers(txHash);
+    return transfers.length === 1 ? transfers[0]! : null;
+  }
+
+  async getVerifiedTransfers(
+    txHash: string,
+  ): Promise<VerifiedTrc20Transfer[]> {
+    await Promise.resolve();
+    const hash = tryNormalizeTronTxHash(txHash);
+    if (!hash) return [];
+    return (this.byHash.get(hash) ?? []).map((item) => this.withConfirmations(item));
+  }
+
+  private withConfirmations(
+    transfer: VerifiedTrc20Transfer,
+  ): VerifiedTrc20Transfer {
+    return {
+      ...transfer,
+      confirmations: confirmationsFromBlocks(this.nowBlock, transfer.blockNumber),
+    };
   }
 }

@@ -6,9 +6,11 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { assertProductionBootSafe } from './config/production-boot-guard';
+import { assertDbConnectionPolicy } from './config/db-connection-policy';
 
 async function bootstrap() {
   assertProductionBootSafe();
+  assertDbConnectionPolicy();
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const rawOrigins =

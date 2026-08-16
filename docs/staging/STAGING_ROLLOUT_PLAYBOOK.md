@@ -21,8 +21,8 @@
 |-------|----------|
 | Staging frontend domain | `https://staging.spliton.example` (или ваш URL) |
 | Staging backend domain | `https://api.staging.spliton.example` |
-| `DATABASE_URL` | Staging Supabase pooler (`pgbouncer=true`) |
-| `DIRECT_URL` / `DIRECT_DATABASE_URL` | Direct host `:5432` (migrations) |
+| `DATABASE_URL` | Staging Supabase **session** pooler `:5432` (**no** `pgbouncer=true`) |
+| `DIRECT_URL` / `DIRECT_DATABASE_URL` | Direct host `db.<ref>.supabase.co:5432` (migrations) |
 | `NEXT_PUBLIC_*_DATA_SOURCE` | **все `live`** на frontend |
 | `NEXT_PUBLIC_APP_ENV` | `staging` |
 | `NEXT_PUBLIC_API_BASE_URL` | Staging API URL |

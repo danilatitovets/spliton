@@ -10,6 +10,8 @@ import {
   ACTIVITY_STATUS_ALL,
 } from "@/components/dashboard/assets/activity-filters-bar";
 import { adaptWalletActivityToRecord } from "@/lib/wallet/wallet-activity-adapter";
+import { getClientCache, setClientCache } from "@/lib/client-data-cache";
+import { useCabinetDemoPreview } from "@/hooks/use-cabinet-demo-preview";
 import { isLivePortfolioEnabled } from "@/lib/public-env";
 import {
   fetchPortfolioPositions,
@@ -108,25 +110,32 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 export function useAssetsActivityPage(initial: Partial<ActivityPageFilters> = {}) {
-  const { authorizedFetch, isAuthenticated } = useAuth();
+  const { authorizedFetch, isAuthenticated, user } = useAuth();
   const { locale } = useI18n();
-  const live = isLivePortfolioEnabled() && isAuthenticated;
+  const demoPreview = useCabinetDemoPreview();
+  const live = isLivePortfolioEnabled() && isAuthenticated && !demoPreview;
 
   const [filters, setFilters] = useState<ActivityPageFilters>({
     ...DEFAULT_FILTERS,
     ...initial,
   });
-  const debouncedQ = useDebouncedValue(filters.q, 350);
-
-  const [data, setData] = useState<WalletActivityList | null>(null);
-  const [releaseOptions, setReleaseOptions] = useState<{ id: string; title: string }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const debouncedQ = useDebouncedValue(filters.q, 100);
 
   const apiQuery = useMemo(
     () => buildApiQuery(filters, debouncedQ),
     [filters, debouncedQ],
   );
+  const activityCacheKey = useMemo(
+    () => `assets:activity:${user?.id ?? "anon"}:${JSON.stringify(apiQuery)}`,
+    [apiQuery, user?.id],
+  );
+
+  const [data, setData] = useState<WalletActivityList | null>(() =>
+    live ? getClientCache<WalletActivityList>(activityCacheKey) : null,
+  );
+  const [releaseOptions, setReleaseOptions] = useState<{ id: string; title: string }[]>([]);
+  const [loading, setLoading] = useState(() => live && !getClientCache(activityCacheKey));
+  const [error, setError] = useState<string | null>(null);
 
   const loadReleases = useCallback(async () => {
     if (!live) return;
@@ -153,18 +162,25 @@ export function useAssetsActivityPage(initial: Partial<ActivityPageFilters> = {}
 
   const loadActivity = useCallback(async () => {
     if (!live) return;
-    setLoading(true);
+    const cached = getClientCache<WalletActivityList>(activityCacheKey);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const res = await fetchWalletActivity(authorizedFetch, apiQuery);
       setData(res);
+      setClientCache(activityCacheKey, res);
     } catch (e) {
       setError(walletErrorMessage(e) || portfolioErrorMessage(e));
-      setData(null);
+      if (!cached) setData(null);
     } finally {
       setLoading(false);
     }
-  }, [authorizedFetch, apiQuery, live]);
+  }, [authorizedFetch, apiQuery, activityCacheKey, live]);
 
   useEffect(() => {
     void loadReleases();

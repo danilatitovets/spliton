@@ -13,7 +13,7 @@ function ProfileCursor({ step, hint, className }: { step: string; hint: string; 
   return <BlockCursor step={step} hint={hint} className={className} />;
 }
 
-function MiniSecurityRing({ score, label }: { score: number; label: string }) {
+function MiniSecurityRing({ score, label }: { score: number; label?: string }) {
   const deg = (score / 100) * 360;
 
   return (
@@ -24,7 +24,9 @@ function MiniSecurityRing({ score, label }: { score: number; label: string }) {
     >
       <div className="flex size-8 flex-col items-center justify-center rounded-full bg-white">
         <span className="text-[6px] font-bold tabular-nums leading-none text-neutral-900">{score}</span>
-        <span className="mt-px text-[2.5px] font-semibold uppercase tracking-wider text-neutral-400">{label}</span>
+        {label ? (
+          <span className="mt-px text-[2.5px] font-semibold uppercase tracking-wider text-neutral-400">{label}</span>
+        ) : null}
       </div>
     </div>
   );
@@ -151,7 +153,7 @@ export function ProfileSecurityScene() {
 
       <section className="relative min-h-0 flex-1 overflow-visible rounded-lg bg-white px-1.5 py-1 ring-1 ring-neutral-200/60">
         <div className="flex items-center gap-1.5">
-          <MiniSecurityRing score={78} label={t("profile.security.score.ringOf")} />
+          <MiniSecurityRing score={78} />
           <div className="min-w-0">
             <p className="text-[5.5px] font-semibold text-neutral-900">{t("profile.security.score.good.title")}</p>
             <p className="mt-0.5 line-clamp-2 text-[4px] leading-snug text-neutral-500">

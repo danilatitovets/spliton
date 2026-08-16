@@ -47,7 +47,7 @@ export function SecondaryMarketTerminalOrderCard({
     <div className="border-b border-white/6 py-3">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className={cn("text-[13px] font-semibold", side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300")}>
+          <p className={cn("text-[13px] font-semibold", side === "buy" ? "text-white" : "text-zinc-400")}>
             {t(`secondaryMarket.side.${side}`)} · {t(`secondaryMarket.forms.${mode}`)}
           </p>
           <p className="mt-0.5 font-mono text-[12px] tabular-nums text-zinc-400">
@@ -66,7 +66,7 @@ export function SecondaryMarketTerminalOrderCard({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] font-medium text-zinc-300 transition hover:border-fuchsia-400/40 hover:text-fuchsia-200"
+            className="rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] font-medium text-zinc-300 transition hover:border-white/25 hover:text-zinc-400"
           >
             {t("secondaryMarket.listings.cancelListing")}
           </button>

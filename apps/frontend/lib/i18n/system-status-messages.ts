@@ -9,6 +9,10 @@ const RU: Record<string, string> = {
   "systemStatus.hero.subtitle":
     "Пополнения, выводы, выплаты и вторичный рынок — в одном статус-контуре.",
 
+  "systemStatus.overall.label": "Общий статус",
+  "systemStatus.overall.sync": "Синхронизация сервисов",
+  "systemStatus.overall.servicesFallback": "Сервисы",
+
   "systemStatus.error.live":
     "Не удалось загрузить статус с API. Убедитесь, что backend запущен.",
   "systemStatus.error.demo": "Не удалось загрузить статус. Попробуйте обновить страницу.",
@@ -55,6 +59,8 @@ const RU: Record<string, string> = {
   "systemStatus.help.body":
     "Если операция длится дольше, чем в интерфейсе, откройте центр поддержки.",
   "systemStatus.help.cta": "Центр поддержки",
+  "systemStatus.help.buy": "Купить",
+  "systemStatus.help.fees": "Комиссии",
 
   "systemStatus.serviceStatus.operational": "Работает",
   "systemStatus.serviceStatus.degraded": "Задержки",
@@ -73,6 +79,10 @@ const EN: Record<string, string> = {
   "systemStatus.hero.title": "System status",
   "systemStatus.hero.subtitle":
     "Deposits, withdrawals, payouts, and secondary market — in one status view.",
+
+  "systemStatus.overall.label": "Overall status",
+  "systemStatus.overall.sync": "Service sync",
+  "systemStatus.overall.servicesFallback": "Services",
 
   "systemStatus.error.live": "Could not load status from the API. Make sure the backend is running.",
   "systemStatus.error.demo": "Could not load status. Try refreshing the page.",
@@ -119,6 +129,8 @@ const EN: Record<string, string> = {
   "systemStatus.help.body":
     "If an operation takes longer than shown in the UI, open the support center.",
   "systemStatus.help.cta": "Support center",
+  "systemStatus.help.buy": "Buy",
+  "systemStatus.help.fees": "Fees",
 
   "systemStatus.serviceStatus.operational": "Operational",
   "systemStatus.serviceStatus.degraded": "Degraded",
@@ -137,6 +149,10 @@ const ES: Record<string, string> = {
   "systemStatus.hero.title": "Estado del sistema",
   "systemStatus.hero.subtitle":
     "Depósitos, retiros, pagos y mercado secundario — en una sola vista de estado.",
+
+  "systemStatus.overall.label": "Estado general",
+  "systemStatus.overall.sync": "Sincronización de servicios",
+  "systemStatus.overall.servicesFallback": "Servicios",
 
   "systemStatus.error.live":
     "No se pudo cargar el estado desde la API. Asegúrese de que el backend esté en ejecución.",
@@ -184,6 +200,8 @@ const ES: Record<string, string> = {
   "systemStatus.help.body":
     "Si una operación tarda más de lo indicado en la interfaz, abra el centro de soporte.",
   "systemStatus.help.cta": "Centro de soporte",
+  "systemStatus.help.buy": "Comprar",
+  "systemStatus.help.fees": "Comisiones",
 
   "systemStatus.serviceStatus.operational": "Operativo",
   "systemStatus.serviceStatus.degraded": "Degradado",
@@ -202,6 +220,10 @@ const PT: Record<string, string> = {
   "systemStatus.hero.title": "Estado do sistema",
   "systemStatus.hero.subtitle":
     "Depósitos, levantamentos, pagamentos e mercado secundário — numa única vista de estado.",
+
+  "systemStatus.overall.label": "Estado geral",
+  "systemStatus.overall.sync": "Sincronização de serviços",
+  "systemStatus.overall.servicesFallback": "Serviços",
 
   "systemStatus.error.live":
     "Não foi possível carregar o estado da API. Verifique se o backend está em execução.",
@@ -249,6 +271,8 @@ const PT: Record<string, string> = {
   "systemStatus.help.body":
     "Se uma operação demorar mais do que indicado na interface, abra o centro de suporte.",
   "systemStatus.help.cta": "Centro de suporte",
+  "systemStatus.help.buy": "Comprar",
+  "systemStatus.help.fees": "Taxas",
 
   "systemStatus.serviceStatus.operational": "Operacional",
   "systemStatus.serviceStatus.degraded": "Degradado",

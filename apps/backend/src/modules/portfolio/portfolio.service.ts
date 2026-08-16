@@ -36,6 +36,7 @@ export class PortfolioService {
           amountNet: true,
           createdAt: true,
           releaseId: true,
+          release: { select: { title: true } },
         },
       }),
     ]);
@@ -65,18 +66,10 @@ export class PortfolioService {
     } | null = null;
 
     if (latestPaid?.createdAt) {
-      let releaseTitle: string | null = null;
-      if (latestPaid.releaseId) {
-        const release = await this.prisma.release.findUnique({
-          where: { id: latestPaid.releaseId },
-          select: { title: true },
-        });
-        releaseTitle = release?.title ?? null;
-      }
       latestPayout = {
         amountUsdt: decToMoney(latestPaid.amountNet),
         paidAt: latestPaid.createdAt.toISOString(),
-        releaseTitle,
+        releaseTitle: latestPaid.release?.title ?? null,
       };
     }
 
@@ -102,8 +95,10 @@ export class PortfolioService {
   }
 
   async getOverview(userId: string): Promise<PortfolioOverviewDto> {
-    const positions = await this.positionsService.loadPositions(userId);
-    const payoutByRelease = await this.aggregatePayoutsByRelease(userId);
+    const [positions, payoutByRelease] = await Promise.all([
+      this.positionsService.loadPositions(userId),
+      this.aggregatePayoutsByRelease(userId),
+    ]);
     const stripped = positions.map((p) =>
       this.stripLoadedPosition(this.enrichPositionPayouts(p, payoutByRelease)),
     );

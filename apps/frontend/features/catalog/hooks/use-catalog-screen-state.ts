@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useCatalogPriceLabel } from "@/hooks/use-catalog-i18n";
 import { catalogItems } from "@/lib/catalog-mock";
-import { formatApiError } from "@/lib/i18n/format-api-error";
 import { localizeCatalogItem } from "@/lib/catalog/catalog-adapter";
 import {
   buildCatalogUrlSearchParams,
@@ -30,6 +29,9 @@ import type {
   CatalogSortKey,
   CatalogStats,
 } from "@/types/catalog/page";
+
+import { getClientCache, setClientCache } from "@/lib/client-data-cache";
+import { useCatalogFavorites } from "./use-catalog-favorites";
 
 const LIVE_DEBOUNCE_MS = 320;
 const DEFAULT_PAGE_SIZE = 24;
@@ -56,6 +58,9 @@ export function useCatalogScreenState() {
     [searchParams],
   );
 
+  const favorites = useCatalogFavorites();
+  const suppressCatalogReloadRef = useRef(false);
+
   const [catalogView, setCatalogView] = useState<CatalogGridView>("list");
   const [query, setQuery] = useState(urlState.search ?? "");
   const [kind, setKind] = useState<CatalogKindFilter>(urlState.kind ?? "all");
@@ -67,6 +72,7 @@ export function useCatalogScreenState() {
   const [minProgress, setMinProgress] = useState(urlState.minProgress ?? "");
   const [minYield, setMinYield] = useState(urlState.minYield ?? "");
   const [minLiquidity, setMinLiquidity] = useState(urlState.minLiquidity ?? "");
+  const [favoritesOnly, setFavoritesOnlyState] = useState(Boolean(urlState.favoritesOnly));
   const [page, setPage] = useState(urlState.page ?? 1);
 
   const liveMode = isLiveCatalogEnabled();
@@ -80,8 +86,33 @@ export function useCatalogScreenState() {
   const [catalogError, setCatalogError] = useState<unknown>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  const setFavoritesOnly = useCallback(
+    (next: boolean) => {
+      if (next && !favorites.isAuthenticated) {
+        if (favorites.authLoading) return;
+        favorites.requireAuth();
+        return;
+      }
+      setFavoritesOnlyState(next);
+      setPage(1);
+    },
+    [favorites],
+  );
+
+  // Drop favorites filter if user logs out while it is on.
+  useEffect(() => {
+    if (!favorites.isAuthenticated && favoritesOnly) {
+      setFavoritesOnlyState(false);
+    }
+  }, [favorites.isAuthenticated, favoritesOnly]);
+
+  const favoriteReleaseIdsKey = useMemo(() => {
+    if (!favoritesOnly || !favorites.isAuthenticated) return "";
+    return [...favorites.favoriteIdList].sort().join(",");
+  }, [favoritesOnly, favorites.isAuthenticated, favorites.favoriteIdList]);
+
   const listQuery = useMemo((): CatalogListQueryParams => {
-    return {
+    const base: CatalogListQueryParams = {
       search: query,
       genre,
       kind,
@@ -92,9 +123,14 @@ export function useCatalogScreenState() {
       minProgress,
       minYield,
       minLiquidity,
+      favoritesOnly,
       page,
       pageSize: DEFAULT_PAGE_SIZE,
     };
+    if (favoriteReleaseIdsKey) {
+      base.releaseIds = favoriteReleaseIdsKey.split(",");
+    }
+    return base;
   }, [
     query,
     genre,
@@ -106,6 +142,8 @@ export function useCatalogScreenState() {
     minProgress,
     minYield,
     minLiquidity,
+    favoritesOnly,
+    favoriteReleaseIdsKey,
     page,
   ]);
 
@@ -118,26 +156,75 @@ export function useCatalogScreenState() {
     [pathname, router],
   );
 
+  // Debounce URL sync so typing filters does not trigger RSC navigation storms.
   useEffect(() => {
-    syncUrl(listQuery);
+    const handle = window.setTimeout(() => {
+      syncUrl(listQuery);
+    }, 320);
+    return () => window.clearTimeout(handle);
   }, [listQuery, syncUrl]);
 
   const loadLive = useCallback(async () => {
     if (!liveMode) return;
-    setCatalogLoading(true);
+
+    // Favorites filter with empty watchlist → empty list (no round-trip).
+    if (favoritesOnly && favorites.isAuthenticated && favorites.ready && favorites.favoriteIdList.length === 0) {
+      setLiveItems([]);
+      setPagination({
+        page: 1,
+        pageSize: DEFAULT_PAGE_SIZE,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+      });
+      setCatalogLoading(false);
+      setCatalogError(null);
+      return;
+    }
+
+    // Wait for watchlist hydrate before requesting favorites-only page.
+    if (favoritesOnly && favorites.isAuthenticated && !favorites.ready) {
+      setCatalogLoading(true);
+      return;
+    }
+
+    const cacheKey = `catalog:list:${locale}:${JSON.stringify(listQuery)}`;
+    const cached = getClientCache<{ items: CatalogItem[]; pagination: CatalogPagination | null }>(
+      cacheKey,
+      60_000,
+    );
+    if (cached) {
+      // Soft-nav: show stale list immediately — no full-page skeleton.
+      setLiveItems(cached.items);
+      setPagination(cached.pagination);
+      setCatalogLoading(false);
+    } else {
+      setCatalogLoading(true);
+    }
     setCatalogError(null);
     try {
       const { items, pagination: pg } = await loadLiveCatalogItems(listQuery, locale);
       setLiveItems(items);
       setPagination(pg);
+      setClientCache(cacheKey, { items, pagination: pg });
     } catch (e) {
       setCatalogError(e);
-      setLiveItems([]);
-      setPagination(null);
+      if (!cached) {
+        setLiveItems([]);
+        setPagination(null);
+      }
     } finally {
       setCatalogLoading(false);
     }
-  }, [liveMode, listQuery, locale]);
+  }, [
+    liveMode,
+    listQuery,
+    locale,
+    favoritesOnly,
+    favorites.isAuthenticated,
+    favorites.ready,
+    favoriteReleaseIdsKey,
+  ]);
 
   useEffect(() => {
     if (!liveMode) return;
@@ -173,11 +260,36 @@ export function useCatalogScreenState() {
       setCatalogLoading(false);
       return;
     }
+    if (suppressCatalogReloadRef.current) {
+      suppressCatalogReloadRef.current = false;
+      return;
+    }
     const timer = window.setTimeout(() => {
       void loadLive();
     }, LIVE_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [liveMode, loadLive]);
+
+  const toggleFavorite = useCallback(
+    async (releaseId: string) => {
+      const wasFavorite = favorites.isFavorite(releaseId);
+      if (wasFavorite && favoritesOnly) {
+        suppressCatalogReloadRef.current = true;
+        setLiveItems((prev) => (prev ? prev.filter((item) => item.id !== releaseId) : prev));
+        setPagination((pg) =>
+          pg
+            ? {
+                ...pg,
+                total: Math.max(0, pg.total - 1),
+                totalPages: Math.max(0, Math.ceil(Math.max(0, pg.total - 1) / pg.pageSize)),
+              }
+            : pg,
+        );
+      }
+      return favorites.toggleFavorite(releaseId);
+    },
+    [favorites, favoritesOnly],
+  );
 
   const localizedMockItems = useMemo(
     () => catalogItems.map((item) => localizeCatalogItem(item, locale)),
@@ -217,6 +329,9 @@ export function useCatalogScreenState() {
         maxPrice,
         minProgress,
         minYield,
+        minLiquidity,
+        favoritesOnly,
+        favoriteIds: favorites.favoriteIds,
       }),
     );
     let rows = applyClientKindFilter(base, kind);
@@ -235,6 +350,9 @@ export function useCatalogScreenState() {
     maxPrice,
     minProgress,
     minYield,
+    minLiquidity,
+    favoritesOnly,
+    favorites.favoriteIds,
   ]);
 
   const matchingCount = liveMode ? (pagination?.total ?? filtered.length) : filtered.length;
@@ -252,6 +370,7 @@ export function useCatalogScreenState() {
     setMinProgress("");
     setMinYield("");
     setMinLiquidity("");
+    setFavoritesOnlyState(false);
     setPage(1);
   };
 
@@ -294,6 +413,10 @@ export function useCatalogScreenState() {
     setMinYield,
     minLiquidity,
     setMinLiquidity,
+    favoritesOnly,
+    setFavoritesOnly,
+    isFavorite: favorites.isFavorite,
+    toggleFavorite,
     page,
     setPage,
     pagination,

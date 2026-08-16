@@ -44,7 +44,7 @@ export function SecondaryMarketBreadcrumbNav({
               scroll={item.scroll ?? true}
               className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 transition hover:bg-white/5 hover:text-zinc-300"
             >
-              {item.icon ? <item.icon className="size-3 shrink-0 text-[#B7F500]/80" strokeWidth={2} aria-hidden /> : null}
+              {item.icon ? <item.icon className="size-3 shrink-0 text-white/80" strokeWidth={2} aria-hidden /> : null}
               {item.label}
             </Link>
           ) : (
@@ -57,7 +57,7 @@ export function SecondaryMarketBreadcrumbNav({
             >
               {item.icon ? (
                 <item.icon
-                  className={cn("size-3 shrink-0", i === items.length - 1 ? "text-[#B7F500]" : "text-zinc-500")}
+                  className={cn("size-3 shrink-0", i === items.length - 1 ? "text-white" : "text-zinc-500")}
                   strokeWidth={2}
                   aria-hidden
                 />

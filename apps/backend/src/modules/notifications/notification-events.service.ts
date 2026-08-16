@@ -285,4 +285,43 @@ export class NotificationEventsService {
       sendEmail: true,
     });
   }
+
+  async newDeviceLogin(input: {
+    userId: string;
+    device: string;
+    ip: string | null;
+  }) {
+    const where = input.ip ? `IP ${input.ip}` : 'нового IP';
+    await this.notifications.notifyUser(input.userId, {
+      type: 'security.new_device_login',
+      category: 'security',
+      severity: NotificationSeverity.WARNING,
+      title: 'Вход с нового устройства',
+      message: `Обнаружен вход: ${input.device} (${where}). Если это не вы — завершите сессии в профиле.`,
+      actionUrl: '/dashboard/profile?tab=security',
+      idempotencyKey: `new-device:${input.userId}:${Math.floor(Date.now() / 300000)}`,
+      sendEmail: true,
+    });
+  }
+
+  async withdrawalEmailConfirmation(input: {
+    userId: string;
+    withdrawalId: string;
+    amount: string;
+    toAddress: string;
+  }) {
+    const shortAddr = `${input.toAddress.slice(0, 6)}…${input.toAddress.slice(-4)}`;
+    await this.notifications.notifyUser(input.userId, {
+      type: 'security.withdrawal_email_confirmation',
+      category: 'security',
+      severity: NotificationSeverity.WARNING,
+      title: 'Подтверждение вывода',
+      message: `Запрошен вывод ${input.amount} USDT на ${shortAddr}. Если это не вы — срочно завершите сессии и напишите в поддержку.`,
+      actionUrl: '/assets/payouts',
+      relatedEntityType: 'withdrawal',
+      relatedEntityId: input.withdrawalId,
+      idempotencyKey: `withdrawal-email-confirm:${input.withdrawalId}`,
+      sendEmail: true,
+    });
+  }
 }

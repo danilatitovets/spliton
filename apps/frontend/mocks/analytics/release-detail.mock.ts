@@ -140,10 +140,7 @@ export function buildReleaseDetailPageData(row: ReleaseAnalyticsRow): ReleaseDet
     ],
     heroBlurb:
       "Revenue share release внутри Spliton: учёт units, распределения и выплат в USDT (TRC20). Ниже — агрегированный обзор, история начислений и условия модели (mock-данные для макета).",
-    cover: {
-      caption:
-        "Видео-обложка релиза: короткий ролик о сделке, payout-модели и участниках (подключите MP4/HLS в данных страницы).",
-    },
+    cover: {},
     summaryPanel: [
       { label: "Ориентир gross", value: row.yieldPct, hint: "Модельная метрика, не гарантия" },
       { label: "Статус раунда", value: statusRu, hint: "Первичка / выплаты / secondary" },

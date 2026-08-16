@@ -24,7 +24,7 @@ export type SecuritySessionRow = {
 export const MOCK_SECURITY_SESSIONS: SecuritySessionRow[] = [
   {
     id: "1",
-    device: "Chrome · Windows",
+    device: "Chrome / Windows",
     location: "Москва, Россия",
     ip: "185.•••.••12",
     lastActive: "Сейчас",
@@ -32,7 +32,7 @@ export const MOCK_SECURITY_SESSIONS: SecuritySessionRow[] = [
   },
   {
     id: "2",
-    device: "Safari · iPhone",
+    device: "Safari / iPhone",
     location: "Санкт-Петербург, Россия",
     ip: "178.•••.••88",
     lastActive: "2 дня назад",
@@ -40,7 +40,7 @@ export const MOCK_SECURITY_SESSIONS: SecuritySessionRow[] = [
   },
   {
     id: "3",
-    device: "Firefox · macOS",
+    device: "Firefox / macOS",
     location: "Неизвестно",
     ip: "91.•••.••40",
     lastActive: "14 дней назад",

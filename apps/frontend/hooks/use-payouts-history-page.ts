@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import type { PayoutHistoryRow } from "@/components/dashboard/assets/payouts-mock-data";
+import { useCabinetDemoPreview } from "@/hooks/use-cabinet-demo-preview";
 import { isLivePayoutsEnabled } from "@/lib/public-env";
 import { adaptWalletActivityToPayoutHistory } from "@/lib/wallet/wallet-activity-adapter";
 import {
@@ -36,6 +37,7 @@ const DEFAULT_FILTERS: PayoutHistoryPageFilters = {
 function historyTypeToApi(type: PayoutHistoryTypeFilter): string | undefined {
   switch (type) {
     case "accrual":
+      // UI "accrual" = wallet deposits in the payouts ledger feed.
       return "deposit";
     case "payout":
       return "payout";
@@ -60,7 +62,8 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 export function usePayoutsHistoryPage(initial: Partial<PayoutHistoryPageFilters> = {}) {
   const { authorizedFetch, isAuthenticated } = useAuth();
   const { locale } = useI18n();
-  const live = isLivePayoutsEnabled() && isAuthenticated;
+  const demoPreview = useCabinetDemoPreview();
+  const live = isLivePayoutsEnabled() && isAuthenticated && !demoPreview;
 
   const [filters, setFilters] = useState<PayoutHistoryPageFilters>({
     ...DEFAULT_FILTERS,
@@ -83,7 +86,8 @@ export function usePayoutsHistoryPage(initial: Partial<PayoutHistoryPageFilters>
         type: apiType,
         sort: filters.sort,
         page: filters.page,
-        limit: filters.pageSize,
+        // Backend WalletActivityQueryDto caps limit/pageSize at 100.
+        limit: Math.min(Math.max(1, filters.pageSize), 100),
         q: debouncedQ.trim() || undefined,
       });
       setData(res);
@@ -150,5 +154,6 @@ export function usePayoutsHistoryPage(initial: Partial<PayoutHistoryPageFilters>
     error,
     hasActiveFilters,
     reload: load,
+    demoPreview,
   };
 }

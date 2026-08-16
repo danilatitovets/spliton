@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Star } from "@/lib/lucide";
 
@@ -7,10 +8,12 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { SortHeader } from "@/components/shared/exchange/sort-header";
 import { analyticsReleaseDetailPath } from "@/constants/routes";
 import { directionFromChangePct } from "@/lib/analytics/change-pct";
+import { resolveCatalogCoverUrl } from "@/lib/catalog/catalog-demo-covers";
 import { analyticsReleaseStatusLabel } from "@/lib/i18n/analytics-messages";
 import { cn } from "@/lib/utils";
 import type { ReleaseAnalyticsRow, ReleaseAnalyticsSortKey } from "@/types/analytics/releases";
 
+import { AnalyticsHeaderTip } from "../ui/analytics-header-tip";
 import { ReleasePayoutRangeBar } from "../ui/release-payout-range-bar";
 import { ReleaseSparkline } from "../ui/release-sparkline";
 
@@ -33,14 +36,19 @@ export function ReleaseAnalyticsReleasesTable({
   const { t, locale } = useI18n();
 
   return (
-    <div className="mt-5 overflow-hidden rounded-xl bg-[#111111]">
+    <div className="mt-2 overflow-hidden rounded-xl bg-[#0d0d0d]">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[980px] border-collapse text-left font-mono text-[13px] tabular-nums tracking-tight">
           <thead>
-            <tr className="text-zinc-500">
+            <tr className="border-b border-white/[0.06] text-zinc-500">
               <th className="w-9 py-3 pr-1 pl-3" aria-label={t("analytics.releases.table.localMarkAria")} />
               <th className="py-3 pr-4 font-normal">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">{t("analytics.releases.table.name")}</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip
+                    label={t("analytics.releases.table.name")}
+                    tip="Символ релиза и артист. Клик по строке открывает карточку."
+                  />
+                </span>
               </th>
               <th className="py-3 pr-3">
                 <SortHeader
@@ -52,13 +60,25 @@ export function ReleaseAnalyticsReleasesTable({
                 />
               </th>
               <th className="py-3 pr-3 text-right">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Δ</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip label="Δ 24ч" tip="Изменение за последние 24 часа относительно предыдущего закрытия." />
+                </span>
               </th>
               <th className="py-3 pr-4">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">{t("analytics.releases.table.dynamics")}</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip
+                    label={t("analytics.releases.table.dynamics")}
+                    tip="Спарклайн доходности / цены за короткий горизонт."
+                  />
+                </span>
               </th>
               <th className="py-3 pr-4">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">{t("analytics.releases.table.corridor")}</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip
+                    label={t("analytics.releases.table.corridor")}
+                    tip="Диапазон выплат: нижняя и верхняя оценка коридора."
+                  />
+                </span>
               </th>
               <th className="py-3 pr-3">
                 <SortHeader
@@ -80,16 +100,22 @@ export function ReleaseAnalyticsReleasesTable({
                 />
               </th>
               <th className="py-3 pr-3 font-normal">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Progress</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip label="Progress" tip="Прогресс первичного раунда, % от цели." />
+                </span>
               </th>
               <th className="py-3 pr-3 font-normal">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Raised</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip label="Raised" tip="Привлечённый объём на первичке (USDT)." />
+                </span>
               </th>
               <th className="py-3 pr-3 font-normal">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Holders</span>
+                <span className="text-[11px] font-medium">
+                  <AnalyticsHeaderTip label="Holders" tip="Число уникальных держателей UNT." />
+                </span>
               </th>
               <th className="py-3 pr-4 pl-0 font-normal">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">{t("analytics.releases.table.status")}</span>
+                <span className="text-[11px] font-medium">{t("analytics.releases.table.status")}</span>
               </th>
             </tr>
           </thead>
@@ -99,17 +125,18 @@ export function ReleaseAnalyticsReleasesTable({
               const deltaDir = directionFromChangePct(r.changePct);
               const deltaClass =
                 deltaDir === "up"
-                  ? "text-[#B7F500]"
+                  ? "text-[#00C087]"
                   : deltaDir === "down"
-                    ? "text-rose-400"
+                    ? "text-[#FF4D4F]"
                     : "text-sky-400";
               const go = () => router.push(analyticsReleaseDetailPath(r.id));
+              const cover = resolveCatalogCoverUrl(undefined, r.id);
               return (
                 <tr
                   key={r.id}
                   tabIndex={0}
                   aria-label={t("analytics.releases.table.openReleaseAria").replace("{name}", r.release)}
-                  className="cursor-pointer text-zinc-300 transition-colors hover:bg-white/4"
+                  className="cursor-pointer text-zinc-300 transition-colors hover:bg-white/[0.035]"
                   onClick={go}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -144,12 +171,15 @@ export function ReleaseAnalyticsReleasesTable({
                   </td>
                   <td className="py-2.5 pr-4 align-middle">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#0a0a0a] text-[10px] font-semibold uppercase text-zinc-500">
-                        {r.symbol.slice(0, 2)}
+                      <div className="relative size-7 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                        <Image src={cover} alt="" fill sizes="28px" className="object-cover" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                          <span className="font-semibold tracking-tight text-white">{r.symbol}</span>
+                          <span className="font-semibold tracking-tight text-white">
+                            {r.symbol}
+                            <span className="font-normal text-zinc-500"> / USDT</span>
+                          </span>
                           <span className="truncate font-sans text-[12px] text-zinc-500">{r.release}</span>
                         </div>
                         <div className="font-sans text-[11px] text-zinc-600">{r.artist}</div>
@@ -160,7 +190,7 @@ export function ReleaseAnalyticsReleasesTable({
                     <span className="font-semibold text-zinc-100">{r.yieldPct}</span>
                   </td>
                   <td className="py-2.5 pr-3 text-right align-middle">
-                    <span className={cn("text-[13px] font-medium", deltaClass)}>{r.changePct}</span>
+                    <span className={cn("text-[13px] font-semibold", deltaClass)}>{r.changePct}</span>
                   </td>
                   <td className="py-2.5 pr-4 align-middle">
                     <ReleaseSparkline values={r.sparkline} trend={r.trend} changePct={r.changePct} />

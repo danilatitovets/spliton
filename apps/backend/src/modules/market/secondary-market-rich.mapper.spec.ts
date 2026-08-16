@@ -23,7 +23,11 @@ describe('secondary-market-rich.mapper', () => {
         releaseArtists: [],
         copyrightOwner: null,
       },
-    } as Parameters<typeof mapListingToUserOrder>[0];
+      seller: {
+        id: 'u1',
+        email: 'seller@example.com',
+      },
+    } as unknown as Parameters<typeof mapListingToUserOrder>[0];
 
     const dto = mapListingToUserOrder(row, 'u1');
     expect(dto.statusLabel).toBe('Активна');

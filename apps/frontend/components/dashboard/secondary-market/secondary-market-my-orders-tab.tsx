@@ -2,10 +2,15 @@
 
 import * as React from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 
+import { AssetsGptMenu } from "@/components/dashboard/assets/assets-gpt-menu";
+import { AssetsSearchField } from "@/components/dashboard/assets/assets-search-field";
+import { MetricsGptToggle } from "@/components/dashboard/assets/metrics-gpt-toggle";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { statusLabel } from "@/lib/i18n/status-labels";
 import type { AppLocale } from "@/lib/i18n/types";
 import { ROUTES } from "@/constants/routes";
@@ -18,7 +23,7 @@ import {
   SecondaryMarketLoadingState,
 } from "@/components/dashboard/secondary-market/secondary-market-fetch-states";
 import { Dialog } from "@base-ui/react/dialog";
-import { ExternalLink, LayoutPanelTop, MoreHorizontal, Plus, Search, X } from "@/lib/lucide";
+import { ExternalLink, LayoutPanelTop, MoreHorizontal, X } from "@/lib/lucide";
 
 import {
   secondaryMarketBookHref,
@@ -38,6 +43,14 @@ import { cn } from "@/lib/utils";
 import { OrderCancelConfirmModal } from "@/components/dashboard/secondary-market/secondary-market-order-cancel-confirm-modal";
 import { SecondaryMarketCreateListingSheet } from "@/components/dashboard/secondary-market/secondary-market-create-listing-sheet";
 import {
+  DEFAULT_MY_ORDERS_FILTERS,
+  MY_ORDERS_STATUS_CHIPS,
+  type MyOrdersFiltersState,
+  type MyOrdersModeFilter,
+  type MyOrdersSideFilter,
+  type MyOrdersStatusFilter,
+} from "@/components/dashboard/secondary-market/secondary-market-my-orders-filters-sheet";
+import {
   smTableActionIconCircle,
   smTableActionIconCirclePressed,
   smTableActionMenuItem,
@@ -49,6 +62,9 @@ import {
   smTableActionMoreMenu,
   smTableActionReleasePill,
 } from "@/components/dashboard/secondary-market/secondary-market-table-action-styles";
+
+const ORDERS_HERO_ICON = "/images/secondary-market/orders-hero.png";
+const ORDERS_EMPTY_ICON = "/images/secondary-market/orders-empty-glass.png";
 
 type OrderStatus = "active" | "partial" | "filled" | "cancelled" | "expired" | "rejected";
 type OrderSide = "buy" | "sell";
@@ -182,16 +198,6 @@ const MOCK_ORDERS: UserOrder[] = [
   },
 ];
 
-const STATUS_FILTER = [
-  { id: "all" as const, key: "secondaryMarket.filters.all" },
-  { id: "active" as const, key: "secondaryMarket.filters.statusActive" },
-  { id: "partial" as const, key: "secondaryMarket.filters.statusPartial" },
-  { id: "filled" as const, key: "secondaryMarket.filters.statusFilled" },
-  { id: "cancelled" as const, key: "secondaryMarket.filters.statusCancelled" },
-  { id: "expired" as const, key: "secondaryMarket.filters.statusExpired" },
-  { id: "failed" as const, key: "secondaryMarket.filters.statusFailed" },
-] as const;
-
 function formatUsdt(n: number) {
   return n.toLocaleString("ru-RU", {
     minimumFractionDigits: n % 1 ? 2 : 0,
@@ -219,24 +225,29 @@ function orderStatusUiLabel(s: OrderStatus, locale: AppLocale): string {
 function statusPillClass(s: OrderStatus) {
   switch (s) {
     case "active":
-      return "bg-[#B7F500]/14 text-[#d4f570]";
+      return "bg-[#B7F500]/15 text-[#B7F500]";
     case "partial":
       return "bg-amber-500/15 text-amber-200/95";
     case "filled":
-      return "bg-zinc-500/20 text-zinc-300";
+      return "bg-white/10 text-zinc-200";
     case "cancelled":
       return "bg-zinc-600/25 text-zinc-500";
     case "expired":
       return "bg-zinc-600/25 text-zinc-500";
     case "rejected":
-      return "bg-fuchsia-500/15 text-fuchsia-200/90";
+      return "bg-fuchsia-500/15 text-fuchsia-300/90";
     default:
       return "bg-zinc-600/20 text-zinc-400";
   }
 }
 
-function countBy(orders: UserOrder[], pred: (o: UserOrder) => boolean): number {
-  return orders.filter(pred).length;
+function OrderFillBar({ filled, total }: { filled: number; total: number }) {
+  const pct = total > 0 ? Math.min(100, Math.round((filled / total) * 100)) : 0;
+  return (
+    <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/[0.08]" aria-hidden>
+      <div className="h-full rounded-full bg-[#B7F500] transition-[width] duration-500" style={{ width: `${pct}%` }} />
+    </div>
+  );
 }
 
 function mockUserHoldings(): UserHoldingItem[] {
@@ -395,34 +406,50 @@ export function SecondaryMarketMyOrdersTab() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [orderActionMenuId]);
 
-  const [statusFilter, setStatusFilter] = React.useState<(typeof STATUS_FILTER)[number]["id"]>("all");
-  const [sideFilter, setSideFilter] = React.useState<"all" | OrderSide>("all");
-  const [modeFilter, setModeFilter] = React.useState<"all" | OrderMode>("all");
-  const [query, setQuery] = React.useState("");
+  const [filters, setFilters] = React.useState<MyOrdersFiltersState>(DEFAULT_MY_ORDERS_FILTERS);
 
-  const summary = React.useMemo(() => {
-    const o = ordersSource;
-    return {
-      active: countBy(o, (x) => x.status === "active"),
-      partial: countBy(o, (x) => x.status === "partial"),
-      filled: countBy(o, (x) => x.status === "filled"),
-      cancelled: countBy(o, (x) => x.status === "cancelled"),
-      expired: countBy(o, (x) => x.status === "expired"),
-      failed: countBy(o, (x) => x.status === "rejected"),
-    };
-  }, [ordersSource]);
+  const patchFilters = React.useCallback((patch: Partial<MyOrdersFiltersState>) => {
+    setFilters((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const resetFilters = React.useCallback(() => {
+    setFilters(DEFAULT_MY_ORDERS_FILTERS);
+  }, []);
+
+  const statusToggleOptions = React.useMemo(
+    () => MY_ORDERS_STATUS_CHIPS.map((chip) => ({ id: chip.id, label: t(chip.key) })),
+    [t],
+  );
+
+  const sideMenuOptions = React.useMemo(
+    (): { id: MyOrdersSideFilter; label: string }[] => [
+      { id: "all", label: t("secondaryMarket.filters.all") },
+      { id: "buy", label: t("secondaryMarket.side.buy") },
+      { id: "sell", label: t("secondaryMarket.side.sell") },
+    ],
+    [t],
+  );
+
+  const modeMenuOptions = React.useMemo(
+    (): { id: MyOrdersModeFilter; label: string }[] => [
+      { id: "all", label: t("secondaryMarket.filters.all") },
+      { id: "limit", label: t("secondaryMarket.forms.limit") },
+      { id: "market", label: t("secondaryMarket.forms.market") },
+    ],
+    [t],
+  );
 
   const filtered = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = filters.query.trim().toLowerCase();
     return ordersSource.filter((row) => {
-      if (statusFilter === "active" && row.status !== "active") return false;
-      if (statusFilter === "partial" && row.status !== "partial") return false;
-      if (statusFilter === "filled" && row.status !== "filled") return false;
-      if (statusFilter === "cancelled" && row.status !== "cancelled") return false;
-      if (statusFilter === "expired" && row.status !== "expired") return false;
-      if (statusFilter === "failed" && row.status !== "rejected") return false;
-      if (sideFilter !== "all" && row.side !== sideFilter) return false;
-      if (modeFilter !== "all" && row.mode !== modeFilter) return false;
+      if (filters.status === "active" && row.status !== "active") return false;
+      if (filters.status === "partial" && row.status !== "partial") return false;
+      if (filters.status === "filled" && row.status !== "filled") return false;
+      if (filters.status === "cancelled" && row.status !== "cancelled") return false;
+      if (filters.status === "expired" && row.status !== "expired") return false;
+      if (filters.status === "failed" && row.status !== "rejected") return false;
+      if (filters.side !== "all" && row.side !== filters.side) return false;
+      if (filters.mode !== "all" && row.mode !== filters.mode) return false;
       if (!q) return true;
       return (
         row.id.toLowerCase().includes(q) ||
@@ -431,7 +458,7 @@ export function SecondaryMarketMyOrdersTab() {
         row.artist.toLowerCase().includes(q)
       );
     });
-  }, [query, statusFilter, sideFilter, modeFilter, ordersSource]);
+  }, [filters, ordersSource]);
 
   const cancellableCount = ordersSource.filter(
     (o) => (o.status === "active" || o.status === "partial") && (!isLive || o.canCancel),
@@ -451,7 +478,6 @@ export function SecondaryMarketMyOrdersTab() {
       setCancelTarget(null);
       return;
     }
-    await new Promise((r) => setTimeout(r, 480));
     const updatedAt = formatOrderUpdatedAt();
     const id = cancelTarget?.id;
     if (!id) return;
@@ -477,7 +503,6 @@ export function SecondaryMarketMyOrdersTab() {
       setIsBulkCancelOpen(false);
       return;
     }
-    await new Promise((r) => setTimeout(r, 420));
     const updatedAt = formatOrderUpdatedAt();
     setOrders((prev) =>
       prev.map((o) =>
@@ -509,7 +534,6 @@ export function SecondaryMarketMyOrdersTab() {
         clearToastSoon(t("secondaryMarket.toast.listingPlaced"));
         return;
       }
-      await new Promise((r) => setTimeout(r, 520));
       const listing = SECONDARY_MARKET_LISTINGS_MOCK.find((l) => l.releaseId === body.releaseId);
       const holding = holdingsSource.find((h) => h.releaseId === body.releaseId);
       const updatedAt = formatOrderUpdatedAt();
@@ -548,19 +572,38 @@ export function SecondaryMarketMyOrdersTab() {
 
   return (
     <div className="relative space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <p className="max-w-[62ch] font-mono text-[11px] leading-relaxed text-zinc-600">
-          {t("secondaryMarket.orders.intro")}
-        </p>
-        <button
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="relative size-[4.5rem] shrink-0 sm:size-20">
+            <Image
+              src={ORDERS_HERO_ICON}
+              alt=""
+              fill
+              sizes="80px"
+              className="object-contain"
+              unoptimized
+              aria-hidden
+              priority
+            />
+          </div>
+          <div className="min-w-0 pt-0.5">
+            <h1 className="text-xl font-semibold tracking-tight text-white md:text-2xl">
+              {t("secondaryMarket.tabs.orders")}
+            </h1>
+            <p className="mt-1.5 max-w-[62ch] text-[13px] leading-relaxed text-zinc-400">
+              {t("secondaryMarket.orders.intro")}
+            </p>
+          </div>
+        </div>
+        <SplitonCtaPill
           type="button"
+          tone="onDark"
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-full bg-[#B7F500] px-4 font-mono text-[12px] font-semibold text-black transition hover:bg-[#c8ff3d] active:scale-[0.98]"
+          className="w-auto shrink-0 self-start sm:self-center"
         >
-          <Plus className="size-4" strokeWidth={2.5} aria-hidden />
           {t("secondaryMarket.forms.createListingTitle")}
-        </button>
-      </div>
+        </SplitonCtaPill>
+      </header>
 
       <SecondaryMarketCreateListingSheet
         open={isCreateOpen}
@@ -569,161 +612,94 @@ export function SecondaryMarketMyOrdersTab() {
         onSubmit={handleCreateListing}
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.orders.kpiActive")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white">{summary.active}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.orders.kpiPartial")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-amber-200/90">{summary.partial}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.orders.kpiFilled")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-zinc-200">{summary.filled}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.orders.kpiTerminal")}</p>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] tabular-nums text-zinc-400">
-            <span>
-              <span className="text-zinc-600">{t("secondaryMarket.orders.kpiCancelledAbbr")}</span> {summary.cancelled}
-            </span>
-            <span>
-              <span className="text-zinc-600">{t("secondaryMarket.orders.kpiExpiredAbbr")}</span> {summary.expired}
-            </span>
-            <span>
-              <span className="text-zinc-600">{t("secondaryMarket.orders.kpiFailedAbbr")}</span> {summary.failed}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-          {STATUS_FILTER.map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => setStatusFilter(chip.id)}
-              className={cn(
-                "rounded-full px-2.5 py-1 font-mono text-[11px] font-medium transition-colors",
-                statusFilter === chip.id ? "bg-white text-black" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300",
-              )}
-            >
-              {t(chip.key)}
-            </button>
-          ))}
-        </div>
-        {cancellableCount > 0 ? (
-          <button
-            type="button"
-            onClick={() => setIsBulkCancelOpen(true)}
-            className="shrink-0 self-start rounded-full border border-white/12 bg-white/4 px-3 py-1.5 font-mono text-[10px] font-medium uppercase tracking-wide text-zinc-300 transition hover:border-fuchsia-400/35 hover:text-fuchsia-200 lg:self-center"
-          >
-            {tm(t, "secondaryMarket.actions.cancelAllActive", { count: cancellableCount })}
-          </button>
-        ) : null}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <div className="relative min-w-0">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600" aria-hidden />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("secondaryMarket.filters.searchOrders")}
-            className="h-10 w-full rounded-xl bg-[#111111] py-2 pl-10 pr-3 font-mono text-sm text-white placeholder:text-zinc-600 outline-none ring-1 ring-white/10 focus:ring-[#B7F500]/35"
-            aria-label={t("secondaryMarket.aria.searchOrders")}
+      <section className="space-y-3 rounded-2xl bg-white/[0.04] px-3.5 py-3.5 sm:px-4 sm:py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <MetricsGptToggle
+            value={filters.status}
+            onChange={(id) => patchFilters({ status: id as MyOrdersStatusFilter })}
+            options={statusToggleOptions}
+            ariaLabel={t("secondaryMarket.orders.columnStatus")}
+            size="sm"
           />
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8 sm:gap-y-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.filters.side")}</span>
-            {(
-              [
-                { id: "all" as const, key: "secondaryMarket.filters.all" },
-                { id: "buy" as const, key: "secondaryMarket.side.buy" },
-                { id: "sell" as const, key: "secondaryMarket.side.sell" },
-              ] as const
-            ).map((chip) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <AssetsGptMenu
+              value={filters.side}
+              onChange={(id) => patchFilters({ side: id as MyOrdersSideFilter })}
+              options={sideMenuOptions}
+              ariaLabel={t("secondaryMarket.filters.side")}
+            />
+            <AssetsGptMenu
+              value={filters.mode}
+              onChange={(id) => patchFilters({ mode: id as MyOrdersModeFilter })}
+              options={modeMenuOptions}
+              ariaLabel={t("secondaryMarket.filters.type")}
+            />
+            {cancellableCount > 0 ? (
               <button
-                key={chip.id}
                 type="button"
-                onClick={() => setSideFilter(chip.id)}
-                className={cn(
-                  "rounded-full px-2.5 py-1 font-mono text-[11px] font-medium",
-                  sideFilter === chip.id ? "bg-white text-black" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300",
-                )}
+                onClick={() => setIsBulkCancelOpen(true)}
+                className="inline-flex h-9 items-center rounded-full bg-[#2a2a2c] px-3.5 text-[13px] font-medium text-white/80 transition hover:bg-[#343438] hover:text-white"
               >
-                {t(chip.key)}
+                {tm(t, "secondaryMarket.actions.cancelAllActive", { count: cancellableCount })}
               </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.filters.type")}</span>
-            {(
-              [
-                { id: "all" as const, key: "secondaryMarket.filters.all" },
-                { id: "limit" as const, key: "secondaryMarket.forms.limit" },
-                { id: "market" as const, key: "secondaryMarket.forms.market" },
-              ] as const
-            ).map((chip) => (
-              <button
-                key={chip.id}
-                type="button"
-                onClick={() => setModeFilter(chip.id)}
-                className={cn(
-                  "rounded-full px-2.5 py-1 font-mono text-[11px] font-medium",
-                  modeFilter === chip.id ? "bg-white text-black" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300",
-                )}
-              >
-                {t(chip.key)}
-              </button>
-            ))}
+            ) : null}
           </div>
         </div>
-      </div>
+
+        <AssetsSearchField
+          value={filters.query}
+          onSubmit={(query) => patchFilters({ query })}
+          placeholder={t("secondaryMarket.filters.searchOrders")}
+          aria-label={t("secondaryMarket.aria.searchOrders")}
+          size="md"
+          tone="onDark"
+        />
+      </section>
 
       {ordersSource.length === 0 ? (
-        <div className="rounded-2xl bg-[#111111] px-6 py-16 text-center ring-1 ring-white/6">
-          <h2 className="text-lg font-semibold tracking-tight text-white">{t("secondaryMarket.empty.noOrders")}</h2>
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-14 text-center sm:py-16">
+          <div className="relative mx-auto size-36 sm:size-40">
+            <Image
+              src={ORDERS_EMPTY_ICON}
+              alt=""
+              fill
+              sizes="160px"
+              className="object-contain"
+              unoptimized
+              aria-hidden
+            />
+          </div>
+          <h2 className="mt-5 text-lg font-semibold tracking-tight text-white sm:text-xl">
+            {t("secondaryMarket.empty.noOrders")}
+          </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">
             {t("secondaryMarket.empty.noOrdersDesc")}
           </p>
-          <Link
-            href={marketHref}
-            className="mt-6 inline-flex h-10 items-center justify-center rounded-full bg-white px-5 font-mono text-[12px] font-semibold text-black transition hover:opacity-90"
-          >
-            {t("secondaryMarket.actions.goToMarket")}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-            className="mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black transition hover:bg-[#c8ff3d]"
-          >
-            <Plus className="size-4" strokeWidth={2.5} aria-hidden />
-            {t("secondaryMarket.forms.createListingTitle")}
-          </button>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
+            <SplitonCtaPill href={marketHref} tone="onDark" className="min-w-[11.5rem]">
+              {t("secondaryMarket.actions.goToMarket")}
+            </SplitonCtaPill>
+            <SplitonCtaPill
+              type="button"
+              tone="onDark"
+              onClick={() => setIsCreateOpen(true)}
+              className="min-w-[11.5rem]"
+            >
+              {t("secondaryMarket.forms.createListingTitle")}
+            </SplitonCtaPill>
+          </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl bg-[#111111] px-6 py-16 text-center ring-1 ring-white/6">
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-14 text-center sm:py-16">
           <h2 className="text-lg font-semibold tracking-tight text-white">{t("secondaryMarket.empty.noResults")}</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">
             {t("secondaryMarket.empty.noOrdersFilterDesc")}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setStatusFilter("all");
-              setSideFilter("all");
-              setModeFilter("all");
-            }}
-            className="mt-6 font-mono text-[12px] text-zinc-400 underline-offset-2 hover:text-white hover:underline"
-          >
-            {t("secondaryMarket.filters.resetFilters")}
-          </button>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <SplitonCtaPill type="button" tone="onDark" withArrow={false} onClick={resetFilters}>
+              {t("secondaryMarket.filters.resetFilters")}
+            </SplitonCtaPill>
+          </div>
         </div>
       ) : (
         <>
@@ -731,21 +707,34 @@ export function SecondaryMarketMyOrdersTab() {
             {filtered.map((order) => {
               const bookId = secondaryMarketBookIdForSymbol(order.symbol) ?? order.releaseId;
               return (
-                <div key={order.id} className="flex items-start gap-3 py-3.5">
+                <button
+                  key={order.id}
+                  type="button"
+                  onClick={() => setSelectedOrder(order)}
+                  className="flex w-full items-start gap-3 py-3.5 text-left transition hover:bg-white/[0.02]"
+                >
                   <CoverThumb symbol={order.symbol} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-[14px] font-semibold text-white">{order.track}</p>
                         <p className="truncate text-[12px] text-zinc-500">
-                          {order.symbol} · {sideLabel(order.side, t)} · {modeLabel(order.mode, t)}
+                          {order.symbol}
+                          {" · "}
+                          <span className={order.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-400"}>
+                            {sideLabel(order.side, t)}
+                          </span>
+                          {" · "}
+                          {modeLabel(order.mode, t)}
                         </p>
                       </div>
-                      <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", statusPillClass(order.status))}>
+                      <span className={cn("shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold", statusPillClass(order.status))}>
                         {orderStatusUiLabel(order.status, locale)}
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[12px]">
+                    <div className="mt-2 space-y-1.5">
+                      <OrderFillBar filled={order.unitsFilled} total={order.unitsTotal} />
+                      <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[12px]">
                       <span className="text-zinc-400">
                         {order.pricePerUnit != null ? `${order.pricePerUnit.toLocaleString("ru-RU")} USDT` : t("secondaryMarket.forms.market")}
                         <span className="text-zinc-600"> · </span>
@@ -753,32 +742,34 @@ export function SecondaryMarketMyOrdersTab() {
                       </span>
                       <Link
                         href={secondaryMarketBookHref(bookId)}
-                        className="text-[#B7F500] hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-white hover:underline"
                       >
                         {t("secondaryMarket.actions.orderBook")}
                       </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
-          <div className="hidden min-w-0 overflow-x-auto md:block">
+          <div className="hidden min-w-0 overflow-x-auto rounded-2xl bg-[#111111] ring-1 ring-white/[0.08] md:block">
           <table className="w-full min-w-[1020px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-white/10 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
-                <th className="px-3 py-2.5 font-normal">{t("secondaryMarket.orders.columnId")}</th>
-                <th className="min-w-[200px] px-3 py-2.5 font-normal">{t("secondaryMarket.orders.columnListing")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("secondaryMarket.orders.columnSide")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("secondaryMarket.orders.columnType")}</th>
-                <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.orders.columnPrice")}</th>
-                <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.orders.columnUnits")}</th>
-                <th className="hidden px-3 py-2.5 text-right font-normal lg:table-cell">{t("secondaryMarket.orders.columnFilled")}</th>
-                <th className="hidden px-3 py-2.5 text-right font-normal lg:table-cell">{t("secondaryMarket.orders.columnRemainder")}</th>
-                <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.orders.columnAmount")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("secondaryMarket.orders.columnStatus")}</th>
-                <th className="hidden px-3 py-2.5 font-normal xl:table-cell">{t("secondaryMarket.orders.columnCreated")}</th>
-                <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.actions.actions")}</th>
+              <tr className="border-b border-white/10 font-mono text-[12px] text-zinc-500">
+                <th className="px-3 py-2.5 font-medium text-zinc-400">{t("secondaryMarket.orders.columnId")}</th>
+                <th className="min-w-[200px] px-3 py-2.5 font-medium text-zinc-400">{t("secondaryMarket.orders.columnListing")}</th>
+                <th className="px-3 py-2.5 font-medium text-zinc-400">{t("secondaryMarket.orders.columnSide")}</th>
+                <th className="px-3 py-2.5 font-medium text-zinc-400">{t("secondaryMarket.orders.columnType")}</th>
+                <th className="px-3 py-2.5 text-right font-medium text-zinc-400">{t("secondaryMarket.orders.columnPrice")}</th>
+                <th className="px-3 py-2.5 text-right font-medium text-zinc-400">{t("secondaryMarket.orders.columnUnits")}</th>
+                <th className="hidden px-3 py-2.5 text-right font-medium text-zinc-400 lg:table-cell">{t("secondaryMarket.orders.columnFilled")}</th>
+                <th className="hidden px-3 py-2.5 text-right font-medium text-zinc-400 lg:table-cell">{t("secondaryMarket.orders.columnRemainder")}</th>
+                <th className="px-3 py-2.5 text-right font-medium text-zinc-400">{t("secondaryMarket.orders.columnAmount")}</th>
+                <th className="px-3 py-2.5 font-medium text-zinc-400">{t("secondaryMarket.orders.columnStatus")}</th>
+                <th className="hidden px-3 py-2.5 font-medium text-zinc-400 xl:table-cell">{t("secondaryMarket.orders.columnCreated")}</th>
+                <th className="px-3 py-2.5 text-right font-medium text-zinc-400">{t("secondaryMarket.actions.actions")}</th>
               </tr>
             </thead>
             <tbody className="font-mono text-[12px] text-zinc-300">
@@ -807,7 +798,7 @@ export function SecondaryMarketMyOrdersTab() {
                         setSelectedOrder(row);
                       }
                     }}
-                    className="cursor-pointer border-b border-white/5 transition-colors hover:bg-white/3 focus-visible:bg-white/4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B7F500]/25"
+                    className="cursor-pointer border-b border-white/5 transition-colors hover:bg-white/3 focus-visible:bg-white/4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/20"
                   >
                     <td className="px-3 py-2.5 align-middle text-[11px] text-zinc-500">{row.id}</td>
                     <td className="px-3 py-2.5 align-middle">
@@ -825,7 +816,7 @@ export function SecondaryMarketMyOrdersTab() {
                       <span
                         className={cn(
                           "text-xs font-semibold",
-                          row.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300",
+                          row.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-400",
                         )}
                       >
                         {sideLabel(row.side, t)}
@@ -841,7 +832,12 @@ export function SecondaryMarketMyOrdersTab() {
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-right align-middle tabular-nums">{row.unitsTotal}</td>
+                    <td className="px-3 py-2.5 text-right align-middle tabular-nums">
+                      <div className="inline-flex w-[4.5rem] flex-col items-end">
+                        <span>{row.unitsTotal}</span>
+                        <OrderFillBar filled={row.unitsFilled} total={row.unitsTotal} />
+                      </div>
+                    </td>
                     <td className="hidden px-3 py-2.5 text-right align-middle tabular-nums text-zinc-400 lg:table-cell">
                       {row.unitsFilled}
                     </td>
@@ -1112,7 +1108,7 @@ export function SecondaryMarketMyOrdersTab() {
                     </div>
                     <div className="flex justify-between gap-4 border-b border-white/[0.05] py-2">
                       <dt className="text-zinc-600">{t("secondaryMarket.orders.columnSide")}</dt>
-                      <dd className={detailOrder.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300"}>
+                      <dd className={detailOrder.side === "buy" ? "text-white" : "text-zinc-400"}>
                         {sideLabel(detailOrder.side, t)}
                       </dd>
                     </div>
@@ -1162,7 +1158,7 @@ export function SecondaryMarketMyOrdersTab() {
                   <div className="mt-4 rounded-xl bg-white/[0.03] px-4 py-3">
                     <p className="text-[11px] leading-relaxed text-zinc-500">{executionSourceLabel(detailOrder, t)}</p>
                     {detailOrder.failureReason ? (
-                      <p className="mt-2 text-[11px] leading-relaxed text-fuchsia-200/80">{t(detailOrder.failureReason)}</p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-zinc-400/80">{t(detailOrder.failureReason)}</p>
                     ) : null}
                   </div>
                   <div className="mt-2.5 rounded-xl bg-white/[0.03] px-4 py-3">
@@ -1200,7 +1196,7 @@ export function SecondaryMarketMyOrdersTab() {
                         setCancelTarget(detailOrder);
                         setSelectedOrder(null);
                       }}
-                      className="w-full rounded-full bg-fuchsia-500/20 py-2.5 font-mono text-[12px] font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/28"
+                      className="w-full rounded-full bg-zinc-700/20 py-2.5 font-mono text-[12px] font-semibold text-zinc-200 transition hover:bg-zinc-700/28"
                     >
                       {detailOrder.status === "partial" ? t("secondaryMarket.actions.cancelRemainder") : t("secondaryMarket.forms.cancelOrder")}
                     </button>

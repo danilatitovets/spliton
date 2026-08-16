@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Check, Pencil } from "@/lib/lucide";
 
 import { useI18n } from "@/components/providers/i18n-provider";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { tf } from "@/lib/i18n/financial-messages";
 import { cn } from "@/lib/utils";
 
@@ -84,13 +85,9 @@ export function FlowPanel({
 export function FlowContinueButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <div className="pt-1">
-      <button
-        type="button"
-        onClick={onClick}
-        className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-neutral-900 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:w-auto sm:min-w-[200px]"
-      >
+      <SplitonCtaPill tone="onLight" type="button" onClick={onClick} className="w-full sm:w-auto sm:min-w-[200px]">
         {label}
-      </button>
+      </SplitonCtaPill>
     </div>
   );
 }

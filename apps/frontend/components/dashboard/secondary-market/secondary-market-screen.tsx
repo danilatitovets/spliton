@@ -8,10 +8,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { UnderlineTab } from "@/components/shared/exchange/underline-tab";
 import {
   isSecondaryBookMarketQuery,
-  SECONDARY_MARKET_TAB_META,
   parseSecondaryMarketTabParam,
   type SecondaryMarketTabId,
-  type SecondaryMarketTabZone,
 } from "@/constants/dashboard/secondary-market";
 import { useI18n } from "@/components/providers/i18n-provider";
 import {
@@ -24,8 +22,6 @@ import {
   isSecondaryMarketReleaseIdKnown,
 } from "@/mocks/dashboard/secondary-market-listings.mock";
 import { getWalletDataSource } from "@/services/wallet.service";
-
-import { cn } from "@/lib/utils";
 
 const SecondaryMarketMarketTab = dynamic(
   () =>
@@ -63,14 +59,6 @@ const SecondaryMarketRulesTab = dynamic(
       (mod) => ({ default: mod.SecondaryMarketRulesTab }),
     ),
 );
-
-const ZONE_PILL: Record<SecondaryMarketTabZone, string> = {
-  trading: "bg-[#B7F500]/12 text-[#d4f570] ring-1 ring-[#B7F500]/22",
-  operations: "bg-sky-500/10 text-sky-200/95 ring-1 ring-sky-400/18",
-  ledger: "bg-violet-500/10 text-violet-200/95 ring-1 ring-violet-400/18",
-  research: "bg-fuchsia-500/10 text-fuchsia-200/95 ring-1 ring-fuchsia-400/18",
-  reference: "bg-amber-500/10 text-amber-200/95 ring-1 ring-amber-400/18",
-};
 
 const RELEASE_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -111,7 +99,6 @@ function SecondaryMarketScreenInner() {
   }, [router, searchParams, tab]);
 
   const pageMeta = useSecondaryMarketPageMeta(tab);
-  const tabZone = SECONDARY_MARKET_TAB_META[tab].zone;
 
   const releaseRaw = searchParams.get("release");
   const walletLive = getWalletDataSource() === "live";
@@ -124,6 +111,7 @@ function SecondaryMarketScreenInner() {
       : null;
   const analyticsUnknownRelease =
     tab === "analytics" &&
+    walletLive &&
     typeof releaseRaw === "string" &&
     releaseRaw.length > 0 &&
     !analyticsReleaseId;
@@ -189,22 +177,6 @@ function SecondaryMarketScreenInner() {
         aria-label={t("meta.secondaryMarket.title")}
       >
         <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
-          {tab === "analytics" ? (
-            <div className="border-b border-white/6 pb-4 pt-4 md:pt-5">
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em]",
-                  ZONE_PILL[tabZone],
-                )}
-              >
-                {pageMeta.zoneLabel}
-              </span>
-              <h1 className="mt-3 text-xl font-semibold tracking-tight text-white md:text-2xl">
-                {pageMeta.surfaceTitle}
-              </h1>
-            </div>
-          ) : null}
-
           <div key={`${tab}-body`} className="animate-secondary-market-surface-in pb-20 pt-3 md:pt-4">
             {tabBody}
           </div>

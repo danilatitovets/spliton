@@ -13,6 +13,11 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/dashboard/profile")).toBe(true);
     expect(isProtectedPath("/dashboard/support/abc")).toBe(true);
     expect(isProtectedPath("/dashboard/secondary-market")).toBe(true);
+    expect(isProtectedPath("/dashboard/disputes")).toBe(true);
+    expect(isProtectedPath("/dashboard/disputes/abc")).toBe(true);
+    expect(isProtectedPath("/dashboard/documents")).toBe(true);
+    expect(isProtectedPath("/dashboard/statements")).toBe(true);
+    expect(isProtectedPath("/dashboard/artist")).toBe(true);
   });
 
   it("keeps marketing and catalog routes public", () => {

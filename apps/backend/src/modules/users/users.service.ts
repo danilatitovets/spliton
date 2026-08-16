@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AppLocale } from '@prisma/client';
 import { normalizeAppLocale } from '../../common/i18n/app-locale';
+import { resolveSessionDeviceLabel } from '../../common/http/user-agent-label';
 import { UsersRepository } from './users.repository';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountCenterService } from './account-center.service';
@@ -84,7 +85,7 @@ export class UsersService {
     };
   }
 
-  async listSessions(userId: string) {
+  async listSessions(userId: string, currentSessionId?: string | null) {
     const rows = await this.prisma.userSession.findMany({
       where: { userId },
       orderBy: { lastActiveAt: 'desc' },
@@ -93,13 +94,14 @@ export class UsersService {
     return {
       items: rows.map((s) => ({
         id: s.id,
-        device: s.device,
+        device: resolveSessionDeviceLabel(s.device, s.userAgent),
         ip: s.ip,
         userAgent: s.userAgent,
         lastActiveAt: s.lastActiveAt.toISOString(),
         createdAt: s.createdAt.toISOString(),
         active: !s.revokedAt && (!s.expiresAt || s.expiresAt.getTime() > Date.now()),
         revokedAt: s.revokedAt?.toISOString() ?? null,
+        isCurrent: Boolean(currentSessionId && s.id === currentSessionId),
       })),
     };
   }

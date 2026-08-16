@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ProductDemoBanner } from "@/components/shared/product-demo-banner";
 import { usePublicPlatformFees } from "@/hooks/use-public-platform-fees";
+import { cn } from "@/lib/utils";
 
 export function FeesLiveRatesBanner() {
   const { t } = useI18n();
@@ -24,18 +25,23 @@ export function FeesLiveRatesBanner() {
   }, [error, fees, live, loading, t]);
 
   if (!live) {
-    return <ProductDemoBanner messageKey="fees.banner.demo" className="mb-4" />;
+    return (
+      <ProductDemoBanner
+        messageKey="fees.banner.demo"
+        className="border-b border-neutral-200/80 pb-4 text-sm leading-relaxed text-neutral-600"
+      />
+    );
   }
 
-  if (!text) return null;
+  // Avoid a second loading strip while the main fees panel is still loading.
+  if (loading || !text) return null;
 
   return (
     <p
-      className={
-        error
-          ? "mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          : "mb-4 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700"
-      }
+      className={cn(
+        "border-b border-neutral-200/80 pb-4 text-sm leading-relaxed",
+        error ? "text-rose-700" : "text-neutral-600",
+      )}
     >
       {text}
       {fees?.disclaimer ? ` ${fees.disclaimer}` : null}

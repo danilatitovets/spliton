@@ -3,16 +3,23 @@
 import "./statements-page.css";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Check, Download, FileText, RefreshCw } from "@/lib/lucide";
+import { Check, ChevronRight, Download, RefreshCw } from "@/lib/lucide";
 import { SplitonLoader } from "@/components/ui/spliton-loader";
 
+import { AssetsGptMenu } from "@/components/dashboard/assets/assets-gpt-menu";
+import { SplitonDarkSurface } from "@/components/dashboard/assets/spliton-dark-surface";
 import { DashboardAppShell } from "@/components/layout/dashboard-app-shell";
-import { profileCardClass } from "@/components/dashboard/profile/profile-ui";
-import { FeesPageTabs } from "@/components/fees/fees-page-tabs";
+import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
+import {
+  profileCardClass,
+  profileMutedCardClass,
+  profilePrimaryButtonClass,
+} from "@/components/dashboard/profile/profile-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { StyledSelectField } from "@/components/ui/styled-select";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { ROUTES } from "@/constants/routes";
 import { intlLocaleFor } from "@/lib/i18n/formatters";
 import { tf } from "@/lib/i18n/financial-messages";
@@ -38,6 +45,9 @@ type RequestStatus = {
 };
 
 type PageTab = "request" | "history";
+
+const STATEMENTS_ICON = "/images/services-menu/statements.png";
+const STATEMENTS_EMPTY_ICON = "/images/services-menu/statements-empty.png";
 
 const STATEMENT_DOC_KINDS = new Set([
   "ANNUAL_INCOME_STATEMENT",
@@ -110,20 +120,21 @@ function StatementGenerationSteps({
     <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
       {steps.map((step) => {
         const done = activeIndex > step.id || (status === "completed" && step.id <= 4);
-        const active = activeIndex === step.id && status !== "failed" && status !== "completed" && status !== "ready";
+        const active =
+          activeIndex === step.id && status !== "failed" && status !== "completed" && status !== "ready";
         return (
           <div key={step.id} className="flex flex-col items-center gap-1 text-center">
             <span
               className={cn(
                 "stmt-gen-step flex size-7 items-center justify-center rounded-full text-[10px] font-bold sm:size-8",
-                done && "bg-neutral-900 text-white stmt-gen-step--done",
-                active && "bg-[#B7F500] text-black stmt-gen-step--active",
-                !done && !active && "bg-neutral-100 text-neutral-400",
+                done && "bg-white text-black stmt-gen-step--done",
+                active && "bg-white text-black stmt-gen-step--active",
+                !done && !active && "bg-white/[0.08] text-zinc-500",
               )}
             >
               {done ? <Check className="size-3.5" strokeWidth={3} /> : step.id}
             </span>
-            <span className="text-[9px] leading-tight text-neutral-500 sm:text-[10px]">{step.label}</span>
+            <span className="text-[9px] leading-tight text-zinc-500 sm:text-[10px]">{step.label}</span>
           </div>
         );
       })}
@@ -163,7 +174,7 @@ export function StatementsPageContent() {
   const periodOptions = React.useMemo(
     () =>
       PERIOD_VALUES.map((value) => ({
-        value,
+        id: value,
         label: t(PERIOD_LABEL_KEYS[value]),
       })),
     [t],
@@ -380,121 +391,207 @@ export function StatementsPageContent() {
     (d) => activeRequest && isDocumentReady(d.status) && d.id === activeRequest.id,
   );
 
-  const readyDownloadId = completedDoc?.id ?? (activeRequest?.status === "completed" || activeRequest?.status === "ready" ? activeRequest.id : null);
-
-  const tabItems = React.useMemo(
-    () => PAGE_TABS.map((item) => ({ id: item.id, label: t(item.labelKey) })),
-    [t],
-  );
+  const readyDownloadId =
+    completedDoc?.id ??
+    (activeRequest?.status === "completed" || activeRequest?.status === "ready" ? activeRequest.id : null);
 
   const headerSubtitleParts = t("statements.page.subtitle").split("{documents}");
 
   return (
-    <DashboardAppShell contentClassName="max-w-3xl pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
-          {t("statements.page.header.title")}
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-          {headerSubtitleParts[0]}
-          <Link href={ROUTES.dashboardDocuments} className="font-medium text-neutral-900 underline-offset-2 hover:underline">
-            {t("statements.page.header.documentsLink")}
-          </Link>
-          {headerSubtitleParts[1]}
-        </p>
-      </header>
+    <DashboardAppShell
+      tone="dark"
+      contentClassName="max-w-[960px] pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:pb-10"
+    >
+      <SplitonDarkSurface
+        className="min-h-0 shadow-none"
+        contentClassName="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6"
+        watermarkCompact
+      >
+        <div className="relative mx-auto size-24 shrink-0 sm:mx-0 sm:size-28">
+          <Image
+            src={STATEMENTS_ICON}
+            alt=""
+            fill
+            sizes="112px"
+            className="object-contain"
+            unoptimized
+            aria-hidden
+            priority
+          />
+        </div>
+        <div className="min-w-0 flex-1 text-center sm:text-left">
+          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {t("statements.page.header.title")}
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-white/55">
+            {headerSubtitleParts[0]}
+            <Link
+              href={ROUTES.dashboardDocuments}
+              className="font-medium text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/60"
+            >
+              {t("statements.page.header.documentsLink")}
+            </Link>
+            {headerSubtitleParts[1]}
+          </p>
+        </div>
+      </SplitonDarkSurface>
 
-      <div className="mt-6 sm:mt-8">
-        <FeesPageTabs items={tabItems} active={tab} onChange={setTab} />
+      <div className="mt-4 flex flex-wrap gap-2">
+        <SplitonCtaPill
+          href={ROUTES.dashboardDocuments}
+          tone="onDark"
+          variant="ghost"
+          className="h-9 min-w-0 px-3.5 text-[12px]"
+        >
+          {t("statements.page.header.documentsLink")}
+        </SplitonCtaPill>
+        <SplitonCtaPill
+          href={ROUTES.dashboardSupport}
+          tone="onDark"
+          variant="ghost"
+          withArrow={false}
+          className="h-9 min-w-0 px-3.5 text-[12px]"
+        >
+          {t("support.nav.support")}
+        </SplitonCtaPill>
+        <button
+          type="button"
+          onClick={() => setTab("request")}
+          className="inline-flex h-9 items-center rounded-full px-3.5 text-[12px] font-semibold text-white/75 transition hover:bg-white/[0.06] hover:text-white"
+        >
+          {t("statements.tab.request")}
+        </button>
+      </div>
+
+      <div className="mt-6 space-y-5 sm:mt-8">
+        <div className="flex gap-1.5">
+          {PAGE_TABS.map((item) => {
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTab(item.id)}
+                className={cn(
+                  smExchange.chipBase,
+                  active ? smExchange.chipActive : smExchange.chipIdle,
+                  "px-3.5 py-2 text-[13px]",
+                )}
+              >
+                {t(item.labelKey)}
+              </button>
+            );
+          })}
+        </div>
 
         {tab === "request" ? (
-          <div className="mt-5 space-y-4">
-            <section className={cn(profileCardClass, "space-y-4 px-5 py-6 sm:px-8 sm:py-8")}>
+          <div className="space-y-4">
+            <section className={profileCardClass}>
               {loading ? (
-                <p className="flex items-center gap-2 text-sm text-neutral-500">
-                  <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
-                  {t("statements.page.request.loadingKinds")}
-                </p>
+                <div className="flex min-h-[10rem] items-center justify-center">
+                  <SplitonLoader size="sm" variant="light" className="shrink-0" />
+                </div>
               ) : loadError ? (
-                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-100 ring-1 ring-rose-400/25">
                   <p>{loadError}</p>
-                  <button type="button" onClick={loadKinds} className="mt-2 text-xs font-semibold underline">
+                  <button type="button" onClick={loadKinds} className="mt-2 text-xs font-semibold text-white underline">
                     {t("statements.page.request.retry")}
                   </button>
                 </div>
               ) : kinds.length === 0 ? (
-                <p className="text-sm text-neutral-500">{t("statements.page.request.noKinds")}</p>
+                <p className="text-sm text-zinc-400">{t("statements.page.request.noKinds")}</p>
               ) : (
                 <>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-white">{t("statements.page.request.kindLabel")}</p>
+                    <AssetsGptMenu
+                      value={period}
+                      onChange={setPeriod}
+                      options={periodOptions}
+                      ariaLabel={t("statements.page.request.periodLabel")}
+                    />
+                  </div>
+
                   {!live ? (
-                    <p className="rounded-lg bg-[#F5F5F5] px-3 py-2 text-xs text-neutral-600">
+                    <p className={cn(profileMutedCardClass, "mt-4 text-xs text-zinc-400")}>
                       {t("statements.page.request.demoHint")}
                     </p>
                   ) : null}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <StyledSelectField
-                      label={t("statements.page.request.kindLabel")}
-                      id="statement-kind"
-                      variant="okx"
-                      value={selected}
-                      placeholder={t("statements.page.request.kindPlaceholder")}
-                      options={kinds.map((k) => ({ value: k.kind, label: k.label }))}
-                      onChange={setSelected}
-                    />
-                    <StyledSelectField
-                      label={t("statements.page.request.periodLabel")}
-                      id="statement-period"
-                      variant="okx"
-                      value={period}
-                      options={periodOptions}
-                      onChange={setPeriod}
-                    />
-                  </div>
-                  <div className="space-y-2">
+
+                  <ul className="mt-4 space-y-2">
+                    {kinds.map((kind) => {
+                      const isSelected = kind.kind === selected;
+                      return (
+                        <li key={kind.kind}>
+                          <button
+                            type="button"
+                            onClick={() => setSelected(kind.kind)}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition",
+                              isSelected
+                                ? "bg-white/[0.08] text-white"
+                                : "bg-white/[0.04] text-zinc-200 hover:bg-white/[0.06]",
+                            )}
+                          >
+                            <span className="block min-w-0 truncate text-sm font-medium text-white">
+                              {kind.label}
+                            </span>
+                            {isSelected ? (
+                              <Check className="size-4 shrink-0 text-white" strokeWidth={2.5} aria-hidden />
+                            ) : (
+                              <ChevronRight className="size-4 shrink-0 text-zinc-600" aria-hidden />
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <div className="mt-5 space-y-2">
                     <button
                       type="button"
                       disabled={!selected || busy || Boolean(generating)}
                       onClick={requestStatement}
-                      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-black px-6 text-sm font-semibold text-white transition hover:bg-[#1a1a1a] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                      className={cn(profilePrimaryButtonClass, "h-11 w-full sm:w-auto sm:min-w-[180px]")}
                     >
                       {busy ? (
                         <>
-                          <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
+                          <SplitonLoader size="xxs" variant="dark" className="mr-2 shrink-0" />
                           {t("statements.page.request.submitting")}
                         </>
                       ) : (
                         t("statements.page.request.submit")
                       )}
                     </button>
-                    {requestError ? <p className="text-sm text-red-700">{requestError}</p> : null}
-                    <p className="text-xs text-neutral-500">{t("statements.page.request.hint")}</p>
+                    {requestError ? <p className="text-sm text-rose-200">{requestError}</p> : null}
+                    <p className="text-xs text-zinc-500">{t("statements.page.request.hint")}</p>
                   </div>
                 </>
               )}
             </section>
 
             {activeRequest ? (
-              <section className={cn(profileCardClass, "space-y-4 px-5 py-6 sm:px-8")}>
+              <section className={cn(profileCardClass, "space-y-4")}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-neutral-900">
+                    <p className="text-sm font-semibold text-white">
                       {selectedKind?.label ?? kindLabels[activeRequest.kind] ?? activeRequest.kind}
                     </p>
-                    <p className="mt-0.5 text-xs text-neutral-500">
-                      {periodMeta.label} · {shortStatementRef(activeRequest.id)}
+                    <p className="mt-0.5 font-mono text-xs text-zinc-500">
+                      {periodMeta.label} — {shortStatementRef(activeRequest.id)}
                     </p>
                   </div>
                   {generating ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-semibold text-neutral-700">
-                      <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] px-2.5 py-1 text-[10px] font-semibold text-zinc-200">
+                      <SplitonLoader size="xxs" variant="light" className="shrink-0" />
                       {t("statements.page.preview.generating")}
                     </span>
                   ) : activeRequest.status === "completed" || activeRequest.status === "ready" ? (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-800">
+                    <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-200">
                       {t("statements.page.preview.ready")}
                     </span>
                   ) : activeRequest.status === "failed" ? (
-                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-semibold text-red-800">
+                    <span className="rounded-full bg-rose-400/15 px-2.5 py-1 text-[10px] font-semibold text-rose-200">
                       {t("statements.status.failed")}
                     </span>
                   ) : null}
@@ -503,8 +600,8 @@ export function StatementsPageContent() {
                 <StatementGenerationSteps status={activeRequest.status} t={t} />
 
                 {generating ? (
-                  <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
-                    <div className="stmt-gen-progress h-full rounded-full bg-[#B7F500]" />
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="stmt-gen-progress h-full rounded-full bg-white" />
                   </div>
                 ) : null}
 
@@ -513,17 +610,17 @@ export function StatementsPageContent() {
                     type="button"
                     onClick={() => void handleDownload(readyDownloadId)}
                     disabled={downloadingId === readyDownloadId}
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-60 sm:w-auto sm:min-w-[180px]"
+                    className={cn(profilePrimaryButtonClass, "h-10 w-full sm:w-auto sm:min-w-[180px]")}
                   >
                     {downloadingId === readyDownloadId ? (
-                      <SplitonLoader size="xxs" variant="light" className="shrink-0" />
+                      <SplitonLoader size="xxs" variant="dark" className="mr-2 shrink-0" />
                     ) : (
-                      <Download className="size-4" />
+                      <Download className="mr-2 size-4" />
                     )}
                     {t("statements.preview.downloadPdf")}
                   </button>
                 ) : generating ? (
-                  <p className="flex items-center gap-2 text-xs text-neutral-600">
+                  <p className="flex items-center gap-2 text-xs text-zinc-400">
                     <SplitonLoader size="xxs" variant="light" className="shrink-0" />
                     {t("statements.preview.generatingHint")}
                   </p>
@@ -532,17 +629,13 @@ export function StatementsPageContent() {
             ) : null}
           </div>
         ) : (
-          <section className="mt-5">
+          <section className={profileCardClass}>
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-neutral-500">
-                {documents.length > 0
-                  ? tf(t("statements.page.history.count"), { count: String(documents.length) })
-                  : null}
-              </p>
+              <h2 className="text-sm font-semibold text-white">{t("statements.tab.history")}</h2>
               <button
                 type="button"
                 onClick={loadDocuments}
-                className="inline-flex size-9 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700 transition hover:bg-neutral-200"
+                className="inline-flex size-9 items-center justify-center rounded-full bg-white/[0.06] text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
                 aria-label={t("statements.page.history.refreshAria")}
               >
                 <RefreshCw className="size-4" />
@@ -550,38 +643,50 @@ export function StatementsPageContent() {
             </div>
 
             {documents.length === 0 ? (
-              <div className={cn(profileCardClass, "mt-4 text-center")}>
-                <p className="text-sm text-neutral-600">{t("statements.page.history.empty")}</p>
+              <div className="flex flex-col items-center px-2 py-10 text-center sm:py-12">
+                <div className="relative size-[7.5rem] sm:size-36">
+                  <Image
+                    src={STATEMENTS_EMPTY_ICON}
+                    alt=""
+                    fill
+                    sizes="144px"
+                    className="object-contain"
+                    unoptimized
+                    aria-hidden
+                  />
+                </div>
+                <p className="mt-5 text-[15px] font-medium text-white">{t("statements.page.history.empty")}</p>
                 <button
                   type="button"
                   onClick={() => setTab("request")}
-                  className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#1a1a1a]"
+                  className={cn(profilePrimaryButtonClass, "mt-5 h-10 px-5")}
                 >
                   {t("statements.page.request.submit")}
                 </button>
               </div>
             ) : (
-              <ul className="mt-4 divide-y divide-neutral-200/80 overflow-hidden rounded-xl bg-white ring-1 ring-neutral-200/80">
+              <ul className="mt-4 divide-y divide-white/[0.06]">
                 {documents.map((doc) => (
-                  <li key={doc.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
-                    <div className="flex min-w-0 items-start gap-2.5">
-                      <FileText className="mt-0.5 size-4 shrink-0 text-neutral-400" aria-hidden />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-neutral-900">
-                          {kindLabels[doc.kind.toLowerCase()] ?? doc.kind}
-                        </p>
-                        <p className="text-xs text-neutral-500">
-                          {new Date(doc.createdAt).toLocaleDateString(intlLocaleFor(locale))} ·{" "}
-                          {statusLabels[doc.status.toLowerCase()] ?? doc.status}
-                        </p>
-                      </div>
+                  <li
+                    key={doc.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3.5 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-white">
+                        {kindLabels[doc.kind.toLowerCase()] ?? doc.kind}
+                      </p>
+                      <p className="mt-0.5 font-mono text-xs text-zinc-500">
+                        {new Date(doc.createdAt).toLocaleDateString(intlLocaleFor(locale))}
+                        {" — "}
+                        {statusLabels[doc.status.toLowerCase()] ?? doc.status}
+                      </p>
                     </div>
                     {isDocumentReady(doc.status) ? (
                       <button
                         type="button"
                         onClick={() => void handleDownload(doc.id)}
                         disabled={downloadingId === doc.id}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-neutral-900 px-3 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-60"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-semibold text-black transition hover:bg-[#e8e8e8] disabled:opacity-60"
                       >
                         {downloadingId === doc.id ? (
                           <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
@@ -591,7 +696,7 @@ export function StatementsPageContent() {
                         {t("statements.page.history.pdf")}
                       </button>
                     ) : (
-                      <span className="text-xs text-neutral-500">
+                      <span className="text-xs text-zinc-500">
                         {statusLabels[doc.status.toLowerCase()] ?? doc.status}
                       </span>
                     )}

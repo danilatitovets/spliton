@@ -27,16 +27,38 @@ export class AccountCenterService {
   ) {}
 
   async buildSummary(userId: string, roles: string[]): Promise<AccountCenterSummary> {
+    const consentSources = [
+      ConsentSource.REGISTER,
+      ConsentSource.PRIMARY_PURCHASE,
+      ConsentSource.SECONDARY_TRADE,
+      ConsentSource.WITHDRAWAL,
+      ConsentSource.LOGIN,
+    ] as const;
+
+    const missingPromise = this.legalConsents.getMissingConsentsForSources(userId, [
+      ...consentSources,
+    ]);
+    const eligibilityPromise = missingPromise.then((missingBySource) =>
+      this.eligibility.checkMany(
+        userId,
+        [
+          ConsentSource.LOGIN,
+          ConsentSource.WITHDRAWAL,
+          ConsentSource.PRIMARY_PURCHASE,
+          ConsentSource.SECONDARY_TRADE,
+        ],
+        { missingBySource },
+      ),
+    );
+
     const [
       user,
       twoFaCount,
       activeSessionsCount,
       lastLogin,
       kyc,
-      registerMissing,
-      primaryMissing,
-      secondaryMissing,
-      withdrawalMissing,
+      missingBySource,
+      eligibilityByAction,
       securityPrefs,
       notificationPrefs,
       securityEvents,
@@ -44,10 +66,6 @@ export class AccountCenterService {
       openDisputesCount,
       pendingWithdrawalsCount,
       hasWalletActivity,
-      canDeposit,
-      canWithdraw,
-      canBuyPrimary,
-      canTradeSecondary,
       unreadNotificationsCount,
     ] = await Promise.all([
       this.prisma.user.findUnique({
@@ -80,10 +98,8 @@ export class AccountCenterService {
         orderBy: { updatedAt: 'desc' },
         select: { status: true, level: true },
       }),
-      this.legalConsents.getMissingConsents(userId, ConsentSource.REGISTER),
-      this.legalConsents.getMissingConsents(userId, ConsentSource.PRIMARY_PURCHASE),
-      this.legalConsents.getMissingConsents(userId, ConsentSource.SECONDARY_TRADE),
-      this.legalConsents.getMissingConsents(userId, ConsentSource.WITHDRAWAL),
+      missingPromise,
+      eligibilityPromise,
       this.prisma.userSecurityPreference.findUnique({ where: { userId } }),
       this.prisma.notificationPreference.findUnique({ where: { userId } }),
       this.prisma.auditLog.findMany({
@@ -127,12 +143,20 @@ export class AccountCenterService {
           select: { id: true },
         })
         .then((row) => Boolean(row)),
-      this.eligibility.canDeposit(userId).then((r) => r.allowed),
-      this.eligibility.canWithdraw(userId).then((r) => r.allowed),
-      this.eligibility.canBuyPrimary(userId).then((r) => r.allowed),
-      this.eligibility.canTradeSecondary(userId).then((r) => r.allowed),
       this.notifications.unreadCountForUser(userId, roles).then((r) => r.count),
     ]);
+
+    const registerMissing = missingBySource.get(ConsentSource.REGISTER) ?? [];
+    const primaryMissing = missingBySource.get(ConsentSource.PRIMARY_PURCHASE) ?? [];
+    const secondaryMissing = missingBySource.get(ConsentSource.SECONDARY_TRADE) ?? [];
+    const withdrawalMissing = missingBySource.get(ConsentSource.WITHDRAWAL) ?? [];
+
+    const canDeposit = eligibilityByAction.get(ConsentSource.LOGIN)?.allowed ?? false;
+    const canWithdraw = eligibilityByAction.get(ConsentSource.WITHDRAWAL)?.allowed ?? false;
+    const canBuyPrimary =
+      eligibilityByAction.get(ConsentSource.PRIMARY_PURCHASE)?.allowed ?? false;
+    const canTradeSecondary =
+      eligibilityByAction.get(ConsentSource.SECONDARY_TRADE)?.allowed ?? false;
 
     const emailVerified = Boolean(user?.emailVerifiedAt);
     const twoFaEnabled = twoFaCount > 0;
@@ -163,7 +187,7 @@ export class AccountCenterService {
         securityPrefs?.withdrawalAddressWhitelistEnabled ?? false,
       suspiciousLoginAlertsEnabled: securityPrefs?.suspiciousLoginAlertsEnabled ?? true,
       emailSecurityNotificationsEnabled: notificationPrefs?.emailSecurity ?? true,
-      enforcementReady: false,
+      enforcementReady: true,
     };
 
     const security = buildSecuritySummary({

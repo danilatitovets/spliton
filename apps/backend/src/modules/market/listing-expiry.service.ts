@@ -68,6 +68,9 @@ export class ListingExpiryService implements OnModuleInit, OnModuleDestroy {
   private async expireListing(listingId: string): Promise<boolean> {
     try {
       await this.prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`
+          SELECT id FROM market_listings WHERE id = ${listingId}::uuid FOR UPDATE
+        `;
         const listing = await tx.marketListing.findFirst({
           where: {
             id: listingId,
@@ -79,38 +82,38 @@ export class ListingExpiryService implements OnModuleInit, OnModuleDestroy {
         if (!listing) return;
 
         const unlock = listing.unitsAvailable;
+        const cas = await tx.$executeRaw`
+          UPDATE market_listings
+          SET status = 'EXPIRED', updated_at = NOW()
+          WHERE id = ${listingId}::uuid
+            AND status IN ('ACTIVE', 'PAUSED')
+            AND deleted_at IS NULL
+        `;
+        if (Number(cas) !== 1) return;
+
         if (unlock.gt(0)) {
-          const position = await tx.userPosition.findUnique({
-            where: {
-              userId_releaseId: {
-                userId: listing.sellerUserId,
-                releaseId: listing.releaseId,
-              },
-            },
-          });
-          if (position) {
-            await tx.userPosition.update({
-              where: { id: position.id },
-              data: {
-                unitsAvailable: position.unitsAvailable.plus(unlock),
-                unitsLocked: position.unitsLocked.minus(unlock),
-              },
-            });
+          const posUpdated = await tx.$executeRaw`
+            UPDATE user_positions
+            SET
+              units_available = units_available + ${unlock},
+              units_locked = units_locked - ${unlock},
+              updated_at = NOW()
+            WHERE user_id = ${listing.sellerUserId}::uuid
+              AND release_id = ${listing.releaseId}::uuid
+              AND units_locked >= ${unlock}
+          `;
+          if (Number(posUpdated) !== 1) {
+            throw new Error(`POSITION_LOCK_MISMATCH for listing ${listingId}`);
           }
-        }
 
-        await tx.marketListing.update({
-          where: { id: listingId },
-          data: { status: ListingStatus.EXPIRED },
-        });
-
-        if (unlock.gt(0)) {
           await tx.ownershipLedger.create({
             data: {
               userId: listing.sellerUserId,
               releaseId: listing.releaseId,
               eventType: OwnershipEventType.UNLOCK_AFTER_CANCEL,
               unitsDelta: unlock,
+              sourceEntityType: 'listing',
+              sourceEntityId: listingId,
               happenedAt: new Date(),
             },
           });

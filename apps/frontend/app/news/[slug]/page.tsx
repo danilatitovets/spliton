@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
@@ -8,7 +9,7 @@ import { findNewsArticleBySlug } from "@/constants/news-mock-data";
 import { isLiveNewsEnabled } from "@/lib/public-env";
 import { fetchPublicNewsBySlug } from "@/services/news.service";
 
-async function loadNews(slug: string) {
+const loadNews = cache(async (slug: string) => {
   if (!isLiveNewsEnabled()) {
     const article = findNewsArticleBySlug(slug);
     if (!article) return null;
@@ -24,7 +25,7 @@ async function loadNews(slug: string) {
     };
   }
   return fetchPublicNewsBySlug(slug);
-}
+});
 
 export async function generateMetadata({
   params,

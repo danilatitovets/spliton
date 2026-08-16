@@ -123,7 +123,6 @@ export class FeatureFlagsService {
     if (key === 'enableDeposits') {
       return (
         this.isEnabled('enableDeposits') &&
-        !this.isEnabled('disableDepositsCredit') &&
         !this.isEnabled('disableDepositsImmediately')
       );
     }

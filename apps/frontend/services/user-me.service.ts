@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl } from "@/lib/public-env";
+import { parseApiClientError } from "@/lib/api/api-client-error";
 
 type AuthorizedFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -115,6 +116,7 @@ export type UserSessionItem = {
   createdAt: string;
   active: boolean;
   revokedAt: string | null;
+  isCurrent?: boolean;
 };
 
 export async function fetchUserSessions(fetcher: AuthorizedFetch) {
@@ -186,10 +188,10 @@ export async function changeUserPassword(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const data = (await res.json().catch(() => null)) as { message?: string | string[] } | null;
-    const msg = Array.isArray(data?.message) ? data.message[0] : data?.message;
     if (res.status === 401) throw new Error("profile.security.password.error.invalidCurrent");
-    if (res.status === 400 && msg) throw new Error("profile.security.password.error.generic");
-    throw new Error("profile.security.password.error.generic");
+    const err = await parseApiClientError(res);
+    // Prefer localized profile keys for known weak-password / validation cases.
+    if (res.status === 400) throw new Error("profile.security.password.error.generic");
+    throw err;
   }
 }

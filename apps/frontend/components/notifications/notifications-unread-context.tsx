@@ -38,7 +38,7 @@ export function NotificationsUnreadProvider({
 
   React.useEffect(() => {
     void refresh();
-    const timer = setInterval(() => void refresh(), 60_000);
+    const timer = setInterval(() => void refresh(), 120_000);
     return () => clearInterval(timer);
   }, [refresh]);
 

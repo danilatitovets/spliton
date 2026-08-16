@@ -1,7 +1,8 @@
 "use client";
 
 import { ChevronDown } from "@/lib/lucide";
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { assetsFilterSelectClass } from "@/components/dashboard/assets/assets-ui";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ export function AssetsFilterField({
   className?: string;
 }) {
   return (
-    <div className={cn("min-w-0 flex-1 sm:flex-none sm:min-w-[9.5rem]", className)}>
+    <div className={cn("min-w-0", className)}>
       <p className="mb-1.5 text-xs text-neutral-500">{label}</p>
       {children}
     </div>
@@ -24,6 +25,8 @@ export function AssetsFilterField({
 }
 
 type FilterOption = { value: string; label: string };
+
+type MenuPos = { top: number; left: number; width: number };
 
 export function AssetsFilterSelect({
   value,
@@ -39,55 +42,101 @@ export function AssetsFilterSelect({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<MenuPos | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const items = useMemo(() => options, [options]);
   const currentLabel = items.find((o) => o.value === value)?.label ?? value;
 
+  const updatePos = () => {
+    const el = buttonRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: Math.max(rect.width, 160),
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePos();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => updatePos();
+    const onResize = () => updatePos();
+    const onPointer = (e: MouseEvent | PointerEvent) => {
+      const t = e.target as Node;
+      if (buttonRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <div
-      ref={rootRef}
-      className={cn("relative", className)}
-      onBlur={(e) => {
-        if (!rootRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
-      }}
-    >
+    <>
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={() => setOpen((v) => !v)}
-        className={assetsFilterSelectClass}
+        className={cn(assetsFilterSelectClass, className)}
       >
-        <span className="truncate">{currentLabel}</span>
+        <span className="min-w-0 flex-1 truncate text-left">{currentLabel}</span>
         <ChevronDown
           className={cn("size-4 shrink-0 text-neutral-400 transition-transform", open && "rotate-180")}
           aria-hidden
         />
       </button>
-      {open ? (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-full overflow-hidden rounded-lg bg-white">
-          <ul className="max-h-56 overflow-auto py-1">
-            {items.map((item) => (
-              <li key={item.value}>
+      {open && pos
+        ? createPortal(
+            <div
+              ref={menuRef}
+              role="listbox"
+              style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
+              className="fixed z-[80] max-h-56 overflow-auto rounded-xl bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.14)] ring-1 ring-neutral-200"
+            >
+              {items.map((item) => (
                 <button
+                  key={item.value}
                   type="button"
+                  role="option"
+                  aria-selected={item.value === value}
                   onClick={() => {
                     onSelect(item.value);
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center px-3 py-2 text-left text-sm transition",
+                    "flex w-full items-center px-3 py-2.5 text-left text-sm transition",
                     item.value === value
                       ? "bg-neutral-100 font-medium text-neutral-900"
                       : "text-neutral-700 hover:bg-neutral-50",
                   )}
                 >
-                  {item.label}
+                  <span className="truncate">{item.label}</span>
                 </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </div>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }

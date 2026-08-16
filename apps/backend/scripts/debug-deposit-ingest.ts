@@ -7,6 +7,7 @@ import { createE2eApp } from '../test/helpers/create-e2e-app';
 import { registerE2eUser } from '../test/helpers/register-e2e-user';
 import { seedWalletWithLedger } from '../test/helpers/seed-wallet-ledger';
 import { DepositIngestionService } from '../src/modules/deposit-ingestion/deposit-ingestion.service';
+import { mockUsdtTransfer } from '../test/helpers/mock-usdt-transfer';
 import { MockDepositProvider } from '../src/modules/deposit-ingestion/providers/mock-deposit.provider';
 
 const envPath = resolve(__dirname, '../../../.env');
@@ -39,17 +40,15 @@ async function main() {
     const ingestion = app.get(DepositIngestionService);
     provider.clear();
     const txHash = `tx-debug-${Date.now()}`;
-    provider.enqueue({
-      txHash,
-      fromAddress: 'TFromAddress111111111111111111111111111',
-      toAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-      amount: '25',
-      confirmations: 25,
-      blockNumber: 1000n,
-      tokenContract: '',
-      network: 'TRC20',
-      assetCode: 'USDT',
-    });
+    provider.enqueue(
+      mockUsdtTransfer({
+        txHash,
+        toAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+        amount: '25',
+        fromAddress: 'TFromAddress111111111111111111111111111',
+        blockNumber: 1000n,
+      }),
+    );
     const out = await ingestion.tick();
     console.log('tick:', out);
 

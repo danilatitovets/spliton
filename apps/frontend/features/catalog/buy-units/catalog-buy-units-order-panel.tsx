@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/providers/auth-provider";
@@ -29,6 +29,8 @@ import { ProductDemoBanner } from "@/components/shared/product-demo-banner";
 import { AuthActionPanel } from "@/components/shared/auth-action-panel";
 
 import { formatUsdtFixedRu, formatUnitsCompact } from "@/lib/market-overview/format";
+import { invalidateClientCache } from "@/lib/client-data-cache";
+import { invalidateWalletBalanceCache } from "@/lib/wallet-balance-cache";
 import {
   amountFromUnits,
   clampUnits,
@@ -162,6 +164,8 @@ export function CatalogBuyUnitsOrderPanel({
   const [previewFailed, setPreviewFailed] = useState(false);
   const [roundError, setRoundError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const purchaseIdempotencyKeyRef = useRef<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [payAmountError, setPayAmountError] = useState<string | null>(null);
 
@@ -216,6 +220,11 @@ export function CatalogBuyUnitsOrderPanel({
   const ownershipPct = computeOwnershipPercent(clampedQty, totalUnits);
 
   useEffect(() => {
+    // New checkout attempt when quantity/round changes.
+    purchaseIdempotencyKeyRef.current = null;
+  }, [clampedQty, round?.roundId]);
+
+  useEffect(() => {
     if (!live || !round?.roundId || clampedQty < minUnits || priceInvalid || maxUnits < minUnits) {
       setPreview(null);
       setPreviewFailed(false);
@@ -230,11 +239,18 @@ export function CatalogBuyUnitsOrderPanel({
         setPreview(p);
         applyTerms((prev) => mergePrimaryBuyTermsFromPreview(prev, p));
       })
-      .catch(() => {
-        if (!cancelled) {
-          setPreview(null);
-          setPreviewFailed(true);
-        }
+      .catch((err) => {
+        if (cancelled) return;
+        // Consent/KYC 403 is expected before accept — keep local quote, not a connection error.
+        const code = err && typeof err === 'object' && 'code' in err ? String((err as { code?: string }).code) : '';
+        const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status?: number }).status) : 0;
+        const softBlock =
+          status === 403 ||
+          code === 'COMPLIANCE_RESTRICTED' ||
+          code === 'CONSENT_REQUIRED' ||
+          code === 'FEATURE_DISABLED';
+        setPreview(null);
+        setPreviewFailed(!softBlock);
       })
       .finally(() => {
         if (!cancelled) setPreviewLoading(false);
@@ -356,6 +372,7 @@ export function CatalogBuyUnitsOrderPanel({
   }
 
   const executePurchase = async () => {
+    if (submittingRef.current) return;
     setSubmitError(null);
     if (!canPurchase) return;
 
@@ -368,9 +385,24 @@ export function CatalogBuyUnitsOrderPanel({
         setSubmitError(blockingLabel ?? t("catalog.buy.panel.unavailable"));
         return;
       }
+      submittingRef.current = true;
       setSubmitting(true);
       try {
-        const result = await createPrimaryOrder(round.roundId, clampedQty, authorizedFetch);
+        if (!purchaseIdempotencyKeyRef.current) {
+          purchaseIdempotencyKeyRef.current =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? `primary-${round.roundId}-${clampedQty}-${crypto.randomUUID()}`
+              : `primary-${round.roundId}-${clampedQty}-${Date.now()}`;
+        }
+        const result = await createPrimaryOrder(
+          round.roundId,
+          clampedQty,
+          authorizedFetch,
+          purchaseIdempotencyKeyRef.current,
+        );
+        purchaseIdempotencyKeyRef.current = null;
+        invalidateClientCache("assets:");
+        invalidateWalletBalanceCache();
         setReceipt({
           releaseTitle: row.title,
           artist: row.artist,
@@ -391,6 +423,7 @@ export function CatalogBuyUnitsOrderPanel({
       } catch (e) {
         setSubmitError(walletErrorMessage(e));
       } finally {
+        submittingRef.current = false;
         setSubmitting(false);
       }
       return;

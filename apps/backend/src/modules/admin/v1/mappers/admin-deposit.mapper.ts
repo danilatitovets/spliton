@@ -82,15 +82,19 @@ const STATUS_TO_API: Record<DepositStatus, string> = {
   CONFIRMING: 'confirming',
   MANUAL_REVIEW: 'manual_review',
   CREDITED: 'completed',
-  CONFIRMED: 'completed',
+  CONFIRMED: 'confirmed',
   IGNORED: 'ignored',
   FAILED: 'failed',
+  REJECTED: 'rejected',
 };
 
 const API_TO_STATUS: Record<string, DepositStatus> = {
   pending: DepositStatus.PENDING,
   detected: DepositStatus.DETECTED,
   confirming: DepositStatus.CONFIRMING,
+  pending_confirmations: DepositStatus.PENDING_CONFIRMATIONS,
+  confirmed: DepositStatus.CONFIRMED,
+  confirmed_waiting_credit: DepositStatus.CONFIRMED,
   manual_review: DepositStatus.MANUAL_REVIEW,
   completed: DepositStatus.CREDITED,
   ignored: DepositStatus.IGNORED,

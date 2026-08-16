@@ -1,23 +1,14 @@
+import { parseApiClientError } from "@/lib/api/api-client-error";
 import { getPublicApiBaseUrl } from "@/lib/public-env";
 import type { KycStatusResponse } from "@/lib/kyc/kyc-status-adapter";
 
 type AuthorizedFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-async function parseError(res: Response): Promise<Error> {
-  try {
-    const body = (await res.json()) as { message?: string | string[] };
-    const msg = Array.isArray(body.message) ? body.message.join(", ") : body.message;
-    return new Error(msg ?? res.statusText);
-  } catch {
-    return new Error(res.statusText);
-  }
-}
-
 export async function fetchKycStatus(
   authorizedFetch: AuthorizedFetch,
 ): Promise<KycStatusResponse> {
   const res = await authorizedFetch(`${getPublicApiBaseUrl()}/api/v1/kyc/status`);
-  if (!res.ok) throw await parseError(res);
+  if (!res.ok) throw await parseApiClientError(res);
   return res.json() as Promise<KycStatusResponse>;
 }
 
@@ -30,7 +21,7 @@ export async function startKycVerification(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ countryCode }),
   });
-  if (!res.ok) throw await parseError(res);
+  if (!res.ok) throw await parseApiClientError(res);
   return res.json() as Promise<KycStatusResponse>;
 }
 
@@ -43,6 +34,6 @@ export async function submitKycManual(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw await parseError(res);
+  if (!res.ok) throw await parseApiClientError(res);
   return res.json() as Promise<KycStatusResponse>;
 }

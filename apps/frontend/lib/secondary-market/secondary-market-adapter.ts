@@ -17,7 +17,40 @@ function toGenre(genre: string): SecondaryMarketListingGenre {
 function sparklineToNumbers(values: string[]): number[] {
   const nums = values.map((v) => Number(v)).filter((n) => Number.isFinite(n));
   if (nums.length >= 2) return nums;
-  return [0.4, 0.42, 0.45, 0.44, 0.48];
+  return [];
+}
+
+/** Distinct mini series when API has no / flat price history. */
+export function buildListingSparkline(seed: string, change7dPct: number, points = 14): number[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const out: number[] = [];
+  let v = 0.38 + ((h >>> 0) % 45) / 100;
+  const drift = Math.max(-0.28, Math.min(0.28, change7dPct / 100));
+  for (let i = 0; i < points; i++) {
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    const t = i / Math.max(1, points - 1);
+    const wave = Math.sin(t * Math.PI * (1.6 + (h % 5) * 0.35)) * (0.04 + (h % 7) * 0.008);
+    const noise = (((h >>> 8) % 100) / 100 - 0.5) * 0.07;
+    v = Math.max(0.12, Math.min(0.92, v + wave + noise + drift / points));
+    out.push(Number(v.toFixed(4)));
+  }
+  // Pin direction so trend reads clearly.
+  if (out.length >= 2) {
+    const first = out[0]!;
+    out[out.length - 1] = Number(Math.max(0.12, Math.min(0.92, first + drift * 0.55)).toFixed(4));
+  }
+  return out;
+}
+
+function sparklineHasShape(values: number[]): boolean {
+  if (values.length < 2) return false;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return max - min > 1e-6;
 }
 
 export type AdaptedListing = SecondaryMarketListingMock & {
@@ -30,6 +63,12 @@ export type AdaptedListing = SecondaryMarketListingMock & {
 };
 
 export function adaptRichListing(dto: RichMarketListingDto): AdaptedListing {
+  const change7dPct = Number(dto.change7dPct);
+  const rawSpark = sparklineToNumbers(dto.payoutSparkline);
+  const payoutSparkline = sparklineHasShape(rawSpark)
+    ? rawSpark
+    : buildListingSparkline(`${dto.id}:${dto.symbol}:${dto.pricePerUnit}`, change7dPct);
+
   return {
     id: dto.id,
     releaseId: dto.releaseSlug,
@@ -39,8 +78,8 @@ export function adaptRichListing(dto: RichMarketListingDto): AdaptedListing {
     artist: dto.artist,
     genre: toGenre(dto.genre),
     pricePerUnit: Number(dto.pricePerUnit),
-    change7dPct: Number(dto.change7dPct),
-    payoutSparkline: sparklineToNumbers(dto.payoutSparkline),
+    change7dPct,
+    payoutSparkline,
     range7dLow: Number(dto.range7dLow) || Number(dto.pricePerUnit) * 0.95,
     range7dHigh: Number(dto.range7dHigh) || Number(dto.pricePerUnit) * 1.05,
     listingValueUsdt: Number(dto.listingValueUsdt),

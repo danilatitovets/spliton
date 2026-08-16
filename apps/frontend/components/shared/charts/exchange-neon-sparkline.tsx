@@ -51,6 +51,11 @@ export function ExchangeNeonSparkline({
   /** Чем больше, тем плавнее линия между опорными точками */
   detailSegments = 5,
   palette = "neon",
+  /** OKX-style left→right draw on mount */
+  animateDraw = false,
+  /** Override stroke (for multi-color table sparklines like OKX). */
+  color,
+  hiColor,
 }: {
   values: number[];
   trend: ExchangeNeonTrend;
@@ -60,12 +65,18 @@ export function ExchangeNeonSparkline({
   fitContainer?: boolean;
   detailSegments?: number;
   palette?: "neon" | "muted";
+  animateDraw?: boolean;
+  color?: string;
+  hiColor?: string;
 }) {
   const uid = React.useId().replace(/:/g, "");
   const glowNeonId = `ex-neon-wide-${uid}`;
   const glowId = `ex-neon-core-${uid}`;
   const softWideId = `ex-neon-softw-${uid}`;
   const softCoreId = `ex-neon-softc-${uid}`;
+  const drawPathRef = React.useRef<SVGPathElement>(null);
+  const glowPathRef = React.useRef<SVGPathElement>(null);
+  const hiPathRef = React.useRef<SVGPathElement>(null);
 
   const padX = 2;
   const padY = 3;
@@ -98,9 +109,34 @@ export function ExchangeNeonSparkline({
       .join(" ");
   }, [series, innerW, innerH, domain, padX, padY]);
 
-  const stroke = palette === "muted" ? STROKE_MUTED[trend] : STROKE[trend];
-  const hi = palette === "muted" ? HI_MUTED[trend] : HI[trend];
-  const useNeonGlow = palette === "neon" && trend === "up";
+  const pathD = React.useMemo(() => {
+    const pts = points.split(" ").filter(Boolean);
+    if (!pts.length) return "";
+    return pts.map((pt, i) => `${i === 0 ? "M" : "L"}${pt}`).join(" ");
+  }, [points]);
+
+  React.useEffect(() => {
+    if (!animateDraw) return;
+    const paths = [drawPathRef.current, glowPathRef.current, hiPathRef.current].filter(
+      (p): p is SVGPathElement => Boolean(p),
+    );
+    if (!paths.length || !pathD) return;
+    for (const path of paths) {
+      const length = path.getTotalLength();
+      path.style.transition = "none";
+      path.style.strokeDasharray = `${length}`;
+      path.style.strokeDashoffset = `${length}`;
+    }
+    void paths[0]!.getBoundingClientRect();
+    for (const path of paths) {
+      path.style.transition = "stroke-dashoffset 0.95s cubic-bezier(0.22, 1, 0.36, 1)";
+      path.style.strokeDashoffset = "0";
+    }
+  }, [animateDraw, pathD, width, height]);
+
+  const stroke = color ?? (palette === "muted" ? STROKE_MUTED[trend] : STROKE[trend]);
+  const hi = hiColor ?? (palette === "muted" ? HI_MUTED[trend] : color ? color : HI[trend]);
+  const useNeonGlow = !color && palette === "neon" && trend === "up";
   const sw5 = Math.max(2.2, height * 0.11);
   const sw9 = Math.max(3.5, height * 0.2);
   const sw28 = Math.max(1.35, height * 0.065);
@@ -182,43 +218,81 @@ export function ExchangeNeonSparkline({
         )}
       </defs>
 
-      <polyline
-        points={points}
-        fill="none"
-        stroke={stroke}
-        strokeWidth={sw5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.16"
-      />
-      <polyline
-        points={points}
-        fill="none"
-        stroke={stroke}
-        strokeWidth={sw9}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.22"
-        filter={useNeonGlow ? `url(#${glowNeonId})` : `url(#${softWideId})`}
-      />
-      <polyline
-        points={points}
-        fill="none"
-        stroke={stroke}
-        strokeWidth={sw28}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter={useNeonGlow ? `url(#${glowId})` : `url(#${softCoreId})`}
-      />
-      <polyline
-        points={points}
-        fill="none"
-        stroke={hi}
-        strokeWidth={sw11}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={palette === "muted" ? "0.35" : "0.55"}
-      />
+      {animateDraw ? (
+        <>
+          <path
+            ref={glowPathRef}
+            d={pathD}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={sw9}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.2"
+            filter={useNeonGlow ? `url(#${glowNeonId})` : `url(#${softWideId})`}
+          />
+          <path
+            ref={drawPathRef}
+            d={pathD}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={sw28}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter={useNeonGlow ? `url(#${glowId})` : `url(#${softCoreId})`}
+          />
+          <path
+            ref={hiPathRef}
+            d={pathD}
+            fill="none"
+            stroke={hi}
+            strokeWidth={sw11}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={palette === "muted" ? "0.35" : "0.55"}
+          />
+        </>
+      ) : (
+        <>
+          <polyline
+            points={points}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={sw5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.16"
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={sw9}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.22"
+            filter={useNeonGlow ? `url(#${glowNeonId})` : `url(#${softWideId})`}
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={sw28}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter={useNeonGlow ? `url(#${glowId})` : `url(#${softCoreId})`}
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke={hi}
+            strokeWidth={sw11}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={palette === "muted" ? "0.35" : "0.55"}
+          />
+        </>
+      )}
     </svg>
   );
 }

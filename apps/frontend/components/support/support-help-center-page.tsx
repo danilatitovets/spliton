@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowUpRight, FolderOpen } from "@/lib/lucide";
+import { ArrowUpRight } from "@/lib/lucide";
 
 import { SupportEmailContactPanel } from "@/components/support/support-email-contact-panel";
 import { SupportHelpAnnouncements } from "@/components/support/support-help-announcements";
 import { SupportHelpArticleCard } from "@/components/support/support-help-article-card";
+import { SupportOrbitalIcon } from "@/components/support/support-orbital-icon";
 import { SupportPageHero } from "@/components/support/support-page-hero";
 import { SupportPageSkeleton, SupportPageStatePanel, supportFocusRing } from "@/components/support/support-page-states";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -14,6 +15,7 @@ import {
   SUPPORT_PRODUCT_DOC_LINKS,
   SUPPORT_QUICK_ACTIONS,
 } from "@/constants/support-hub-config";
+import { resolveSupportCategoryIconSrc } from "@/constants/support-icons";
 import { ROUTES } from "@/constants/routes";
 import { isLiveHelpCenterEnabled } from "@/lib/public-env";
 import {
@@ -66,9 +68,7 @@ function CategoryCard({
       <Link href={ROUTES.supportCategory(category.slug)} className={cn("group block rounded-lg", supportFocusRing)}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/[0.06] text-zinc-400">
-              <FolderOpen className="size-4" aria-hidden />
-            </span>
+            <SupportOrbitalIcon src={resolveSupportCategoryIconSrc(category.slug)} />
             <div className="min-w-0">
               <h3 className="break-words text-sm font-semibold text-white group-hover:text-zinc-100">{title}</h3>
               {description ? (
@@ -225,12 +225,17 @@ export function SupportHelpCenterPage() {
                       <Link
                         key={cat.id}
                         href={ROUTES.supportCategory(cat.slug)}
-                        className={cn(interactivePanelClass, "group")}
+                        className={cn(interactivePanelClass, "group flex items-start gap-3")}
                       >
-                        <span className="text-sm font-semibold text-white">{resolveHelpCategoryTitle(cat, t)}</span>
-                        {resolveHelpCategoryDescription(cat, t) ? (
-                          <p className="mt-1 text-xs text-zinc-500">{resolveHelpCategoryDescription(cat, t)}</p>
-                        ) : null}
+                        <SupportOrbitalIcon src={resolveSupportCategoryIconSrc(cat.slug)} />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-white">
+                            {resolveHelpCategoryTitle(cat, t)}
+                          </span>
+                          {resolveHelpCategoryDescription(cat, t) ? (
+                            <p className="mt-1 text-xs text-zinc-500">{resolveHelpCategoryDescription(cat, t)}</p>
+                          ) : null}
+                        </span>
                       </Link>
                     ))}
                   </div>
@@ -333,24 +338,19 @@ export function SupportHelpCenterPage() {
               hint={t("support.section.quickActionsHint")}
             />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {SUPPORT_QUICK_ACTIONS.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link key={action.id} href={action.href} className={cn(interactivePanelClass, "group flex flex-col")}>
-                    <span className="grid size-10 place-items-center rounded-xl bg-white/[0.06] text-zinc-300">
-                      <Icon className="size-4" aria-hidden />
-                    </span>
-                    <span className="mt-4 text-sm font-semibold text-white">{t(action.titleKey)}</span>
-                    <span className="mt-1 block flex-1 text-xs leading-relaxed text-zinc-500">
-                      {t(action.descriptionKey)}
-                    </span>
-                    <ArrowUpRight
-                      className="mt-4 size-4 text-zinc-600 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-zinc-300"
-                      aria-hidden
-                    />
-                  </Link>
-                );
-              })}
+              {SUPPORT_QUICK_ACTIONS.map((action) => (
+                <Link key={action.id} href={action.href} className={cn(interactivePanelClass, "group flex flex-col")}>
+                  <SupportOrbitalIcon src={action.iconSrc} />
+                  <span className="mt-4 text-sm font-semibold text-white">{t(action.titleKey)}</span>
+                  <span className="mt-1 block flex-1 text-xs leading-relaxed text-zinc-500">
+                    {t(action.descriptionKey)}
+                  </span>
+                  <ArrowUpRight
+                    className="mt-4 size-4 text-zinc-600 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-zinc-300"
+                    aria-hidden
+                  />
+                </Link>
+              ))}
             </div>
           </section>
 
@@ -362,8 +362,9 @@ export function SupportHelpCenterPage() {
             />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {SUPPORT_PRODUCT_DOC_LINKS.map((doc) => (
-                <Link key={doc.id} href={doc.href} className={cn(interactivePanelClass, "group")}>
-                  <span className="text-sm font-semibold text-white">{t(doc.titleKey)}</span>
+                <Link key={doc.id} href={doc.href} className={cn(interactivePanelClass, "group flex flex-col")}>
+                  <SupportOrbitalIcon src={doc.iconSrc} />
+                  <span className="mt-4 text-sm font-semibold text-white">{t(doc.titleKey)}</span>
                   <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{t(doc.descriptionKey)}</span>
                   <ArrowUpRight
                     className="mt-4 size-4 text-zinc-600 transition group-hover:text-zinc-300"
@@ -383,12 +384,7 @@ export function SupportHelpCenterPage() {
         </>
       ) : null}
 
-      <section aria-labelledby="support-contact-heading">
-        <SectionHeading
-          id="support-contact-heading"
-          title={t("support.section.notFound")}
-          hint={t("support.section.notFoundHint")}
-        />
+      <section aria-labelledby="support-contact-title">
         <SupportEmailContactPanel />
       </section>
     </div>

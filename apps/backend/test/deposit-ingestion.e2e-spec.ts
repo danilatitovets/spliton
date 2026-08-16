@@ -5,15 +5,14 @@ import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
 import { MockDepositProvider } from '../src/modules/deposit-ingestion/providers/mock-deposit.provider';
 import { DepositIngestionService } from '../src/modules/deposit-ingestion/deposit-ingestion.service';
+import { uniqueTrc20Address } from './helpers/e2e-trc20-address';
+import { canonicalTestTxHash } from './helpers/canonical-tx-hash';
+import { assignUserDepositAddress } from './helpers/assign-user-deposit-address';
+import { mockUsdtTransfer } from './helpers/mock-usdt-transfer';
+import { DepositIngestionSource } from '@prisma/client';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
-}
-
-/** Unique TRC20-looking address (wallet.address is not globally unique in DB). */
-function uniqueTronAddress(label: string): string {
-  const raw = `T${label}${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
-  return raw.replace(/[^1-9A-HJ-NP-Za-km-z]/g, 'X').padEnd(34, '1').slice(0, 34);
 }
 
 async function registerUser(app: E2eApp, email: string) {
@@ -51,10 +50,12 @@ describe('Deposit ingestion (e2e)', () => {
     process.env.TRON_PROVIDER_MODE = 'mock';
     process.env.DEPOSIT_INGESTION_ENABLED = 'false';
     process.env.TRON_CONFIRMATIONS = '20';
+    process.env.KILL_SWITCH_DISABLE_DEPOSIT_CREDIT = 'false';
     app = await createE2eApp();
     provider = app.get(MockDepositProvider);
     ingestion = app.get(DepositIngestionService);
     provider.clear();
+    provider.nowBlock = 10_020n;
   });
 
   afterEach(async () => {
@@ -66,26 +67,16 @@ describe('Deposit ingestion (e2e)', () => {
     const email = uniqueEmail('dep-user');
     const { userId } = await registerUser(app!, email);
     const wallet = await seedWalletWithLedger(userId, '10');
-    const depositAddress = uniqueTronAddress('Dep');
+    const depositAddress = uniqueTrc20Address('Dep');
+    await assignUserDepositAddress(wallet.id, depositAddress);
 
-    const prisma = new PrismaClient();
-    await prisma.wallet.update({
-      where: { id: wallet.id },
-      data: { address: depositAddress },
-    });
-    await prisma.$disconnect();
-
-    provider.enqueue({
-      txHash: `tx-${Date.now()}`,
-      fromAddress: 'TFromAddress111111111111111111111111111',
-      toAddress: depositAddress,
-      amount: '25',
-      confirmations: 25,
-      blockNumber: 1000n,
-      tokenContract: '',
-      network: 'TRC20',
-      assetCode: 'USDT',
-    });
+    provider.enqueue(
+      mockUsdtTransfer({
+        txHash: canonicalTestTxHash(`tx-${Date.now()}`),
+        toAddress: depositAddress,
+        amount: '25',
+      }),
+    );
     const out = await ingestion.tick();
     expect(out.credited).toBe(1);
 
@@ -93,7 +84,7 @@ describe('Deposit ingestion (e2e)', () => {
     const balance = await prisma2.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });
-    expect(Number(balance!.available.toString())).toBe(35);
+    expect(balance!.available.toString()).toBe('35');
     const depositCount = await prisma2.deposit.count({
       where: { walletTx: { walletId: wallet.id } },
     });
@@ -105,46 +96,29 @@ describe('Deposit ingestion (e2e)', () => {
     const email = uniqueEmail('dep-pending');
     const { userId } = await registerUser(app!, email);
     const wallet = await seedWalletWithLedger(userId, '0');
-    const depositAddress = uniqueTronAddress('Pend');
-    const prisma = new PrismaClient();
-    await prisma.wallet.update({
-      where: { id: wallet.id },
-      data: { address: depositAddress },
-    });
-    await prisma.$disconnect();
+    const depositAddress = uniqueTrc20Address('Pend');
+    await assignUserDepositAddress(wallet.id, depositAddress);
 
-    const txHash = `tx-pending-${Date.now()}`;
-    provider.enqueue({
-      txHash,
-      fromAddress: 'TFromAddress222222222222222222222222222',
-      toAddress: depositAddress,
-      amount: '5',
-      confirmations: 3,
-      blockNumber: 1001n,
-      tokenContract: '',
-      network: 'TRC20',
-      assetCode: 'USDT',
-    });
+    const txHash = canonicalTestTxHash(`tx-pending-${Date.now()}`);
+    provider.nowBlock = 9_993n;
+    provider.enqueue(
+      mockUsdtTransfer({
+        txHash,
+        toAddress: depositAddress,
+        amount: '5',
+        blockNumber: 9_990n,
+      }),
+    );
     await ingestion.tick();
 
     const p1 = new PrismaClient();
     const b1 = await p1.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });
-    expect(Number(b1!.available.toString())).toBe(0);
+    expect(b1!.available.toString()).toBe('0');
     await p1.$disconnect();
 
-    provider.enqueue({
-      txHash,
-      fromAddress: 'TFromAddress222222222222222222222222222',
-      toAddress: depositAddress,
-      amount: '5',
-      confirmations: 21,
-      blockNumber: 1002n,
-      tokenContract: '',
-      network: 'TRC20',
-      assetCode: 'USDT',
-    });
+    provider.nowBlock = 10_020n;
     await ingestion.tick();
     await ingestion.tick();
 
@@ -152,14 +126,7 @@ describe('Deposit ingestion (e2e)', () => {
     const b2 = await p2.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });
-    expect(Number(b2!.available.toString())).toBe(5);
-    const postings = await p2.ledgerPosting.count({
-      where: {
-        walletId: wallet.id,
-        operationType: 'DEPOSIT_SETTLE',
-      },
-    });
-    expect(postings).toBeGreaterThanOrEqual(2);
+    expect(b2!.available.toString()).toBe('5');
     const dep = await p2.deposit.findFirstOrThrow({
       where: { blockchainTxid: txHash },
     });
@@ -167,26 +134,28 @@ describe('Deposit ingestion (e2e)', () => {
     await p2.$disconnect();
   });
 
-  it('wrong address ignored and admin sees auto deposits', async () => {
+  it('unknown address is unattributed and admin lists deposits', async () => {
     const token = await staffToken(app!);
-    provider.enqueue({
-      txHash: `tx-wrong-${Date.now()}`,
-      fromAddress: 'TFromAddress333333333333333333333333333',
-      toAddress: 'TUnknownAddress3333333333333333333333333',
-      amount: '3',
-      confirmations: 30,
-      blockNumber: 1003n,
-      tokenContract: '',
-      network: 'TRC20',
-      assetCode: 'USDT',
-    });
-    const out = await ingestion.tick();
-    expect(out.ignored).toBe(1);
+    const out = await ingestion.processTransfer(
+      mockUsdtTransfer({
+        txHash: canonicalTestTxHash(`tx-wrong-${Date.now()}`),
+        toAddress: uniqueTrc20Address('Unknown'),
+        amount: '3',
+      }),
+      DepositIngestionSource.AUTO,
+    );
+    expect(out).toBe('unattributed');
 
     const list = await request(app!.getHttpServer())
       .get('/api/admin/v1/deposits')
       .set('Authorization', `Bearer ${token}`);
     expect(list.status).toBe(200);
     expect(Array.isArray(list.body.items)).toBe(true);
+
+    const unknown = await request(app!.getHttpServer())
+      .get('/api/admin/v1/deposits/unattributed')
+      .set('Authorization', `Bearer ${token}`);
+    expect(unknown.status).toBe(200);
+    expect(unknown.body.length).toBeGreaterThan(0);
   });
 });

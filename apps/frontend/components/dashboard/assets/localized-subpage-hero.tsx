@@ -12,12 +12,19 @@ type LocalizedSubpageHeroProps = {
   tone?: "dark" | "light";
 };
 
-export function LocalizedSubpageHero({ eyebrow, eyebrowKey, titleKey, descriptionKey, align, tone }: LocalizedSubpageHeroProps) {
+export function LocalizedSubpageHero({
+  eyebrow,
+  eyebrowKey,
+  titleKey,
+  descriptionKey,
+  align,
+  tone,
+}: LocalizedSubpageHeroProps) {
   const { t } = useI18n();
 
   return (
     <PayoutsSubpageHero
-      eyebrow={eyebrowKey ? t(eyebrowKey) : (eyebrow ?? "")}
+      eyebrow={eyebrowKey ? t(eyebrowKey) : eyebrow}
       title={t(titleKey)}
       description={descriptionKey ? t(descriptionKey) : undefined}
       align={align}

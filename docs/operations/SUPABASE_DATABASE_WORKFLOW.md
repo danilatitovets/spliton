@@ -17,10 +17,12 @@
 
 | Variable | Host / port | When |
 |----------|-------------|------|
-| `DATABASE_URL` | Pooler `:6543` + `?pgbouncer=true` | NestJS runtime, e2e, scripts |
-| `DIRECT_URL` | `db.<ref>.supabase.co:5432` | `prisma migrate deploy`, DDL |
-| `TEST_DATABASE_URL` | Dedicated e2e pooler | Jest + `scripts/test-db-*.mjs` only |
-| `TEST_DIRECT_URL` | Dedicated e2e direct | E2e migrate deploy |
+| `DATABASE_URL` | Session pooler `:5432` (**no** `pgbouncer=true`) | NestJS runtime — required for interactive Prisma `$transaction` |
+| `DIRECT_URL` | `db.<ref>.supabase.co:5432` | `prisma migrate deploy`, DDL (prefer true direct host) |
+| `TEST_DATABASE_URL` | Local Docker `:5433` or dedicated e2e session URL | Jest + `scripts/test-db-*.mjs` only |
+| `TEST_DIRECT_URL` | Same as test DB / e2e direct | E2e migrate deploy |
+
+**Do not** use transaction pooler `:6543?pgbouncer=true` as Nest `DATABASE_URL` — long financial `$transaction` can fail with `Transaction not found`. Enforced by `assertDbConnectionPolicy()` (`apps/backend/src/config/db-connection-policy.ts`).
 
 Prisma schema:
 
@@ -32,8 +34,9 @@ datasource db {
 }
 ```
 
-**Pooler:** Use for app queries (many short connections).  
-**Direct:** Required for migrations — pooler can break DDL/long transactions.
+**Session pooler:** App queries + interactive transactions.  
+**Direct:** Required for migrations when available — session pooler may work for DDL but true `db.*` is preferred.  
+**Transaction pooler:** Avoid for Nest.
 
 ## Local development
 
@@ -123,6 +126,39 @@ We do **not** use `migrate reset` on shared environments.
 |-----|------------------------|
 | Production | Only if runbook says so — roles upsert, SUPER_ADMIN idempotent |
 | Staging / Dev / E2E | Safe — idempotent `skipDuplicates` |
+
+## Crypto hardening (canonical tx + address invariants)
+
+Applied via Prisma migrations (not `db push`):
+
+| Migration | Purpose |
+|-----------|---------|
+| `20260815120000_crypto_usdt_trc20_engine` | Deposit/withdrawal TRC-20 engine tables, cursors, leases, address pool |
+| `20260815200000_crypto_canonical_invariants` | Canonical/`lower(txid)` uniqueness, ownership source idempotency, lease `version`, address immutability triggers |
+
+**Verify on target Supabase after deploy:**
+
+```sql
+-- expect these index/trigger names
+SELECT indexname FROM pg_indexes WHERE schemaname='public'
+  AND indexname IN (
+    'deposits_canonical_chain_txid_token_uidx',
+    'withdrawals_canonical_txid_uidx',
+    'withdrawals_canonical_provider_tx_hash_uidx',
+    'ownership_ledger_event_source_uidx'
+  );
+SELECT tgname FROM pg_trigger
+  WHERE tgname IN (
+    'trg_forbid_user_deposit_address_reassign',
+    'trg_forbid_deposit_address_pool_reassign'
+  );
+```
+
+**Kill switches (env):** `KILL_SWITCH_DISABLE_DEPOSIT_CREDIT`, `KILL_SWITCH_DISABLE_DEPOSITS`, `KILL_SWITCH_DISABLE_WITHDRAWALS`, `FEATURE_ENABLE_DEPOSITS`, `FEATURE_ENABLE_WITHDRAWALS`.
+
+**Worker:** lease table `crypto_worker_leases` (id=`deposit-ingestion`) + heartbeat/fencing `version`. Scan cursors in `deposit_address_scan_cursors`.
+
+**Historical i18n fix:** `20260608120000_app_locale_production_langs` is dependency-safe (skips columns not yet created). Clean `prisma migrate deploy` from empty PostgreSQL must succeed without `db push`.
 
 ## Security
 

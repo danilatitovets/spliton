@@ -1,22 +1,22 @@
 "use client";
 
-import Link from "next/link";
+import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "@/lib/lucide";
 
-import {
-  ActivityFiltersBar,
-} from "@/components/dashboard/assets/activity-filters-bar";
+import { ActivityFiltersBar } from "@/components/dashboard/assets/activity-filters-bar";
 import { activityRecords } from "@/components/dashboard/assets/activity-mock-data";
 import { ActivityTableCard } from "@/components/dashboard/assets/activity-table-card";
+import { ActivityTypeBreakdownCard } from "@/components/dashboard/assets/activity-type-breakdown-card";
+import { AssetsBuyReleaseCta } from "@/components/dashboard/assets/positions-buy-release-cta";
+import { AssetsEmptyIllustration } from "@/components/dashboard/assets/assets-empty-illustration";
 import {
   assetsCardClass,
   assetsOutlineButtonClass,
-  assetsPrimaryButtonClass,
 } from "@/components/dashboard/assets/assets-ui";
 import { useAssetsActivityPage } from "@/hooks/use-assets-activity-page";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
-import { ProductDemoBanner } from "@/components/shared/product-demo-banner";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,8 @@ export function ActivityPageContent() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const demoBanner = useMemo(() => !live, [live]);
+
   if (live && error && records === null) {
     return (
       <ReadOnlySectionError
@@ -62,8 +64,19 @@ export function ActivityPageContent() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      {!live ? <ProductDemoBanner messageKey="activity.demoBanner" /> : null}
+    <div className="space-y-4 pb-2 sm:space-y-5">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[1.75rem]">
+          {t("activity.widgets.historyTitle")}
+        </h1>
+      </header>
+
+      {demoBanner ? (
+        <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900" role="status">
+          {t("assets.overview.demoBanner")}
+        </p>
+      ) : null}
+
       {live && error && records !== null ? (
         <ReadOnlySectionError
           sectionId="assets-activity-partial"
@@ -94,12 +107,13 @@ export function ActivityPageContent() {
         onSortChange={(sort) => updateFilters({ sort: sort as typeof filters.sort })}
         query={filters.q}
         onQueryChange={(q) => updateFilters({ q })}
-        disabled={live && loading}
+        disabled={isInitialLoad}
       />
 
       {tableState === "empty" ? (
-        <section className={cn(assetsCardClass, "py-14 text-center")}>
-          <p className="text-base font-semibold text-neutral-900">
+        <section className={cn(assetsCardClass, "py-12 text-center sm:py-14")}>
+          <AssetsEmptyIllustration situation="activityEmpty" size="lg" />
+          <p className="mt-5 text-base font-semibold text-neutral-900">
             {hasActiveFilters && live ? t("activity.filteredEmptyTitle") : t("activity.emptyTitle")}
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">
@@ -107,18 +121,26 @@ export function ActivityPageContent() {
           </p>
           {!hasActiveFilters ? (
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              <Link href={ROUTES.dashboardCatalog} className={assetsPrimaryButtonClass}>
+              <SplitonCtaPill href={ROUTES.dashboardCatalog} tone="onLight">
                 {t("activity.openCatalog")}
-              </Link>
-              <Link href={`${ROUTES.dashboardPayouts}/deposit`} className={assetsOutlineButtonClass}>
+              </SplitonCtaPill>
+              <SplitonCtaPill
+                href={`${ROUTES.dashboardPayouts}/deposit`}
+                tone="onLight"
+                variant="ghost"
+                withArrow={false}
+              >
                 {t("activity.depositUsdt")}
-              </Link>
+              </SplitonCtaPill>
             </div>
           ) : null}
         </section>
       ) : (
         <>
-          <ActivityTableCard rows={rows} state={tableState} compact />
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(16rem,1fr)] lg:gap-5 lg:items-start">
+            <ActivityTableCard rows={rows} state={tableState} compact hideHeader />
+            <ActivityTypeBreakdownCard rows={rows} loading={isInitialLoad} />
+          </section>
 
           {live && total > pageSize ? (
             <nav
@@ -155,6 +177,10 @@ export function ActivityPageContent() {
           ) : null}
         </>
       )}
+
+      <div className="pt-2 sm:pt-3">
+        <AssetsBuyReleaseCta ns="activity" />
+      </div>
     </div>
   );
 }

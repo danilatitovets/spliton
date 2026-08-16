@@ -8,8 +8,10 @@ import { CheckCircle2, X } from "@/lib/lucide";
 import { secondaryMarketHref } from "@/constants/dashboard/secondary-market";
 import {
   analyticsReleaseDetailPath,
+  assetsPositionDetailPath,
   assetsSellUnitsPath,
   catalogBuyUnitsPath,
+  ROUTES,
   secondaryMarketReleaseAnalyticsPath,
 } from "@/constants/routes";
 import type { ReleaseLedgerEventUi } from "@/lib/analytics/release-analytics-adapter";
@@ -22,6 +24,8 @@ import type { ReleaseDetailPageData } from "@/types/analytics/release-detail";
 import { cn } from "@/lib/utils";
 
 import { DetailSection } from "./detail-section";
+import { ReleaseDetailMarketingBlocks } from "./release-detail-marketing-blocks";
+import { ReleaseDetailOkxRail } from "./release-detail-okx-rail";
 import { ReleaseDetailPerformanceChart } from "./release-detail-performance-chart";
 import { ReleaseDetailHero } from "./release-detail-hero";
 
@@ -31,28 +35,36 @@ function KVPairs({
   rows: Array<{ label: string; value: React.ReactNode }>;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/[0.06] sm:grid-cols-3">
       {rows.map((r) => (
-        <div key={r.label} className="rounded-xl bg-[#0a0a0a] px-3 py-2.5 ring-1 ring-white/6">
-          <p className="text-[11px] leading-snug text-zinc-500">{r.label}</p>
-          <p className="mt-1 font-mono text-[13px] font-semibold leading-snug text-zinc-100">{r.value}</p>
+        <div key={r.label} className="bg-[#171717] px-3.5 py-3">
+          <p className="text-[11px] leading-none tracking-normal text-white/45">{r.label}</p>
+          <p className="mt-1.5 font-mono text-[13px] font-semibold leading-snug tracking-normal tabular-nums text-white">
+            {r.value}
+          </p>
         </div>
       ))}
     </div>
   );
 }
 
+const textActionClass =
+  "text-[12px] font-semibold uppercase tracking-[0.08em] text-white/80 transition-colors hover:text-white";
+
+const textActionMutedClass =
+  "text-[12px] font-semibold uppercase tracking-[0.08em] text-white/45 transition-colors hover:text-white/80";
+
 type LedgerTone = ReleaseLedgerEventUi["tone"];
 
 function ledgerToneDot(tone: LedgerTone) {
   const map: Record<LedgerTone, string> = {
-    buy: "bg-[#B7F500]/90",
-    order: "bg-sky-400/90",
-    fill: "bg-amber-400/90",
-    cancel: "bg-zinc-500",
-    payout: "bg-emerald-400/90",
-    sell: "bg-fuchsia-400/90",
-    other: "bg-zinc-600",
+    buy: "bg-blue-500",
+    order: "bg-amber-400",
+    fill: "bg-violet-400",
+    cancel: "bg-white/30",
+    payout: "bg-emerald-400",
+    sell: "bg-red-500",
+    other: "bg-white/25",
   };
   return map[tone] ?? map.other;
 }
@@ -83,6 +95,25 @@ export function ReleaseDetailSecondaryOrderPage({
     assetQuery.size > 0
       ? `${analyticsReleaseDetailPath(row.id)}?${assetQuery.toString()}`
       : analyticsReleaseDetailPath(row.id);
+
+  const fromPositions = contextFrom === "positions";
+  const backHref = fromPositions
+    ? assetsPositionDetailPath(row.id)
+    : contextFrom === "secondary"
+      ? ROUTES.dashboardSecondaryMarket
+      : assetHref;
+  const backLabel = fromPositions
+    ? t("analytics.detail.hero.back.positions")
+    : contextFrom === "secondary"
+      ? t("analytics.detail.hero.back.secondary")
+      : t("analytics.detail.hero.back.releaseCard");
+  const heroSource = fromPositions
+    ? "positions"
+    : contextFrom === "secondary"
+      ? "secondary"
+      : contextFrom === "catalog"
+        ? "catalog"
+        : undefined;
 
   const tradingAnalyticsHref = isLive
     ? secondaryMarketHref("analytics", slug ? { release: slug } : undefined)
@@ -198,85 +229,88 @@ export function ReleaseDetailSecondaryOrderPage({
 
   return (
     <div className="bg-black text-white">
-      <div className="mx-auto w-full max-w-[1320px] px-4 pb-16 pt-6 md:px-6 lg:px-8 lg:pb-24 lg:pt-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_min(360px,100%)] lg:items-start">
-          <div className="min-w-0">
-            <ReleaseDetailHero
-              data={data}
-              source={contextFrom === "secondary" ? "secondary" : undefined}
-              backHrefOverride={assetHref}
-              backLabelOverride={t("analytics.detail.hero.back.releaseCard")}
-            />
-          </div>
-          <aside className="rounded-2xl bg-[#111111] px-4 py-4 ring-1 ring-white/8 md:px-5 md:py-5">
-            <h3 className="text-[14px] font-semibold tracking-tight text-white">{t("analytics.detail.secondary.myPosition")}</h3>
-            <div className="mt-3">
-              <KVPairs rows={positionRows} />
+      <div className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pb-24">
+        <div className="min-w-0">
+          <ReleaseDetailHero
+            data={data}
+            source={heroSource}
+            backHrefOverride={backHref}
+            backLabelOverride={backLabel}
+          />
+        </div>
+
+        <section className="mt-2 rounded-2xl bg-[#171717] px-4 py-4 sm:px-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium tracking-normal text-white/45">
+                {t("analytics.detail.secondary.myPosition")}
+              </p>
+              <div className="mt-3">
+                <KVPairs rows={positionRows} />
+              </div>
             </div>
-          </aside>
+            <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 sm:pb-1">
+              <Link href={assetsSellUnitsPath(row.id)} className={textActionClass}>
+                {t("analytics.detail.secondary.newSellOrder")}
+              </Link>
+              <Link href={catalogBuyUnitsPath(row.id)} className={textActionClass}>
+                {t("analytics.detail.secondary.buyMore")}
+              </Link>
+              <Link href={stackHref} className={textActionMutedClass}>
+                {t("analytics.detail.secondary.goToBook")}
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-8 grid grid-cols-1 items-start gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
+          <DetailSection
+            className="mt-0 border-0 pt-0"
+            title={performance.title}
+            description={`${performance.subtitle}${t("analytics.detail.secondary.chartHint")}`}
+          >
+            <ReleaseDetailPerformanceChart
+              title={performance.title}
+              subtitle={performance.subtitle}
+              seriesByPeriod={performance.seriesByPeriod}
+              miniStats={performance.miniStats}
+              releaseId={row.id}
+              buyHref={stackHref}
+              buyLabel={t("analytics.detail.screen.buyToBook")}
+            />
+          </DetailSection>
+          <div className="min-w-0">
+            <ReleaseDetailOkxRail data={data} className="h-fit" />
+          </div>
         </div>
 
         <DetailSection
-          className="mt-10"
-          eyebrow={t("analytics.detail.secondary.chartEyebrow")}
-          title={performance.title}
-          description={`${performance.subtitle}${t("analytics.detail.secondary.chartHint")}`}
-        >
-          <ReleaseDetailPerformanceChart
-            title={performance.title}
-            subtitle={performance.subtitle}
-            seriesByPeriod={performance.seriesByPeriod}
-            miniStats={performance.miniStats}
-            releaseId={row.id}
-            buyHref={stackHref}
-            buyLabel={t("analytics.detail.screen.buyToBook")}
-          />
-        </DetailSection>
-
-        <DetailSection
-          eyebrow={t("analytics.detail.secondary.orderEyebrow")}
+          className="border-white/[0.06]"
           title={t("analytics.detail.secondary.orderTitle")}
           description={t("analytics.detail.secondary.orderDescription")}
         >
           <KVPairs rows={orderRows} />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setCancelOpen(true)}
-              className="inline-flex h-10 items-center rounded-xl border border-fuchsia-400/35 bg-fuchsia-500/12 px-4 text-[13px] font-semibold text-fuchsia-200 transition hover:bg-fuchsia-500/20"
-            >
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button type="button" onClick={() => setCancelOpen(true)} className={textActionMutedClass}>
               {t("analytics.detail.secondary.cancelOrder")}
             </button>
-            <Link
-              href={stackHref}
-              className="inline-flex h-10 items-center rounded-xl bg-white px-4 text-[13px] font-semibold text-black transition hover:opacity-90"
-            >
+            <Link href={stackHref} className={textActionClass}>
               {t("analytics.detail.secondary.goToBook")}
             </Link>
-            <Link
-              href={catalogBuyUnitsPath(row.id)}
-              className="inline-flex h-10 items-center rounded-xl border border-white/15 px-4 text-[13px] font-semibold text-zinc-200 transition hover:border-white/25 hover:text-white"
-            >
+            <Link href={catalogBuyUnitsPath(row.id)} className={textActionClass}>
               {t("analytics.detail.secondary.buyMore")}
             </Link>
-            <Link
-              href={assetsSellUnitsPath(row.id)}
-              className="inline-flex h-10 items-center rounded-xl border border-white/15 px-4 text-[13px] font-semibold text-zinc-200 transition hover:border-white/25 hover:text-white"
-            >
+            <Link href={assetsSellUnitsPath(row.id)} className={textActionClass}>
               {t("analytics.detail.secondary.newSellOrder")}
             </Link>
-            <Link
-              href={tradingAnalyticsHref}
-              scroll={false}
-              className="inline-flex h-10 items-center rounded-xl border border-white/15 px-4 text-[13px] font-semibold text-zinc-200 transition hover:border-white/25 hover:text-white"
-            >
+            <Link href={tradingAnalyticsHref} scroll={false} className={textActionMutedClass}>
               {t("analytics.detail.secondary.tradingAnalytics")}
             </Link>
           </div>
         </DetailSection>
 
         <DetailSection
-          eyebrow={t("analytics.detail.secondary.marketEyebrow")}
+          className="border-white/[0.06]"
           title={t("analytics.detail.secondary.marketTitle")}
           description={t("analytics.detail.secondary.marketDescription")}
         >
@@ -284,7 +318,7 @@ export function ReleaseDetailSecondaryOrderPage({
         </DetailSection>
 
         <DetailSection
-          eyebrow={t("analytics.detail.secondary.orderBookEyebrow")}
+          className="border-white/[0.06]"
           title={t("analytics.detail.secondary.orderBookTitle")}
           description={
             isLive
@@ -293,92 +327,84 @@ export function ReleaseDetailSecondaryOrderPage({
           }
         >
           {isLive ? (
-            <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/8">
-              <p className="text-sm text-zinc-400">
-                {t("analytics.detail.secondary.orderBookLiveHint")}
-              </p>
-              <Link
-                href={stackHref}
-                className="mt-3 inline-flex h-9 items-center rounded-lg border border-white/15 px-3 text-[12px] font-semibold text-zinc-200 transition hover:border-white/25 hover:text-white"
-              >
+            <div className="rounded-2xl bg-[#171717] px-4 py-4">
+              <p className="text-sm text-white/45">{t("analytics.detail.secondary.orderBookLiveHint")}</p>
+              <Link href={stackHref} className={cn("mt-3 inline-flex", textActionClass)}>
                 {t("analytics.detail.secondary.openFullBook")}
               </Link>
             </div>
           ) : (
-          <>
-          <div className="grid gap-3 lg:grid-cols-3">
-            <div className="rounded-2xl bg-[#111111] p-3 ring-1 ring-white/8">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("analytics.detail.secondary.bestBids")}</p>
-              <div className="mt-2 space-y-1.5 font-mono text-[12px]">
-                <div className="flex items-center justify-between text-[#B7F500]">
-                  <span>18,41</span>
-                  <span className="text-zinc-300">120u</span>
+            <>
+              <div className="grid gap-px overflow-hidden rounded-2xl bg-white/[0.06] lg:grid-cols-3">
+                <div className="bg-[#171717] p-4">
+                  <p className="text-[11px] tracking-normal text-white/45">{t("analytics.detail.secondary.bestBids")}</p>
+                  <div className="mt-2 space-y-1.5 font-mono text-[12px]">
+                    <div className="flex items-center justify-between text-blue-400">
+                      <span>18,41</span>
+                      <span className="text-white/50">120u</span>
+                    </div>
+                    <div className="flex items-center justify-between text-blue-400">
+                      <span>18,38</span>
+                      <span className="text-white/50">95u</span>
+                    </div>
+                    <div className="flex items-center justify-between text-blue-400">
+                      <span>18,34</span>
+                      <span className="text-white/50">82u</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-[#B7F500]">
-                  <span>18,38</span>
-                  <span className="text-zinc-300">95u</span>
+                <div className="bg-[#171717] p-4">
+                  <p className="text-[11px] tracking-normal text-white/45">{t("analytics.detail.secondary.bestAsks")}</p>
+                  <div className="mt-2 space-y-1.5 font-mono text-[12px]">
+                    <div className="flex items-center justify-between text-red-400">
+                      <span>18,55</span>
+                      <span className="text-white/50">76u</span>
+                    </div>
+                    <div className="flex items-center justify-between text-red-400">
+                      <span>18,58</span>
+                      <span className="text-white/50">62u</span>
+                    </div>
+                    <div className="flex items-center justify-between text-red-400">
+                      <span>18,63</span>
+                      <span className="text-white/50">48u</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-[#B7F500]">
-                  <span>18,34</span>
-                  <span className="text-zinc-300">82u</span>
+                <div className="bg-[#171717] p-4">
+                  <p className="text-[11px] tracking-normal text-white/45">{t("analytics.detail.secondary.recentTrades")}</p>
+                  <div className="mt-2 space-y-1.5 font-mono text-[12px] text-white/80">
+                    <div className="flex items-center justify-between">
+                      <span>18,48</span>
+                      <span className="text-white/45">24u</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>18,50</span>
+                      <span className="text-white/45">12u</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>18,46</span>
+                      <span className="text-white/45">8u</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="rounded-2xl bg-[#111111] p-3 ring-1 ring-white/8">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("analytics.detail.secondary.bestAsks")}</p>
-              <div className="mt-2 space-y-1.5 font-mono text-[12px]">
-                <div className="flex items-center justify-between text-fuchsia-300">
-                  <span>18,55</span>
-                  <span className="text-zinc-300">76u</span>
-                </div>
-                <div className="flex items-center justify-between text-fuchsia-300">
-                  <span>18,58</span>
-                  <span className="text-zinc-300">62u</span>
-                </div>
-                <div className="flex items-center justify-between text-fuchsia-300">
-                  <span>18,63</span>
-                  <span className="text-zinc-300">48u</span>
-                </div>
+              <div className="mt-3">
+                <Link href={stackHref} className={textActionClass}>
+                  {t("analytics.detail.secondary.openFullBookTrade")}
+                </Link>
               </div>
-            </div>
-            <div className="rounded-2xl bg-[#111111] p-3 ring-1 ring-white/8">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("analytics.detail.secondary.recentTrades")}</p>
-              <div className="mt-2 space-y-1.5 font-mono text-[12px] text-zinc-200">
-                <div className="flex items-center justify-between">
-                  <span>18,48</span>
-                  <span className="text-zinc-400">24u</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>18,50</span>
-                  <span className="text-zinc-400">12u</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>18,46</span>
-                  <span className="text-zinc-400">8u</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3">
-            <Link
-              href={stackHref}
-              className="inline-flex h-9 items-center rounded-lg border border-white/15 px-3 text-[12px] font-semibold text-zinc-200 transition hover:border-white/25 hover:text-white"
-            >
-              {t("analytics.detail.secondary.openFullBookTrade")}
-            </Link>
-          </div>
-          </>
+            </>
           )}
         </DetailSection>
 
         <DetailSection
-          eyebrow={t("analytics.detail.secondary.contextEyebrow")}
+          className="border-white/[0.06]"
           title={t("analytics.detail.secondary.contextTitle")}
           description={t("analytics.detail.secondary.contextDescriptionLive")}
         >
           {isLive && sm ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
+            <KVPairs
+              rows={[
                 {
                   label: t("analytics.detail.secondary.context.activity7d"),
                   value: t("analytics.detail.secondary.context.tradesCount").replace("{count}", String(sm.trades7d)),
@@ -391,114 +417,125 @@ export function ReleaseDetailSecondaryOrderPage({
                   label: t("analytics.detail.secondary.market.liquidity"),
                   value: sm.liquidityLabel || "—",
                 },
-              ].map((c) => (
-                <div key={c.label} className="rounded-xl bg-[#0a0a0a] px-3 py-3 ring-1 ring-white/6 sm:min-h-[88px]">
-                  <p className="text-[11px] leading-snug text-zinc-500">{c.label}</p>
-                  <p className="mt-2 font-mono text-[13px] font-semibold leading-snug text-zinc-100">{c.value}</p>
-                </div>
-              ))}
-            </div>
+              ]}
+            />
           ) : (
-          <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { label: t("analytics.detail.secondary.context.activity7d30d"), value: t("analytics.detail.secondary.context.activityDemoValue") },
-              { label: t("analytics.detail.secondary.context.trend"), value: t("analytics.detail.secondary.context.trendModerateUp") },
-              { label: t("analytics.detail.secondary.context.supplyDemand"), value: t("analytics.detail.secondary.context.demandUp") },
-            ].map((c) => (
-              <div key={c.label} className="rounded-xl bg-[#0a0a0a] px-3 py-3 ring-1 ring-white/6 sm:min-h-[88px]">
-                <p className="text-[11px] leading-snug text-zinc-500">{c.label}</p>
-                <p className="mt-2 font-mono text-[13px] font-semibold leading-snug text-zinc-100">{c.value}</p>
-              </div>
-            ))}
-          </div>
+            <>
+              <KVPairs
+                rows={[
+                  {
+                    label: t("analytics.detail.secondary.context.activity7d30d"),
+                    value: t("analytics.detail.secondary.context.activityDemoValue"),
+                  },
+                  {
+                    label: t("analytics.detail.secondary.context.trend"),
+                    value: t("analytics.detail.secondary.context.trendModerateUp"),
+                  },
+                  {
+                    label: t("analytics.detail.secondary.context.supplyDemand"),
+                    value: t("analytics.detail.secondary.context.demandUp"),
+                  },
+                ]}
+              />
 
-          <div className="mt-6 grid gap-5 lg:grid-cols-2">
-            <section className="rounded-2xl bg-[#111111] px-4 py-4 ring-1 ring-white/8 md:px-5 md:py-5">
-              <h3 className="text-[15px] font-semibold tracking-tight text-white">{t("analytics.detail.secondary.payoutsTitle")}</h3>
-              <p className="mt-1 text-[11px] text-zinc-600">
-                {isLive ? t("analytics.detail.secondary.payoutsHintLive") : t("analytics.detail.secondary.payoutsHintDemo")}
-              </p>
-              <div className="mt-3">
-                <KVPairs
-                  rows={[
-                    {
-                      label: t("analytics.detail.secondary.payouts.window"),
-                      value: data.quickStats.find((s) => s.label.includes("30D"))?.value ?? row.payouts,
-                    },
-                    {
-                      label: t("analytics.detail.secondary.payouts.last"),
-                      value:
-                        data.payoutHistory[0]?.period
-                          ? data.payoutHistory[0].period
-                          : isLive
-                            ? "—"
-                            : "14.04.2026",
-                    },
-                    {
-                      label: t("analytics.detail.secondary.payouts.total"),
-                      value: data.quickStats.find((s) => s.label.includes("all-time"))?.value ?? row.payouts,
-                    },
-                    { label: t("analytics.detail.secondary.payouts.yield"), value: row.yieldPct },
-                  ]}
-                />
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                <section className="rounded-2xl bg-[#171717] px-4 py-4 sm:px-5">
+                  <h3 className="text-[15px] font-semibold tracking-tight text-white">
+                    {t("analytics.detail.secondary.payoutsTitle")}
+                  </h3>
+                  <p className="mt-1 text-[12px] text-white/40">
+                    {isLive ? t("analytics.detail.secondary.payoutsHintLive") : t("analytics.detail.secondary.payoutsHintDemo")}
+                  </p>
+                  <div className="mt-3">
+                    <KVPairs
+                      rows={[
+                        {
+                          label: t("analytics.detail.secondary.payouts.window"),
+                          value: data.quickStats.find((s) => s.label.includes("30D"))?.value ?? row.payouts,
+                        },
+                        {
+                          label: t("analytics.detail.secondary.payouts.last"),
+                          value:
+                            data.payoutHistory[0]?.period
+                              ? data.payoutHistory[0].period
+                              : isLive
+                                ? "—"
+                                : "14.04.2026",
+                        },
+                        {
+                          label: t("analytics.detail.secondary.payouts.total"),
+                          value: data.quickStats.find((s) => s.label.includes("all-time"))?.value ?? row.payouts,
+                        },
+                        { label: t("analytics.detail.secondary.payouts.yield"), value: row.yieldPct },
+                      ]}
+                    />
+                  </div>
+                </section>
+                <section className="rounded-2xl bg-[#171717] px-4 py-4 sm:px-5">
+                  <h3 className="text-[15px] font-semibold tracking-tight text-white">
+                    {t("analytics.detail.secondary.termsTitle")}
+                  </h3>
+                  <p className="mt-1 text-[12px] text-white/40">
+                    {isLive ? t("analytics.detail.secondary.termsHintLive") : t("analytics.detail.secondary.termsHintDemo")}
+                  </p>
+                  <div className="mt-3">
+                    <KVPairs
+                      rows={[
+                        ...data.terms.rows.slice(0, 6).map((termRow) => ({
+                          label: analyticsTermLabel(termRow.key, locale),
+                          value: termRow.val,
+                        })),
+                        {
+                          label: t("analytics.detail.secondary.terms.totalUnitsEmission"),
+                          value: data.terms.rows.find((termRow) => termRow.key.toLowerCase().includes("total_units"))?.val ?? "—",
+                        },
+                        {
+                          label: t("analytics.detail.secondary.terms.availablePrimary"),
+                          value: data.quickStats.find((s) => s.label === "Available units")?.value ?? row.units,
+                        },
+                        {
+                          label: t("analytics.detail.secondary.terms.roundStatus"),
+                          value: analyticsReleaseStatusLabel(row.status, locale, "round"),
+                        },
+                      ]}
+                    />
+                  </div>
+                </section>
               </div>
-            </section>
-            <section className="rounded-2xl bg-[#111111] px-4 py-4 ring-1 ring-white/8 md:px-5 md:py-5">
-              <h3 className="text-[15px] font-semibold tracking-tight text-white">{t("analytics.detail.secondary.termsTitle")}</h3>
-              <p className="mt-1 text-[11px] text-zinc-600">
-                {isLive ? t("analytics.detail.secondary.termsHintLive") : t("analytics.detail.secondary.termsHintDemo")}
-              </p>
-              <div className="mt-3">
-                <KVPairs
-                  rows={[
-                    ...data.terms.rows.slice(0, 6).map((termRow) => ({
-                      label: analyticsTermLabel(termRow.key, locale),
-                      value: termRow.val,
-                    })),
-                    {
-                      label: t("analytics.detail.secondary.terms.totalUnitsEmission"),
-                      value: data.terms.rows.find((termRow) => termRow.key.toLowerCase().includes("total_units"))?.val ?? "—",
-                    },
-                    {
-                      label: t("analytics.detail.secondary.terms.availablePrimary"),
-                      value:
-                        data.quickStats.find((s) => s.label === "Available units")?.value ?? row.units,
-                    },
-                    { label: t("analytics.detail.secondary.terms.roundStatus"), value: analyticsReleaseStatusLabel(row.status, locale, "round") },
-                  ]}
-                />
-              </div>
-            </section>
-          </div>
-          </>
+            </>
           )}
         </DetailSection>
 
         <DetailSection
-          eyebrow={t("analytics.detail.secondary.ledgerEyebrow")}
+          className="border-white/[0.06]"
           title={t("analytics.detail.secondary.ledgerTitle")}
           description={t("analytics.detail.secondary.ledgerDescription")}
         >
-          <ul className="overflow-hidden rounded-2xl border border-white/8 bg-[#111111] ring-1 ring-white/6">
+          <ul className="divide-y divide-white/[0.06] rounded-2xl bg-[#171717] px-4 sm:px-5">
             {timeline.map((ev) => (
               <li
                 key={"id" in ev && ev.id ? ev.id : ev.title}
-                className="flex gap-4 border-b border-white/6 px-4 py-3.5 last:border-b-0 sm:px-5 sm:py-4"
+                className="flex items-start justify-between gap-3 py-3.5 first:pt-3 last:pb-3"
               >
-                <span
-                  className={cn("mt-1.5 size-2 shrink-0 rounded-full", ledgerToneDot(ev.tone))}
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold tracking-tight text-white">{ev.title}</p>
-                  <p className="mt-0.5 font-mono text-[11px] text-zinc-500">{ev.date}</p>
-                  <p className="mt-1 font-mono text-[12px] text-zinc-300">{ev.detail}</p>
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    className={cn("mt-1.5 size-2 shrink-0 rounded-full", ledgerToneDot(ev.tone))}
+                    aria-hidden
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold tracking-tight text-white">{ev.title}</p>
+                    <p className="mt-0.5 text-xs tracking-normal text-white/40">
+                      {ev.date}
+                      {ev.detail ? ` · ${ev.detail}` : ""}
+                    </p>
+                  </div>
                 </div>
               </li>
             ))}
           </ul>
         </DetailSection>
+
+        <ReleaseDetailMarketingBlocks data={data} />
       </div>
 
       <Dialog.Root open={cancelOpen} onOpenChange={setCancelOpen} modal>
@@ -511,30 +548,36 @@ export function ReleaseDetailSecondaryOrderPage({
           />
           <Dialog.Popup
             className={cn(
-              "fixed left-1/2 top-1/2 z-121 w-[min(100vw-1.5rem,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-zinc-950 p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)]",
-              "transition-[opacity,transform] duration-200 data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
+              "fixed left-1/2 top-1/2 z-121 w-[min(100vw-1.5rem,420px)] -translate-x-1/2 -translate-y-1/2",
+              "max-md:inset-x-0 max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:w-full max-md:translate-x-0 max-md:translate-y-0",
+              "rounded-[1.5rem] bg-[#171717] p-5 text-white shadow-[0_28px_90px_rgba(0,0,0,0.55)] max-md:rounded-b-none",
+              "transition-[opacity,transform] duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0",
+              "md:data-ending-style:scale-[0.98] md:data-starting-style:scale-[0.98]",
+              "max-md:data-ending-style:translate-y-full max-md:data-starting-style:translate-y-full",
             )}
           >
             <Dialog.Close
               aria-label={t("analytics.detail.secondary.closeDialog")}
-              className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-white/10 hover:text-zinc-200"
+              className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full bg-white/[0.06] text-white/55 transition hover:bg-white/[0.1] hover:text-white"
             >
               <X className="size-4" />
             </Dialog.Close>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" />
+            <div className="flex items-start gap-3 pr-8">
+              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-white/70" />
               <div>
-                <Dialog.Title className="text-base font-semibold tracking-tight text-white">{t("analytics.detail.secondary.cancelDialogTitle")}</Dialog.Title>
-                <Dialog.Description className="mt-1 text-[13px] text-zinc-400">
+                <Dialog.Title className="text-base font-semibold tracking-tight text-white">
+                  {t("analytics.detail.secondary.cancelDialogTitle")}
+                </Dialog.Title>
+                <Dialog.Description className="mt-1 text-[13px] text-white/45">
                   {t("analytics.detail.secondary.cancelDialogDescription")}
                 </Dialog.Description>
               </div>
             </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <Dialog.Close className="inline-flex h-9 items-center rounded-lg bg-white/6 px-3.5 text-[12px] font-medium text-zinc-200 transition hover:bg-white/10">
+            <div className="mt-5 flex justify-end gap-x-4">
+              <Dialog.Close className={textActionMutedClass}>
                 {t("analytics.detail.secondary.cancelDialogKeep")}
               </Dialog.Close>
-              <Dialog.Close className="inline-flex h-9 items-center rounded-lg bg-fuchsia-500/18 px-3.5 text-[12px] font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/26">
+              <Dialog.Close className={textActionClass}>
                 {t("analytics.detail.secondary.cancelDialogConfirm")}
               </Dialog.Close>
             </div>

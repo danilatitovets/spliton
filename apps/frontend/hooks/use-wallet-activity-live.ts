@@ -10,6 +10,7 @@ import {
 } from "@/lib/wallet/wallet-activity-adapter";
 import type { ActivityRecord } from "@/components/dashboard/assets/activity-mock-data";
 import type { PayoutHistoryRow } from "@/components/dashboard/assets/payouts-mock-data";
+import { useCabinetDemoPreview } from "@/hooks/use-cabinet-demo-preview";
 import {
   fetchWalletActivity,
   getWalletDataSource,
@@ -20,6 +21,8 @@ import {
 
 export function useWalletActivityLiveEnabled(): boolean {
   const { isAuthenticated } = useAuth();
+  const demoPreview = useCabinetDemoPreview();
+  if (demoPreview) return false;
   return getWalletDataSource() === "live" && isAuthenticated;
 }
 

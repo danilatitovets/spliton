@@ -4,6 +4,9 @@ import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
 import { uniqueTrc20Address } from './helpers/e2e-trc20-address';
+import { canonicalTestTxHash } from './helpers/canonical-tx-hash';
+import { mockUsdtTransfer } from './helpers/mock-usdt-transfer';
+import { MockDepositProvider } from '../src/modules/deposit-ingestion/providers/mock-deposit.provider';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -101,10 +104,25 @@ describe('Withdrawal ledger flow (e2e)', () => {
     });
     expect(afterApproveRow?.status).toBe('APPROVED');
 
+    const txHash = canonicalTestTxHash(`wd-complete-${Date.now()}`);
+    const treasuryFrom = uniqueTrc20Address('treasury');
+    process.env.TREASURY_HOT_WALLET_ADDRESS = treasuryFrom;
+    const provider = app!.get(MockDepositProvider);
+    provider.clear();
+    provider.nowBlock = 20_000n;
+    provider.enqueue(
+      mockUsdtTransfer({
+        txHash,
+        toAddress,
+        fromAddress: treasuryFrom,
+        amount: withdrawal!.walletTx.netAmount.toString(),
+      }),
+    );
+
     const completeRes = await request(app!.getHttpServer())
       .post(`/api/admin/v1/withdrawals/${withdrawalId}/complete`)
       .set('Authorization', `Bearer ${staffToken}`)
-      .send({ note: 'e2e complete', blockchainTxid: `0xabc-${Date.now()}` });
+      .send({ note: 'e2e complete', blockchainTxid: txHash });
     expect(completeRes.status).toBe(201);
 
     const afterCompleteBalance = await prisma.walletBalance.findUnique({

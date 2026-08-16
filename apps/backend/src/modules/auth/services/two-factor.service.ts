@@ -22,6 +22,7 @@ import { TwoFactorBackupCodeService } from './two-factor-backup-code.service';
 import { TwoFactorEncryptionService } from './two-factor-encryption.service';
 import { TwoFactorLoginCompletionService } from './two-factor-login-completion.service';
 import { TokenService } from './token.service';
+import { hashRefreshToken } from './session.service';
 
 const TOTP_PERIOD_SEC = 30;
 /** ±1 step (30s) drift tolerance, aligned with previous `window: 1`. */
@@ -277,7 +278,7 @@ export class TwoFactorService {
       sessionId,
     });
     const refreshExpiry = this.tokenService.getRefreshExpiryDate();
-    const refreshHash = await bcrypt.hash(tokens.refreshToken, 12);
+    const refreshHash = hashRefreshToken(tokens.refreshToken);
     const device = params.meta?.device ?? params.meta?.userAgent ?? 'unknown';
 
     await this.repo.runTransaction(async (tx) => {

@@ -48,6 +48,10 @@ export const ADMIN_API_PATHS = {
   userWalletTransactions: (userId: string) =>
     `${ADMIN_API_V1_PREFIX}/users/${userId}/wallet/transactions`,
   deposits: `${ADMIN_API_V1_PREFIX}/deposits`,
+  depositRecover: `${ADMIN_API_V1_PREFIX}/deposits/recover`,
+  depositUnattributed: `${ADMIN_API_V1_PREFIX}/deposits/unattributed`,
+  depositReconciliation: `${ADMIN_API_V1_PREFIX}/deposits/reconciliation`,
+  depositIngestionHealth: `${ADMIN_API_V1_PREFIX}/deposit-ingestion/health`,
   deposit: (id: string) => `${ADMIN_API_V1_PREFIX}/deposits/${id}`,
   withdrawals: `${ADMIN_API_V1_PREFIX}/withdrawals`,
   withdrawal: (id: string) => `${ADMIN_API_V1_PREFIX}/withdrawals/${id}`,

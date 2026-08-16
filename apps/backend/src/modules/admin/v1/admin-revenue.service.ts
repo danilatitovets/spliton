@@ -774,7 +774,7 @@ export class AdminRevenueService {
             walletTransactionId: walletTx.id,
           });
 
-          await tx.payout.create({
+          const payout = await tx.payout.create({
             data: {
               userId: holder.userId,
               releaseId: period.releaseId,
@@ -794,6 +794,8 @@ export class AdminRevenueService {
               eventType: OwnershipEventType.PAYOUT_SNAPSHOT,
               unitsDelta: new Prisma.Decimal(0),
               pricePerUnit: calc.holdersPool.div(calc.totalUnits),
+              sourceEntityType: 'payout',
+              sourceEntityId: payout.id,
               happenedAt: new Date(),
             },
           });

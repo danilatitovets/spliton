@@ -12,6 +12,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { WalletLedgerService } from '../common/wallet-ledger.service';
 import { throwAdminError } from '../common/admin-http.util';
 import type { LedgerMutationContext } from '../common/ledger-mutation.types';
+import { tryNormalizeTronTxHash } from '../../deposit-ingestion/tron/tron-tx-hash';
 
 type WithdrawalWithTx = Prisma.WithdrawalGetPayload<{
   include: { walletTx: { include: { wallet: true } } };
@@ -227,9 +228,14 @@ export class AdminWithdrawalSettlementService {
     });
 
     if (blockchainTxid?.trim()) {
+      const canonical =
+        tryNormalizeTronTxHash(blockchainTxid) ?? blockchainTxid.trim();
       await tx.withdrawal.update({
         where: { id: row.id },
-        data: { blockchainTxid: blockchainTxid.trim() },
+        data: {
+          blockchainTxid: canonical,
+          providerTxHash: canonical,
+        },
       });
     }
 

@@ -70,7 +70,7 @@ async function main() {
     console.log("");
   }
 
-  await seedHelpCenter();
+  await seedHelpCenter(prisma);
 }
 
 main()

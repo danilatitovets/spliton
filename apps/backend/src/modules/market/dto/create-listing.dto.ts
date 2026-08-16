@@ -1,26 +1,15 @@
-import {
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsPositiveDecimalString } from '../../../common/validation/decimal-string.decorator';
 
 export class CreateListingDto {
   @IsUUID()
   releaseId!: string;
 
-  @IsNumber()
-  @IsPositive()
-  @Min(0.00000001)
-  @Max(1_000_000_000)
-  units!: number;
+  @IsPositiveDecimalString()
+  units!: string;
 
-  @IsNumber()
-  @IsPositive()
-  pricePerUnit!: number;
+  @IsPositiveDecimalString()
+  pricePerUnit!: string;
 
   @IsOptional()
   @IsString()

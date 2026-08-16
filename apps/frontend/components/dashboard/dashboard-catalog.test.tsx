@@ -45,6 +45,8 @@ describe("DashboardCatalogSection", () => {
     expect(screen.queryByText(/Пример карточек/i)).not.toBeInTheDocument();
 
     const cardLink = screen.getByRole("link", { name: new RegExp(mockTitles[0]!, "i") });
-    expect(cardLink).toHaveAttribute("href", "/catalog");
+    expect(cardLink).toBeTruthy();
+    // Landing cards link into catalog/buy/detail — not a single wrapper to /catalog.
+    expect(cardLink.getAttribute("href")).toMatch(/^\/(catalog|analytics|dashboard)/);
   });
 });

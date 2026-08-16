@@ -4,6 +4,7 @@ import {
   type DataSourceMode,
 } from "@/lib/public-env";
 import { formatApiError } from "@/lib/i18n/format-api-error";
+import { parseApiClientError } from "@/lib/api/api-client-error";
 
 export type WalletDataSource = DataSourceMode;
 
@@ -270,6 +271,7 @@ export class WalletApiError extends Error {
     message: string,
     readonly code?: string,
     readonly status?: number,
+    readonly details?: unknown,
   ) {
     super(message);
     this.name = "WalletApiError";
@@ -277,23 +279,13 @@ export class WalletApiError extends Error {
 }
 
 async function parseWalletError(res: Response): Promise<WalletApiError> {
-  try {
-    const body = (await res.json()) as {
-      error?: { code?: string; message?: string };
-      code?: string;
-      message?: string | string[];
-    };
-    const code = body.error?.code ?? body.code;
-    const rawMessage = body.error?.message ?? body.message;
-    const message = Array.isArray(rawMessage)
-      ? rawMessage.join(", ")
-      : typeof rawMessage === "string"
-        ? rawMessage
-        : res.statusText;
-    return new WalletApiError(message, code, res.status);
-  } catch {
-    return new WalletApiError(res.statusText, undefined, res.status);
-  }
+  const clientErr = await parseApiClientError(res);
+  return new WalletApiError(
+    clientErr.message,
+    clientErr.code,
+    clientErr.status,
+    clientErr.details,
+  );
 }
 
 async function walletGet<T>(
@@ -410,10 +402,6 @@ export function isValidTrc20Address(address: string): boolean {
 
 export const MIN_WITHDRAWAL_USDT = Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_USDT ?? 50);
 
-function newIdempotencyKey(): string {
-  return `idem-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 export async function fetchPrimaryRound(
   releaseId: string,
   authorizedFetch: (input: string, init?: RequestInit) => Promise<Response>,
@@ -423,13 +411,13 @@ export async function fetchPrimaryRound(
 
 export async function fetchPrimaryOrderPreview(
   roundId: string,
-  units: number,
+  units: string | number,
   authorizedFetch: (input: string, init?: RequestInit) => Promise<Response>,
 ): Promise<PrimaryOrderPreview> {
   const res = await authorizedFetch(walletApiUrl(WALLET_API_PATHS.primaryPreview), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roundId, units }),
+    body: JSON.stringify({ roundId, units: String(units) }),
   });
   if (!res.ok) throw await parseWalletError(res);
   return res.json() as Promise<PrimaryOrderPreview>;
@@ -453,14 +441,21 @@ export async function downloadPrimaryOrderReceipt(
 
 export async function createPrimaryOrder(
   roundId: string,
-  units: number,
+  units: string | number,
   authorizedFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  idempotencyKey?: string,
 ): Promise<PrimaryOrderResult> {
-  const key = newIdempotencyKey();
+  const unitsPayload = String(units);
+  // Stable key for retries/double-click — regenerating caused duplicate purchases.
+  const key =
+    idempotencyKey?.trim() ||
+    (typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? `primary-${roundId}-${unitsPayload}-${crypto.randomUUID()}`
+      : `primary-${roundId}-${unitsPayload}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
   const res = await authorizedFetch(walletApiUrl(WALLET_API_PATHS.orders), {
     method: "POST",
     headers: { "Content-Type": "application/json", "Idempotency-Key": key },
-    body: JSON.stringify({ roundId, units, idempotencyKey: key }),
+    body: JSON.stringify({ roundId, units: unitsPayload, idempotencyKey: key }),
   });
   if (!res.ok) throw await parseWalletError(res);
   return res.json() as Promise<PrimaryOrderResult>;
@@ -497,7 +492,7 @@ export async function listUserHoldings(
 }
 
 export async function createMarketListing(
-  body: { releaseId: string; units: number; pricePerUnit: number },
+  body: { releaseId: string; units: string | number; pricePerUnit: string | number },
   authorizedFetch: (input: string, init?: RequestInit) => Promise<Response>,
 ): Promise<MarketListingItem> {
   const res = await authorizedFetch(walletApiUrl(WALLET_API_PATHS.marketListings), {

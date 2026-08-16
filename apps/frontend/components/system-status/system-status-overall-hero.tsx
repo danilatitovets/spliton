@@ -5,10 +5,13 @@ import "./system-status-overall-hero.css";
 import Image from "next/image";
 import * as React from "react";
 
+import { useI18n } from "@/components/providers/i18n-provider";
 import type { OverallTone } from "@/constants/system-status-mock";
 import { cn } from "@/lib/utils";
 
 const CHIP_CYCLE_MS = 2800;
+const STATUS_HERO_ICON = "/images/system-status/system-status-hero.png";
+const HEADER_VIDEO = "/videos/position-holding-bg.mp4";
 
 const DEFAULT_FLY_LABELS = [
   "Кабинет",
@@ -18,12 +21,22 @@ const DEFAULT_FLY_LABELS = [
   "Пополнение",
 ] as const;
 
-function toneOrbitClass(tone: OverallTone): string {
+function toneGlowClass(tone: OverallTone): string {
   const map: Record<OverallTone, string> = {
-    success: "status-overall-hero__orbit-dot--success",
-    warning: "status-overall-hero__orbit-dot--warning",
-    maintenance: "status-overall-hero__orbit-dot--maintenance",
-    danger: "status-overall-hero__orbit-dot--danger",
+    success: "status-overall-hero__glow--success",
+    warning: "status-overall-hero__glow--warning",
+    maintenance: "status-overall-hero__glow--maintenance",
+    danger: "status-overall-hero__glow--danger",
+  };
+  return map[tone];
+}
+
+function toneDotClass(tone: OverallTone): string {
+  const map: Record<OverallTone, string> = {
+    success: "bg-emerald-400",
+    warning: "bg-amber-400",
+    maintenance: "bg-sky-400",
+    danger: "bg-rose-400",
   };
   return map[tone];
 }
@@ -47,6 +60,7 @@ export function SystemStatusOverallHero({
   flyLabels = DEFAULT_FLY_LABELS,
   className,
 }: SystemStatusOverallHeroProps) {
+  const { t } = useI18n();
   const chips = React.useMemo(
     () => flyLabels.map((label) => label.trim()).filter(Boolean),
     [flyLabels],
@@ -63,21 +77,40 @@ export function SystemStatusOverallHero({
     return () => window.clearInterval(timer);
   }, [chips.length]);
 
-  const activeChip = chips[chipIndex] ?? chips[0] ?? "Сервисы";
+  const activeChip = chips[chipIndex] ?? chips[0] ?? t("systemStatus.overall.servicesFallback");
 
   return (
     <section
-      className={cn("status-overall-hero border-b border-white/[0.06] px-0 pb-8 sm:pb-10", className)}
+      className={cn(
+        "status-overall-hero relative isolate overflow-hidden rounded-2xl sm:rounded-[1.35rem]",
+        className,
+      )}
       aria-labelledby="health-overview"
     >
-      <div className="text-center">
-        <p id="health-overview" className="text-[11px] font-medium uppercase tracking-[0.16em] text-zinc-500">
-          Общий статус
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <video
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-[14px] motion-reduce:hidden"
+          src={HEADER_VIDEO}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/82 to-black" />
+      </div>
+
+      <div className="relative z-10 px-5 py-8 text-center sm:px-8 sm:py-10">
+        <p
+          id="health-overview"
+          className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/50"
+        >
+          {t("systemStatus.overall.label")}
         </p>
 
         <div className="status-overall-hero__orb-wrap">
           <div className="status-overall-hero__sync">
-            <p className="status-overall-hero__sync-label">Синхронизация сервисов</p>
+            <p className="status-overall-hero__sync-label">{t("systemStatus.overall.sync")}</p>
             <p className="status-overall-hero__sync-name">{activeChip}</p>
           </div>
 
@@ -86,33 +119,39 @@ export function SystemStatusOverallHero({
             <span className="status-overall-hero__rail-target" />
             {activeChip ? (
               <span key={`${chipIndex}-${activeChip}`} className="status-overall-hero__fly-chip">
-                <span className="status-overall-hero__fly-chip-dot" />
+                <span className={cn("status-overall-hero__fly-chip-dot", toneDotClass(tone))} />
                 <span>{activeChip}</span>
               </span>
             ) : null}
           </div>
 
-          <div className="status-overall-hero__orb">
-            <span className="status-overall-hero__ring status-overall-hero__ring--spin" aria-hidden>
-              <span className={cn("status-overall-hero__orbit-dot", toneOrbitClass(tone))} />
-            </span>
-            <span className="status-overall-hero__logo size-12 sm:size-14">
+          <div className="status-overall-hero__icon-wrap">
+            <span className={cn("status-overall-hero__glow", toneGlowClass(tone))} aria-hidden />
+            <div className="relative mx-auto size-[9.5rem] sm:size-[11rem]">
               <Image
-                src="/images/LOGO/mini-logo.png"
+                src={STATUS_HERO_ICON}
                 alt=""
-                width={36}
-                height={36}
-                className="size-7 object-contain sm:size-8"
+                fill
+                sizes="176px"
+                className="object-contain drop-shadow-[0_12px_36px_rgba(0,0,0,0.55)]"
                 unoptimized
+                priority
+                aria-hidden
               />
-            </span>
+            </div>
           </div>
         </div>
 
-        <h2 className="mt-6 text-2xl font-semibold tracking-tight text-white sm:text-3xl">{headline}</h2>
-        <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-zinc-400">{subline}</p>
-        <p className="mx-auto mt-2 max-w-3xl text-xs leading-relaxed text-zinc-600">{explanation}</p>
-        <p className="mx-auto mt-5 font-mono text-xs text-zinc-500">{lastUpdatedLabel}</p>
+        <h2 className="mt-7 text-[1.75rem] font-semibold leading-tight tracking-tight text-white sm:text-3xl lg:text-[2.15rem]">
+          {headline}
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-white/65 sm:text-base">
+          {subline}
+        </p>
+        <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">{explanation}</p>
+        <p className="mx-auto mt-5 font-mono text-[11px] tracking-wide text-zinc-500">
+          {lastUpdatedLabel}
+        </p>
       </div>
     </section>
   );

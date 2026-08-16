@@ -46,6 +46,7 @@ export const RELEASE_ANALYTICS_ROWS_MOCK: ReleaseAnalyticsRow[] = MARKET_OVERVIE
     changePct: changePctFromTrend(r.trend),
     payouts: `${Math.round(r.payoutsUsdt).toLocaleString("ru-RU")} USDT`,
     units: Math.round(r.availableUnits).toLocaleString("ru-RU"),
+    pricePerUnitUsdt: r.primaryUnitPriceUsdt.toFixed(2),
     status: marketStatusToRowStatus(r.status),
     trend: r.trend,
     sparkline: spark12(r.sparkline),

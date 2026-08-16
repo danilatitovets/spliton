@@ -15,9 +15,17 @@ export class PrismaService
 
   constructor() {
     const slowMs = Number(process.env.PRISMA_SLOW_QUERY_MS ?? '0');
-    super(
-      slowMs > 0 ? { log: [{ emit: 'event', level: 'query' }] } : undefined,
-    );
+    // Default Prisma interactive tx timeout (5s) is too low for multi-step
+    // ledger / pool-claim work under concurrent load. Override via env.
+    const txMaxWait = Number(process.env.PRISMA_TX_MAX_WAIT_MS ?? '10000');
+    const txTimeout = Number(process.env.PRISMA_TX_TIMEOUT_MS ?? '20000');
+    super({
+      ...(slowMs > 0 ? { log: [{ emit: 'event', level: 'query' as const }] } : {}),
+      transactionOptions: {
+        maxWait: Number.isFinite(txMaxWait) && txMaxWait > 0 ? txMaxWait : 10_000,
+        timeout: Number.isFinite(txTimeout) && txTimeout > 0 ? txTimeout : 20_000,
+      },
+    });
     if (slowMs > 0) {
       const client = this as PrismaClient & {
         $on?: (

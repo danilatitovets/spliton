@@ -22,7 +22,7 @@ export class DepositIngestionController {
   )
   health(@CurrentUser() user: AuthUser) {
     assertAdminArea(user.roles ?? [], 'deposits', 'view');
-    return this.ingestion.providerHealth();
+    return this.ingestion.cryptoHealth();
   }
 
   @Post('run')

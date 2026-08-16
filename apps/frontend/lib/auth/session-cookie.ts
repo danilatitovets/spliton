@@ -17,3 +17,11 @@ export function clearSessionHintCookie(): void {
   const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${SPLITON_SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
 }
+
+export function hasClientSessionHint(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((part) => part.trim() === `${SPLITON_SESSION_COOKIE}=1`);
+}
+

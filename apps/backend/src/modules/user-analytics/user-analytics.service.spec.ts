@@ -28,8 +28,12 @@ describe('UserAnalyticsService release detail', () => {
     resolveReleaseId: jest.fn(),
     assertPublicRelease: jest.fn(),
     loadRelease: jest.fn(),
+    loadPublicReleaseByKey: jest.fn(),
   };
-  const positions = { loadPositions: jest.fn() };
+  const positions = {
+    loadPositions: jest.fn(),
+    loadPositionForRelease: jest.fn(),
+  };
   const enrichment = { loadByReleaseIds: jest.fn() };
 
   beforeEach(async () => {
@@ -50,7 +54,7 @@ describe('UserAnalyticsService release detail', () => {
   it('getDetail returns FAQ from DB and no mock fields', async () => {
     resolve.resolveReleaseId.mockResolvedValue('rel-1');
     resolve.assertPublicRelease.mockResolvedValue(undefined);
-    resolve.loadRelease.mockResolvedValue({
+    const releaseRow = {
       id: 'rel-1',
       slug: 'neon-drift',
       symbol: 'NDR',
@@ -88,8 +92,11 @@ describe('UserAnalyticsService release detail', () => {
       publicStatus: null,
       distributionNotes: null,
       createdAt: new Date('2026-01-01'),
-    });
+    };
+    resolve.loadPublicReleaseByKey.mockResolvedValue(releaseRow);
+    resolve.loadRelease.mockResolvedValue(releaseRow);
     positions.loadPositions.mockResolvedValue([]);
+    positions.loadPositionForRelease.mockResolvedValue(null);
     prisma.releaseMetricsDaily.findFirst.mockResolvedValue({
       yieldPct: new Prisma.Decimal('12.5'),
     });
@@ -108,9 +115,7 @@ describe('UserAnalyticsService release detail', () => {
   });
 
   it('getFullDetail includes payoutHistory from distributions', async () => {
-    resolve.resolveReleaseId.mockResolvedValue('rel-1');
-    resolve.assertPublicRelease.mockResolvedValue(undefined);
-    resolve.loadRelease.mockResolvedValue({
+    const releaseRow = {
       id: 'rel-1',
       slug: 'test',
       symbol: 'TST',
@@ -148,8 +153,13 @@ describe('UserAnalyticsService release detail', () => {
       publicStatus: null,
       distributionNotes: null,
       createdAt: new Date(),
-    });
+    };
+    resolve.loadPublicReleaseByKey.mockResolvedValue(releaseRow);
+    resolve.resolveReleaseId.mockResolvedValue('rel-1');
+    resolve.assertPublicRelease.mockResolvedValue(undefined);
+    resolve.loadRelease.mockResolvedValue(releaseRow);
     positions.loadPositions.mockResolvedValue([]);
+    positions.loadPositionForRelease.mockResolvedValue(null);
     prisma.releaseMetricsDaily.findFirst.mockResolvedValue(null);
     prisma.releaseFaqItem.findMany.mockResolvedValue([]);
     prisma.earningDistribution.findMany.mockResolvedValue([]);
@@ -167,5 +177,6 @@ describe('UserAnalyticsService release detail', () => {
     expect(result.identity.title).toBe('Test');
     expect(Array.isArray(result.payoutHistory)).toBe(true);
     expect(result.secondarySummary.activeListings).toBe(0);
+    expect(resolve.loadPublicReleaseByKey).toHaveBeenCalledWith('test');
   });
 });

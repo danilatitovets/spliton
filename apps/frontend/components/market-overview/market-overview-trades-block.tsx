@@ -59,44 +59,83 @@ export function MarketOverviewTradesBlock({
           {t("marketOverview.trades.empty")}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl bg-[#111111]">
-          <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
-            <thead>
-              <tr className="text-zinc-500">
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.release")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.units")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.price")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.total")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.time")}</th>
-                <th className="px-3 py-2.5 text-right font-normal">{t("marketOverview.trades.table.details")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((trade) => (
-                <tr key={trade.id} className="text-zinc-300">
-                  <td className="px-3 py-2 align-middle">
-                    <div className="font-semibold text-white">{trade.releaseSymbol}</div>
-                    <div className="text-[12px] text-zinc-500">{trade.releaseTitle}</div>
-                  </td>
-                  <td className="px-3 py-2 align-middle font-mono tabular-nums">{trade.units}</td>
-                  <td className="px-3 py-2 align-middle font-mono tabular-nums">{trade.pricePerUnitUsdt} USDT</td>
-                  <td className="px-3 py-2 align-middle font-mono tabular-nums">{trade.totalUsdt} USDT</td>
-                  <td className="px-3 py-2 align-middle font-mono text-[12px] tabular-nums text-zinc-400">
-                    {formatWhen(trade.executedAt)}
-                  </td>
-                  <td className="px-3 py-2 align-middle text-right">
-                    <Link
-                      href={catalogMarketOverviewReleaseAnalyticsPath(trade.releaseId)}
-                      className="text-[12px] font-medium text-zinc-400 hover:text-white hover:underline"
-                    >
-                      {t("marketOverview.trades.details")}
-                    </Link>
-                  </td>
+        <>
+          <ul className="space-y-2 md:hidden" role="list">
+            {items.map((trade) => (
+              <li key={trade.id} className="rounded-xl bg-[#111111] px-3.5 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-white">{trade.releaseSymbol}</p>
+                    <p className="truncate text-[12px] text-zinc-500">{trade.releaseTitle}</p>
+                  </div>
+                  <Link
+                    href={catalogMarketOverviewReleaseAnalyticsPath(trade.releaseId)}
+                    className="shrink-0 text-[12px] font-medium text-zinc-400"
+                  >
+                    {t("marketOverview.trades.details")}
+                  </Link>
+                </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-4">
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.trades.table.units")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-zinc-200">{trade.units}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.trades.table.price")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-zinc-200">{trade.pricePerUnitUsdt}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.trades.table.total")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-white">{trade.totalUsdt}</p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-zinc-600">{t("marketOverview.trades.table.time")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-zinc-400">{formatWhen(trade.executedAt)}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto rounded-xl bg-[#111111] md:block">
+            <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
+              <thead>
+                <tr className="text-zinc-500">
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.release")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.units")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.price")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.total")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.trades.table.time")}</th>
+                  <th className="px-3 py-2.5 text-right font-normal">{t("marketOverview.trades.table.details")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((trade) => (
+                  <tr key={trade.id} className="text-zinc-300">
+                    <td className="px-3 py-2 align-middle">
+                      <div className="font-semibold text-white">{trade.releaseSymbol}</div>
+                      <div className="text-[12px] text-zinc-500">{trade.releaseTitle}</div>
+                    </td>
+                    <td className="px-3 py-2 align-middle font-mono tabular-nums">{trade.units}</td>
+                    <td className="px-3 py-2 align-middle font-mono tabular-nums">{trade.pricePerUnitUsdt} USDT</td>
+                    <td className="px-3 py-2 align-middle font-mono tabular-nums">{trade.totalUsdt} USDT</td>
+                    <td className="px-3 py-2 align-middle font-mono text-[12px] tabular-nums text-zinc-400">
+                      {formatWhen(trade.executedAt)}
+                    </td>
+                    <td className="px-3 py-2 align-middle text-right">
+                      <Link
+                        href={catalogMarketOverviewReleaseAnalyticsPath(trade.releaseId)}
+                        className="text-[12px] font-medium text-zinc-400 hover:text-white hover:underline"
+                      >
+                        {t("marketOverview.trades.details")}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   );

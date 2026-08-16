@@ -21,6 +21,12 @@ describe("classifySellListingError", () => {
     expect(classifySellListingError("SERVER_UNAVAILABLE")).toBe("network");
   });
 
+  it("maps compliance / KYC / country blocks", () => {
+    expect(classifySellListingError("KYC_REQUIRED")).toBe("compliance");
+    expect(classifySellListingError("COUNTRY_RESTRICTED")).toBe("compliance");
+    expect(classifySellListingError("COMPLIANCE_RESTRICTED")).toBe("compliance");
+  });
+
   it("falls back to generic", () => {
     expect(classifySellListingError("UNKNOWN")).toBe("generic");
     expect(classifySellListingError(null)).toBe("generic");

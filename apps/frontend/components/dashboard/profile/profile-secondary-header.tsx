@@ -6,7 +6,7 @@ export function ProfileSecondaryHeaderFallback() {
   return (
     <DashboardSectionSubheaderShell>
       <div className="h-11 sm:h-12">
-        <div className="mb-2 h-4 w-56 animate-pulse rounded bg-neutral-100" />
+        <div className="mb-2 h-4 w-56 animate-pulse rounded bg-white/[0.06]" />
       </div>
     </DashboardSectionSubheaderShell>
   );

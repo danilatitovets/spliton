@@ -25,19 +25,26 @@ export function shortSupportTicketId(id: string) {
 export function SupportTicketStatusBadge({
   status,
   locale,
+  tone: surfaceTone = "light",
 }: {
   status: string;
   locale: AppLocale;
+  tone?: "light" | "dark";
 }) {
   const tone = STATUS_TONE[status] ?? "neutral";
+  const dark = surfaceTone === "dark";
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold",
-        tone === "amber" && "bg-amber-100 text-amber-900",
-        tone === "sky" && "bg-sky-100 text-sky-900",
-        tone === "emerald" && "bg-emerald-100 text-emerald-800",
-        tone === "neutral" && "bg-neutral-100 text-neutral-700",
+        "inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
+        dark && tone === "amber" && "bg-amber-400/15 text-amber-200",
+        dark && tone === "sky" && "bg-sky-400/15 text-sky-200",
+        dark && tone === "emerald" && "bg-emerald-400/15 text-emerald-200",
+        dark && tone === "neutral" && "bg-white/[0.08] text-zinc-300",
+        !dark && tone === "amber" && "bg-amber-100 text-amber-900",
+        !dark && tone === "sky" && "bg-sky-100 text-sky-900",
+        !dark && tone === "emerald" && "bg-emerald-100 text-emerald-800",
+        !dark && tone === "neutral" && "bg-neutral-100 text-neutral-700",
       )}
     >
       {supportTicketStatusLabel(status, locale)}

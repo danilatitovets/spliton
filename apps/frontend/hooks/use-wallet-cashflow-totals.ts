@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { portfolioErrorMessage } from "@/services/portfolio.service";
+import { useCabinetDemoPreview } from "@/hooks/use-cabinet-demo-preview";
 import { isLivePortfolioEnabled } from "@/lib/public-env";
 import { fetchWalletActivity } from "@/services/wallet.service";
 
@@ -19,7 +20,8 @@ function parseAmount(raw: string): number {
 
 export function useWalletCashflowTotals() {
   const { authorizedFetch, isAuthenticated } = useAuth();
-  const live = isLivePortfolioEnabled() && isAuthenticated;
+  const demoPreview = useCabinetDemoPreview();
+  const live = isLivePortfolioEnabled() && isAuthenticated && !demoPreview;
   const [totals, setTotals] = useState<WalletCashflowTotals | null>(null);
   const [loading, setLoading] = useState(live);
   const [error, setError] = useState<string | null>(null);

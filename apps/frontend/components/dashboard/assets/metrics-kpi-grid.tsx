@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/components/providers/i18n-provider";
-import { assetsCardClass } from "@/components/dashboard/assets/assets-ui";
+import { assetsMutedCardClass } from "@/components/dashboard/assets/assets-ui";
 import { EmptyState } from "@/components/shared/data-states/empty-state";
 import { formatUsdtAmount } from "@/lib/i18n/formatters";
 import { emptyAmountLabel } from "@/lib/analytics/display-value";
@@ -46,7 +46,7 @@ export function MetricsKpiGrid({ live = false, overview, wallet, loading, error 
   if (error && !overview && !wallet) {
     return (
       <section aria-label={t("assets.metrics.kpiAria")}>
-        <EmptyState message={t("assets.metrics.metricsUnavailable")} />
+        <EmptyState situation="chartEmpty" message={t("assets.metrics.metricsUnavailable")} />
       </section>
     );
   }
@@ -72,7 +72,7 @@ export function MetricsKpiGrid({ live = false, overview, wallet, loading, error 
   return (
     <section aria-label={t("assets.metrics.kpiAria")} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
       {cards.map((item) => (
-        <article key={item.label} className={assetsCardClass}>
+        <article key={item.label} className={assetsMutedCardClass}>
           <p className="text-sm text-neutral-500">{item.label}</p>
           <p className="mt-2 font-mono text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 sm:text-[1.75rem]">
             {item.value}

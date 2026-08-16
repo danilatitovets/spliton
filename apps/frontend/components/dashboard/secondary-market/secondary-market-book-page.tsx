@@ -69,7 +69,7 @@ export function SecondaryMarketBookPage({ marketId }: { marketId: string }) {
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-black px-4 py-16 text-center text-white">
         <h1 className="text-xl font-semibold">{t("secondaryMarket.orderBook.notFoundTitle")}</h1>
         <p className="mt-2 text-sm text-zinc-500">{t("secondaryMarket.orderBook.notFoundDesc")}</p>
-        <Link href={secondaryMarketHref("market")} className="mt-6 text-sm text-[#B7F500] hover:underline">
+        <Link href={secondaryMarketHref("market")} className="mt-6 text-sm text-white hover:underline">
           {t("secondaryMarket.orderBook.backToMarket")}
         </Link>
       </div>

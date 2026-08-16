@@ -233,8 +233,14 @@ export class UserMarketController {
     @CurrentUser() user: AuthUser,
     @Body() dto: BuyTradeDto,
     @Req() req: Request,
+    @Headers('idempotency-key') idempotencyHeader?: string,
   ) {
-    return this.market.buyListing(user.id, dto.listingId, requestMeta(req));
+    return this.market.buyListing(
+      user.id,
+      dto.listingId,
+      requestMeta(req),
+      dto.idempotencyKey ?? idempotencyHeader,
+    );
   }
 
   @Get('trades')

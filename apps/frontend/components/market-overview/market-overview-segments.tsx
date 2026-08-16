@@ -99,11 +99,11 @@ export function MarketOverviewSegments({
     <section className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
       <div className="mb-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+          <span className="font-mono text-[10px] font-semibold font-medium tracking-wide text-zinc-500">
             {t("marketOverview.segments.kicker")}
           </span>
           {!live ? (
-            <span className="rounded-lg bg-[#0a0a0a] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+            <span className="rounded-lg bg-[#0a0a0a] px-2 py-0.5 text-[10px] font-medium tracking-wide text-zinc-400">
               {t("marketOverview.segments.mockBadge")}
             </span>
           ) : null}
@@ -137,30 +137,81 @@ export function MarketOverviewSegments({
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-xl bg-[#111111]">
+      <ul className="space-y-2 md:hidden" role="list">
+        {rows.length === 0 ? (
+          <li className="rounded-xl bg-[#111111] px-4 py-10 text-center text-sm text-zinc-500">
+            {t("marketOverview.segments.empty")}
+          </li>
+        ) : (
+          rows.map((s) => {
+            const analyticsHref = `${ROUTES.analyticsReleases}?segment=${encodeURIComponent(s.id)}`;
+            return (
+              <li key={s.id} className="rounded-xl bg-[#111111] px-3.5 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link href={analyticsHref} className="text-[14px] font-semibold text-white">
+                      {s.label}
+                    </Link>
+                    <p className="mt-0.5 font-mono text-[10px] tracking-wide text-zinc-600">{s.id.toUpperCase()}</p>
+                  </div>
+                  <Link href={analyticsHref} className="shrink-0 text-[12px] font-medium text-zinc-400">
+                    {t("marketOverview.segments.analytics")}
+                  </Link>
+                </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.segments.table.deepPlus")}</p>
+                    <p className="mt-0.5 font-mono font-semibold tabular-nums text-[#B7F500]">{s.deepPlusShare}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.segments.table.activity")}</p>
+                    <p className="mt-0.5 font-mono font-semibold tabular-nums text-zinc-200">{s.activity}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.segments.table.stability")}</p>
+                    <p className={cn("mt-0.5", stabilityTone(s.stability))}>{translateStability(s.stability)}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.segments.table.demand")}</p>
+                    <p className={cn("mt-0.5", demandTone(s.demand))}>{translateDemand(s.demand)}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-zinc-600">{t("marketOverview.segments.table.liquidity")}</p>
+                    <p className={cn("mt-0.5", liquidityTextClass(s.liquidity))}>
+                      {translateLiquidity(s.liquidity)}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-xl bg-[#111111] md:block">
         <table className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-[13px]">
           <thead>
             <tr className="text-zinc-500">
               <th className="px-3 py-2.5 font-normal sm:px-4">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.genre")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.genre")}</span>
               </th>
               <th className="px-3 py-2.5 text-right font-normal sm:px-4" title="Deep+">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.deepPlus")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.deepPlus")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal sm:px-4">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.stability")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.stability")}</span>
               </th>
               <th className="px-3 py-2.5 text-right font-normal sm:px-4">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.activity")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.activity")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal sm:px-4">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.demand")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.demand")}</span>
               </th>
               <th className="px-3 py-2.5 text-right font-normal sm:px-4">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.liquidity")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.liquidity")}</span>
               </th>
               <th className="px-3 py-2.5 text-right font-normal sm:px-4">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.segments.table.action")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.segments.table.action")}</span>
               </th>
             </tr>
           </thead>
@@ -184,7 +235,7 @@ export function MarketOverviewSegments({
                         >
                           {s.label}
                         </Link>
-                        <div className="mt-1 font-mono text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+                        <div className="mt-1 font-mono text-[10px] font-medium tracking-wide text-zinc-600">
                           {s.id.toUpperCase()}
                         </div>
                       </div>

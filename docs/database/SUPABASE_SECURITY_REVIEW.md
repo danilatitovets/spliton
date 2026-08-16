@@ -5,7 +5,7 @@
 ```
 Browser → Next.js (public env only)
        → NestJS API (JWT, server secrets)
-       → Supabase PostgreSQL (DATABASE_URL pooler)
+       → Supabase PostgreSQL (DATABASE_URL session pooler :5432)
 ```
 
 **No direct Supabase client access from frontend** for financial tables — correct for FinTech.
@@ -14,8 +14,8 @@ Browser → Next.js (public env only)
 
 | Secret | Where | Status |
 |--------|-------|--------|
-| `DATABASE_URL` | Backend only | ✓ Pooled (6543) |
-| `DIRECT_URL` | Migrations/CI only | ✓ Direct 5432 |
+| `DATABASE_URL` | Backend only | ✓ Session pooler `:5432` (no `pgbouncer=true`) |
+| `DIRECT_URL` | Migrations/CI only | ✓ Direct `db.<ref>.supabase.co:5432` |
 | `JWT_SECRET` / refresh | Backend only | ✓ |
 | `SUPABASE_SERVICE_ROLE_KEY` | Listed in TODO — use server-only if Supabase APIs added | Do not expose to frontend |
 | `NEXT_PUBLIC_*` | Frontend | ✓ No DB URLs in repo `.env.example` |
@@ -32,7 +32,7 @@ Browser → Next.js (public env only)
 ## Connection security
 
 - TLS enforced by Supabase
-- Use **transaction pooler** for app; **direct** for migrations
+- Use **session pooler** (`:5432`, no `pgbouncer=true`) for Nest runtime; **direct** (`db.<ref>:5432`) for migrations. Transaction pooler (`:6543` + `pgbouncer=true`) is unsafe for interactive Prisma `$transaction`.
 - Never commit `.env` — `.env.example` has placeholders only ✓
 
 ## Admin API

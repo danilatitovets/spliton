@@ -6,6 +6,7 @@ import { Minus, Plus } from "@/lib/lucide";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import { messageForApiError } from "@/lib/i18n/dictionaries";
+import { formatApiError } from "@/lib/i18n/format-api-error";
 import { tf } from "@/lib/i18n/financial-messages";
 import { cn } from "@/lib/utils";
 
@@ -300,18 +301,13 @@ export function SecondaryMarketOrderEntryPanel({
     const px = orderMode === "limit" ? priceNum : side === "buy" ? marketBuyWalk?.avgPrice ?? bestAsk : marketSellWalk?.avgPrice ?? bestBid;
     try {
       await onSubmit({ orderMode, side, price: px || 0, units: unitsNum });
-    } catch {
-      setLocalError(t("secondaryMarket.errors.submitFailed"));
+    } catch (e) {
+      setLocalError(formatApiError(e, locale));
     }
   };
 
-  const caption =
-    orderMode === "limit"
-      ? t("secondaryMarket.forms.limitOrderCaption")
-      : t("secondaryMarket.forms.marketOrderCaption");
-
-  const dash = "—";
-  const paramsDescParts = t("secondaryMarket.listingDetail.paramsDesc").split("{link}");
+  const dash = t("secondaryMarket.orderBook.valueUnavailable");
+  const estimatePlaceholder = t("secondaryMarket.forms.enterAmountForEstimate");
 
   return (
     <div className="flex flex-col gap-3 bg-black">
@@ -387,7 +383,7 @@ export function SecondaryMarketOrderEntryPanel({
         <span className="font-semibold text-zinc-200">
           {side === "buy" ? `${formatUsdt(usdtBalance)} USDT` : `${unitsAvailable} UNT`}
           {side === "buy" ? (
-            <Link href="/assets/payouts/deposit" className="ml-1.5 text-[#B7F500] hover:underline" aria-label={t("secondaryMarket.forms.topUpAria")}>
+            <Link href="/assets/payouts/deposit" className="ml-1.5 text-white hover:underline" aria-label={t("secondaryMarket.forms.topUpAria")}>
               +
             </Link>
           ) : null}
@@ -444,19 +440,18 @@ export function SecondaryMarketOrderEntryPanel({
               <p className="text-zinc-500">{t("secondaryMarket.forms.marketAskEstimate")}</p>
               <p className="mt-1 text-zinc-200">
                 {tf(t("secondaryMarket.forms.marketAvgPriceLine"), {
-                  avg: marketBuyWalk && unitsNum ? formatUsdt(marketBuyWalk.avgPrice) : dash,
+                  avg: marketBuyWalk && unitsNum ? formatUsdt(marketBuyWalk.avgPrice) : estimatePlaceholder,
                   filled: String(marketBuyWalk?.filledUnits ?? 0),
                   total: String(unitsNum || 0),
                 })}
               </p>
-              <p className="mt-1 text-amber-200/85">{t("secondaryMarket.forms.marketSlippageHint")}</p>
             </>
           ) : (
             <>
               <p className="text-zinc-500">{t("secondaryMarket.forms.marketBidEstimate")}</p>
               <p className="mt-1 text-zinc-200">
                 {tf(t("secondaryMarket.forms.marketAvgPriceLine"), {
-                  avg: marketSellWalk && unitsNum ? formatUsdt(marketSellWalk.avgPrice) : dash,
+                  avg: marketSellWalk && unitsNum ? formatUsdt(marketSellWalk.avgPrice) : estimatePlaceholder,
                   filled: String(marketSellWalk?.filledUnits ?? 0),
                   total: String(unitsNum || 0),
                 })}
@@ -486,6 +481,7 @@ export function SecondaryMarketOrderEntryPanel({
       <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
+          disabled={!bestAsk}
           onClick={() => {
             if (bestAsk) {
               setOrderMode("limit");
@@ -493,12 +489,15 @@ export function SecondaryMarketOrderEntryPanel({
               setPrice(String(bestAsk));
             }
           }}
-          className="rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-zinc-400 transition hover:border-white/20 hover:text-zinc-200"
+          className="rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-zinc-400 transition hover:border-white/20 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {tf(t("secondaryMarket.forms.bestAskBtn"), { price: bestAsk ? formatUsdt(bestAsk) : dash })}
+          {bestAsk
+            ? tf(t("secondaryMarket.forms.bestAskBtn"), { price: formatUsdt(bestAsk) })
+            : t("secondaryMarket.forms.noBestAsk")}
         </button>
         <button
           type="button"
+          disabled={!bestBid}
           onClick={() => {
             if (bestBid) {
               setOrderMode("limit");
@@ -506,9 +505,11 @@ export function SecondaryMarketOrderEntryPanel({
               setPrice(String(bestBid));
             }
           }}
-          className="rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-zinc-400 transition hover:border-white/20 hover:text-zinc-200"
+          className="rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-zinc-400 transition hover:border-white/20 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {tf(t("secondaryMarket.forms.bestBidBtn"), { price: bestBid ? formatUsdt(bestBid) : dash })}
+          {bestBid
+            ? tf(t("secondaryMarket.forms.bestBidBtn"), { price: formatUsdt(bestBid) })
+            : t("secondaryMarket.forms.noBestBid")}
         </button>
       </div>
 
@@ -552,7 +553,7 @@ export function SecondaryMarketOrderEntryPanel({
               className="flex flex-col items-center gap-1"
               aria-label={`${pct}%`}
             >
-              <span className="size-2 rounded-full bg-zinc-600 transition-colors hover:bg-[#B7F500]" />
+              <span className="size-2 rounded-full bg-zinc-600 transition-colors hover:bg-white" />
               <span className="font-mono text-[10px] text-zinc-600">{pct === 0 ? "0" : `${pct}%`}</span>
             </button>
           ))}
@@ -625,7 +626,6 @@ export function SecondaryMarketOrderEntryPanel({
             ? tf(t("secondaryMarket.forms.submitBuySymbol"), { symbol: m.symbol })
             : tf(t("secondaryMarket.forms.submitSellSymbol"), { symbol: m.symbol })}
       </button>
-      <p className="text-center font-mono text-[10px] leading-relaxed text-zinc-600">{caption}</p>
     </div>
   );
 }

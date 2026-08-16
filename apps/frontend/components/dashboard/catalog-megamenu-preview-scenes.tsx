@@ -400,7 +400,7 @@ export function CatalogGuideScene() {
   const { t } = useI18n();
   const topicCards = GUIDE_TOPIC_CARDS.slice(0, 4);
   const navItems = GUIDE_IN_PAGE_NAV.slice(0, 8);
-  const activeNavId = "topics";
+  const activeNavId = "checklist";
   const targetNavId = "risks";
 
   return (

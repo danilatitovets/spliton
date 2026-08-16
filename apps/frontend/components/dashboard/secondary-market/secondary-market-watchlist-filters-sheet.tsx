@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, RotateCcw } from "@/lib/lucide";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import { SecondaryMarketResponsiveSheet } from "@/components/dashboard/secondary-market/secondary-market-responsive-sheet";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
 import {
   DEFAULT_WATCHLIST_FILTERS,
@@ -87,30 +88,37 @@ export function SecondaryMarketWatchlistFiltersSheet({
     <SecondaryMarketResponsiveSheet
       open={open}
       onOpenChange={onOpenChange}
+      side="right"
+      headerVideo
       title={t("secondaryMarket.watchlist.filtersTitle")}
       description={tf(t("secondaryMarket.watchlist.shownOfReleases"), {
         shown: String(resultCount),
         total: String(totalCount),
       })}
       footer={
-        <div className="flex flex-col gap-2">
-          <button type="button" onClick={() => onOpenChange(false)} className={smExchange.submitBuy}>
-            {tf(t("secondaryMarket.watchlist.showReleasesCount"), { count: String(resultCount) })}
-          </button>
+        <div className="flex w-full items-center gap-2">
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white/10 font-mono text-[12px] font-medium text-zinc-300 transition hover:bg-white/14 hover:text-white"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
           >
-            <RotateCcw className="size-3.5" aria-hidden />
+            <RotateCcw className="size-3.5 opacity-70" aria-hidden />
             {t("secondaryMarket.filters.resetFilters")}
           </button>
+          <SplitonCtaPill
+            type="button"
+            tone="onDark"
+            onClick={() => onOpenChange(false)}
+            className="h-11 min-w-0 flex-[1.2] justify-between gap-2 pl-4 pr-1.5 text-[13px] font-semibold"
+          >
+            {tf(t("secondaryMarket.watchlist.showReleasesCount"), { count: String(resultCount) })}
+          </SplitonCtaPill>
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 pb-2">
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.searchPlaceholder")}
           </p>
           <input
@@ -118,15 +126,15 @@ export function SecondaryMarketWatchlistFiltersSheet({
             value={filters.query}
             onChange={(e) => onChange({ query: e.target.value })}
             placeholder={t("secondaryMarket.watchlist.searchFieldPlaceholder")}
-            className={cn(smExchange.input, "mt-2")}
+            className={cn(smExchange.input, "mt-2 rounded-full")}
           />
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.segment")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {segmentOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -139,10 +147,10 @@ export function SecondaryMarketWatchlistFiltersSheet({
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.analytics.liquidity")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {liquidityOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -155,10 +163,10 @@ export function SecondaryMarketWatchlistFiltersSheet({
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.sort")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {sortOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -171,7 +179,7 @@ export function SecondaryMarketWatchlistFiltersSheet({
           <button
             type="button"
             onClick={() => onChange({ sortDir: filters.sortDir === "desc" ? "asc" : "desc" })}
-            className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#111111] px-3 py-1.5 font-mono text-[11px] text-zinc-400 ring-1 ring-white/8 transition hover:text-zinc-200"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-3.5 py-2 text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.1] hover:text-zinc-200"
           >
             {filters.sortDir === "desc" ? (
               <>
@@ -200,23 +208,4 @@ export function countActiveWatchlistFilters(filters: WatchlistFiltersState): num
   }
   if (filters.query.trim()) n += 1;
   return n;
-}
-
-const LIQUIDITY_SUMMARY_KEYS: Record<WatchlistFiltersState["liquidity"], string | null> = {
-  all: null,
-  high: "secondaryMarket.kpi.liquidity.high",
-  med: "secondaryMarket.kpi.liquidity.med",
-  low: "secondaryMarket.kpi.liquidity.low",
-};
-
-export function watchlistFiltersSummary(filters: WatchlistFiltersState, t: (key: string) => string): string {
-  const parts: string[] = [];
-  if (filters.segment === "liquid") parts.push(t("secondaryMarket.filters.liquid"));
-  if (filters.segment === "active") parts.push(t("secondaryMarket.filters.active24h"));
-  if (filters.liquidity !== "all") {
-    const key = LIQUIDITY_SUMMARY_KEYS[filters.liquidity];
-    if (key) parts.push(t(key));
-  }
-  if (filters.query.trim()) parts.push(t("secondaryMarket.filters.searchPlaceholder"));
-  return parts.length ? parts.join(" · ") : t("secondaryMarket.watchlist.allReleases");
 }

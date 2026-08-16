@@ -10,6 +10,7 @@ describe('EligibilityService', () => {
   const enforcement = { assertUserCanTransact: jest.fn() };
   const consents = {
     getMissingConsents: jest.fn(),
+    getMissingConsentsForSources: jest.fn(),
     getUnpublishedPolicyTypes: jest.fn(),
   };
   const countries = { checkCountry: jest.fn() };
@@ -38,6 +39,15 @@ describe('EligibilityService', () => {
       status: KycStatus.APPROVED,
     });
     consents.getMissingConsents.mockResolvedValue([]);
+    consents.getMissingConsentsForSources.mockImplementation(
+      async (_userId: string, sources: ConsentSource[]) => {
+        const map = new Map();
+        for (const source of sources) {
+          map.set(source, await consents.getMissingConsents(_userId, source));
+        }
+        return map;
+      },
+    );
     consents.getUnpublishedPolicyTypes.mockReturnValue([]);
     countries.checkCountry.mockResolvedValue({ allowed: true });
     enforcement.assertUserCanTransact.mockResolvedValue(undefined);

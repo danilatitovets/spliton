@@ -2,50 +2,61 @@
 
 ## Overview
 
-Spliton now supports automatic USDT/TRC20 deposit ingestion through `DepositIngestionModule`.
-Manual admin reconcile remains available as a fallback path.
+SPLITON ingests USDT TRC-20 deposits by polling **assigned user addresses**, not the global USDT contract.
 
-## Provider architecture
+## Provider
 
-- `DepositBlockchainProvider` interface
-- `TronDepositProvider` for live polling
-- `MockDepositProvider` for e2e/tests
-- Health endpoint: `GET /api/admin/v1/deposit-ingestion/health`
+- Interface: `DepositBlockchainProvider`
+- Live: `TronDepositProvider` → TronGrid
+  - list: `GET /v1/accounts/{address}/transactions/trc20?only_to=true`
+  - verify: `POST /wallet/gettransactioninfobyid` + `POST /wallet/gettransactionbyid`
+- Tests/dev: `MockDepositProvider` (forbidden in production when deposits are enabled)
 
-## Watcher state
+Health: `GET /api/admin/v1/deposit-ingestion/health`
 
-Stored in `deposit_watcher_states`:
+## Attribution
 
-- `network`
-- `asset_code`
-- `last_scanned_block`
-- `last_run_at`
-- `status`
-- `last_error`
+- `user_deposit_addresses.address` is unique
+- one ACTIVE address per wallet
+- no shared production address
+- unknown recipient → `unattributed_onchain_transfers`
 
-## Deposit lifecycle
+## Lifecycle
 
-- `DETECTED`
-- `PENDING_CONFIRMATIONS`
-- `CONFIRMED`
-- `CREDITED`
-- `IGNORED`
-- `FAILED`
+`PENDING_CONFIRMATIONS` → `CONFIRMED` → `CREDITED`
 
-## Safety rules
+Failed / wrong token / malformed amount: ignored (fail closed, no credit).
 
-- Duplicate tx hash is idempotent and credited only once.
-- Wrong address/token/network is ignored and logged in `deposit_ingestion_logs`.
-- Pending confirmations never credit balance.
-- Wallet credit always goes through `WalletLedgerService` (`DEPOSIT_SETTLE` postings).
-- Auto actions are written to `audit_logs` with `source=auto`.
+## Exactly-once credit
+
+- unique `deposits.blockchain_txid`
+- unique `(chain_network, blockchain_txid, token_contract)` where txid present
+- ledger idempotency `deposit-credit:{depositId}`
+- `SELECT … FOR UPDATE` on the deposit row
+- multi-replica: `crypto_worker_leases`
+
+## Confirmations
+
+`confirmations = currentConfirmedBlock - transactionBlock + 1`
+
+`TRON_CONFIRMATIONS_REQUIRED` (fallback `TRON_CONFIRMATIONS`, default 20).
+
+## Recovery
+
+Admin `POST /api/admin/v1/deposits/recover` with txHash only. Amount from chain.
 
 ## Env
 
 - `DEPOSIT_INGESTION_ENABLED`
+- `FEATURE_ENABLE_DEPOSITS`
 - `TRON_PROVIDER_MODE` (`mock|tron`)
 - `TRON_PROVIDER_URL`
 - `TRON_API_KEY`
-- `TRON_CONFIRMATIONS`
-- `TRON_POLL_INTERVAL`
+- `TRON_NETWORK` (`mainnet|nile|shasta`)
 - `TRON_USDT_CONTRACT`
+- `TRON_CONFIRMATIONS_REQUIRED`
+- `DEPOSIT_SCAN_INTERVAL_MS` / `TRON_POLL_INTERVAL`
+- `KILL_SWITCH_DISABLE_DEPOSIT_CREDIT`
+- `ALLOW_SHARED_DEPOSIT_ADDRESS` (dev/test only)
+
+See also: [REAL_MONEY_OPERATIONS.md](../operations/REAL_MONEY_OPERATIONS.md).

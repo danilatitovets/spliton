@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, RotateCcw } from "@/lib/lucide";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import { SecondaryMarketResponsiveSheet } from "@/components/dashboard/secondary-market/secondary-market-responsive-sheet";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
 import { tf } from "@/lib/i18n/financial-messages";
 import { statusLabel } from "@/lib/i18n/status-labels";
@@ -122,34 +123,37 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
     <SecondaryMarketResponsiveSheet
       open={open}
       onOpenChange={onOpenChange}
+      side="right"
+      headerVideo
       title={t("secondaryMarket.trade.filtersTitle")}
       description={tf(t("secondaryMarket.trade.shownOfTrades"), {
         shown: String(resultCount),
         total: String(totalCount),
       })}
       footer={
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className={smExchange.submitBuy}
-          >
-            {tf(t("secondaryMarket.trade.showTradesCount"), { count: String(resultCount) })}
-          </button>
+        <div className="flex w-full items-center gap-2">
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white/10 font-mono text-[12px] font-medium text-zinc-300 transition hover:bg-white/14 hover:text-white"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
           >
-            <RotateCcw className="size-3.5" aria-hidden />
+            <RotateCcw className="size-3.5 opacity-70" aria-hidden />
             {t("secondaryMarket.filters.resetFilters")}
           </button>
+          <SplitonCtaPill
+            type="button"
+            tone="onDark"
+            onClick={() => onOpenChange(false)}
+            className="h-11 min-w-0 flex-[1.2] justify-between gap-2 pl-4 pr-1.5 text-[13px] font-semibold"
+          >
+            {tf(t("secondaryMarket.trade.showTradesCount"), { count: String(resultCount) })}
+          </SplitonCtaPill>
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 pb-2">
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.searchPlaceholder")}
           </p>
           <input
@@ -157,15 +161,15 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
             value={filters.query}
             onChange={(e) => onChange({ query: e.target.value })}
             placeholder={t("secondaryMarket.filters.searchTrades")}
-            className={cn(smExchange.input, "mt-2")}
+            className={cn(smExchange.input, "mt-2 rounded-full")}
           />
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.period")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {periodOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -178,10 +182,10 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.side")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             <FilterChip
               active={filters.sideFilter === "all"}
               label={t("secondaryMarket.filters.all")}
@@ -201,10 +205,10 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.settlement")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {settlementOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -217,10 +221,10 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.genre")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {genreOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -233,10 +237,10 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
         </section>
 
         <section>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
             {t("secondaryMarket.filters.sort")}
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {sortOptions.map((opt) => (
               <FilterChip
                 key={opt.id}
@@ -249,7 +253,7 @@ export function SecondaryMarketTradeHistoryFiltersSheet({
           <button
             type="button"
             onClick={() => onChange({ sortDir: filters.sortDir === "desc" ? "asc" : "desc" })}
-            className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#111111] px-3 py-1.5 font-mono text-[11px] text-zinc-400 ring-1 ring-white/8 transition hover:text-zinc-200"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-3.5 py-2 text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.1] hover:text-zinc-200"
           >
             {filters.sortDir === "desc" ? (
               <>
@@ -278,32 +282,4 @@ export function countActiveTradeHistoryFilters(filters: TradeHistoryFiltersState
   if (filters.query.trim()) n += 1;
   if (filters.sortKey !== "time" || filters.sortDir !== "desc") n += 1;
   return n;
-}
-
-const PERIOD_SUMMARY_KEYS: Record<TradeHistoryPeriod, string> = {
-  "7d": "secondaryMarket.filters.period7dLong",
-  "30d": "secondaryMarket.filters.period30dLong",
-  "90d": "secondaryMarket.filters.period90dLong",
-  all: "secondaryMarket.filters.periodAllTime",
-};
-
-export function tradeHistoryFiltersSummary(
-  filters: TradeHistoryFiltersState,
-  t: (key: string) => string,
-  locale: Parameters<typeof statusLabel>[2],
-): string {
-  const parts: string[] = [];
-  if (filters.period !== "30d") {
-    parts.push(t(PERIOD_SUMMARY_KEYS[filters.period]));
-  }
-  if (filters.sideFilter === "buy") parts.push(t("secondaryMarket.side.buy"));
-  if (filters.sideFilter === "sell") parts.push(t("secondaryMarket.side.sell"));
-  if (filters.settlementFilter !== "all") {
-    parts.push(statusLabel("trade", filters.settlementFilter, locale));
-  }
-  if (filters.genreFilter !== "all") {
-    parts.push(GENRE_LABELS[filters.genreFilter]);
-  }
-  if (filters.query.trim()) parts.push(t("secondaryMarket.filters.searchPlaceholder"));
-  return parts.length ? parts.join(" · ") : t("secondaryMarket.trade.summaryDefault");
 }

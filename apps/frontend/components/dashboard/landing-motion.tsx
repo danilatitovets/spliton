@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 
+import { useClientMounted } from "@/hooks/use-client-mounted";
 import { cn } from "@/lib/utils";
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
@@ -15,16 +16,17 @@ type LandingRevealProps = {
 
 /** Fade-up when section enters viewport (landing). */
 export function LandingReveal({ children, className, delay = 0 }: LandingRevealProps) {
+  const mounted = useClientMounted();
   const reduceMotion = useReducedMotion();
-
-  if (reduceMotion) {
+  // Gate on mount: useReducedMotion is null on SSR and may flip on the client (React #418).
+  if (!mounted || reduceMotion) {
     return <div className={className}>{children}</div>;
   }
 
   return (
     <motion.div
       className={cn(className)}
-      initial={{ opacity: 0, y: 28 }}
+      initial={mounted ? { opacity: 0, y: 28 } : false}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15, margin: "0px 0px -6% 0px" }}
       transition={{ duration: 0.75, ease: easeOut, delay }}
@@ -40,16 +42,16 @@ export function LandingRevealFromLeft({
   className,
   delay = 0,
 }: LandingRevealProps) {
+  const mounted = useClientMounted();
   const reduceMotion = useReducedMotion();
-
-  if (reduceMotion) {
+  if (!mounted || reduceMotion) {
     return <div className={className}>{children}</div>;
   }
 
   return (
     <motion.div
       className={cn(className)}
-      initial={{ opacity: 0, x: -72 }}
+      initial={mounted ? { opacity: 0, x: -72 } : false}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, amount: 0.35, margin: "0px 0px -8% 0px" }}
       transition={{ duration: 0.9, ease: easeOut, delay }}

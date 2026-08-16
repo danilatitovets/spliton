@@ -19,7 +19,11 @@ function hideFooterForPath(pathname: string | null) {
   if (pathname.startsWith(`${ROUTES.analyticsReleases}/`)) return true;
   if (pathname === ROUTES.guideSelection) return true;
   if (pathname.startsWith(`${ROUTES.guideSelection}/`)) return true;
-  if (pathname.startsWith(`${ROUTES.dashboardSecondaryMarket}/book/`)) return true;
+  // Full-viewport exchange shells — footer must not stack under/over content
+  if (pathname === ROUTES.dashboardSecondaryMarket) return true;
+  if (pathname.startsWith(`${ROUTES.dashboardSecondaryMarket}/`)) return true;
+  if (pathname === ROUTES.catalogMarketOverview) return true;
+  if (pathname.startsWith(`${ROUTES.catalogMarketOverview}/`)) return true;
   return false;
 }
 

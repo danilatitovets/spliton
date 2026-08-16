@@ -2,9 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 import { ProfileLegalContent } from "@/components/dashboard/profile/profile-legal-content";
+import { ROUTES } from "@/constants/routes";
 
 const mockFetchLegalCenter = vi.fn();
 const mockAcceptLegalConsents = vi.fn();
+const mockPush = vi.fn();
+const navState = { search: new URLSearchParams() };
 
 vi.mock("@/services/legal.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/legal.service")>();
@@ -29,6 +32,11 @@ vi.mock("@/components/providers/i18n-provider", () => ({
     t,
     locale: "en",
   }),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => navState.search,
 }));
 
 const centerWithMissing = {
@@ -58,6 +66,9 @@ describe("ProfileLegalContent", () => {
   beforeEach(() => {
     mockFetchLegalCenter.mockReset();
     mockAcceptLegalConsents.mockReset();
+    mockPush.mockReset();
+    navState.search = new URLSearchParams();
+    sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -87,9 +98,15 @@ describe("ProfileLegalContent", () => {
     expect(screen.getByText("profile.legal.activeTitle")).toBeInTheDocument();
   });
 
-  it("accepts missing consent inline and reloads center", async () => {
+  it("opens missing consent document from the accept list", async () => {
     const missingCenter = {
       ...centerWithMissing,
+      activePolicies: [
+        {
+          ...centerWithMissing.activePolicies[0],
+          content: "Short terms body for tests.",
+        },
+      ],
       missingConsents: {
         primaryPurchase: [
           {
@@ -103,42 +120,17 @@ describe("ProfileLegalContent", () => {
         withdrawal: [],
       },
     };
-    const acceptedCenter = {
-      ...centerWithMissing,
-      acceptedConsents: [
-        {
-          policyType: "TERMS_OF_SERVICE",
-          policyVersion: "1.0",
-          acceptedAt: "2025-06-02T00:00:00.000Z",
-          source: "PROFILE",
-          policy: { title: "Terms", type: "TERMS_OF_SERVICE", version: "1.0" },
-        },
-      ],
-      missingConsents: {
-        primaryPurchase: [],
-        secondaryTrade: [],
-        withdrawal: [],
-      },
-    };
 
-    let accepted = false;
-    mockFetchLegalCenter.mockImplementation(async () => (accepted ? acceptedCenter : missingCenter));
-    mockAcceptLegalConsents.mockImplementation(async () => {
-      accepted = true;
-    });
+    mockFetchLegalCenter.mockResolvedValue(missingCenter);
 
     render(<ProfileLegalContent />);
     await waitFor(() => expect(screen.getByText("profile.legal.acceptSection.title")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("checkbox"));
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "profile.legal.acceptButton" })).toBeEnabled(),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "profile.legal.acceptButton" }));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "profile.legal.acceptButton" })).not.toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(mockAcceptLegalConsents).toHaveBeenCalledWith(["p1"], "PROFILE", expect.any(Function)),
-    );
-    await waitFor(() => expect(screen.getByText("profile.legal.allAccepted")).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole("button", { name: "profile.legal.readDocument" })[0]);
+    expect(mockPush).toHaveBeenCalledWith(ROUTES.dashboardProfileLegalDoc("p1", true));
+    expect(mockAcceptLegalConsents).not.toHaveBeenCalled();
   });
 });

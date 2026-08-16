@@ -125,6 +125,7 @@ export function ReleaseDetailPerformanceChart({
   releaseSlug,
   pageState,
   chartLoading = false,
+  layout = "default",
 }: {
   title: string;
   subtitle: string;
@@ -136,7 +137,10 @@ export function ReleaseDetailPerformanceChart({
   buyLabel?: string;
   pageState?: ReleaseDetailPageData["pageState"];
   chartLoading?: boolean;
+  /** `exchange` — denser Bybit-style panel inside the terminal (no giant price header). */
+  layout?: "default" | "exchange";
 }) {
+  const exchange = layout === "exchange";
   const { t, locale } = useI18n();
   const visibleMiniStats = filterMetricRows(miniStats);
   const canBuy = pageState?.canBuyPrimary ?? false;
@@ -210,7 +214,7 @@ export function ReleaseDetailPerformanceChart({
 
   if (chartLoading) {
     return (
-      <div className="rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5">
+      <div className={cn(exchange ? "bg-[#0b0e11] p-3" : "rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5")}>
         <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
         <div className="mt-4 h-[180px] animate-pulse rounded-xl bg-white/[0.04]" />
       </div>
@@ -219,7 +223,7 @@ export function ReleaseDetailPerformanceChart({
 
   if (!hasData) {
     return (
-      <div className="rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5">
+      <div className={cn(exchange ? "bg-[#0b0e11] p-3" : "rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5")}>
         <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500">
           {detailPageText(locale, "analytics.detail.chart.title")}
         </p>
@@ -424,17 +428,83 @@ export function ReleaseDetailPerformanceChart({
   const endPt = pointCoords[pointCoords.length - 1];
 
   return (
-    <div className="rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5">
+    <div
+      className={cn(
+        exchange
+          ? "bg-[#0b0e11] p-3 sm:p-3.5"
+          : "rounded-2xl bg-[#0d0d0d] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.35)] md:p-5",
+      )}
+    >
+      {exchange ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex shrink-0 flex-wrap gap-1">
+            {PERIOD_IDS.map((periodId) => (
+              <button
+                key={periodId}
+                type="button"
+                onClick={() => setPeriod(periodId)}
+                className={cn(
+                  "rounded px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors",
+                  period === periodId
+                    ? "bg-white/12 text-white"
+                    : "text-white/35 hover:bg-white/[0.04] hover:text-white/70",
+                )}
+              >
+                {chartPeriodButtonLabel(periodId, t)}
+              </button>
+            ))}
+          </div>
+          {chartInteractive ? (
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = svgWrapRef.current;
+                  const cx = el ? el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2 : 0;
+                  applyZoomRef.current(cx, false);
+                }}
+                className="rounded px-2 py-1 text-xs font-semibold text-white/45 transition hover:bg-white/[0.06] hover:text-white"
+                aria-label={t("analytics.detail.performanceChart.zoomIn")}
+              >
+                +
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = svgWrapRef.current;
+                  const cx = el ? el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2 : 0;
+                  applyZoomRef.current(cx, true);
+                }}
+                className="rounded px-2 py-1 text-xs font-semibold text-white/45 transition hover:bg-white/[0.06] hover:text-white"
+                aria-label={t("analytics.detail.performanceChart.zoomOut")}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                onClick={resetView}
+                className="rounded px-2 py-1 text-[11px] font-semibold text-white/35 transition hover:bg-white/[0.06] hover:text-white/70"
+              >
+                {t("analytics.detail.performanceChart.reset")}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500">
             {chartText("analytics.detail.chart.title")}
           </p>
-          <h3 className="mt-1 text-[42px] font-semibold leading-none tracking-tight text-white sm:text-[52px]">
-            {displayPrice.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} USDT
+          <h3 className="mt-1 text-[1.75rem] font-semibold leading-none tracking-tight text-white sm:text-[52px]">
+            <span className="break-words">
+              {displayPrice.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}{" "}
+              <span className="text-[0.55em] font-medium text-white/45 sm:text-[0.45em]">USDT</span>
+            </span>
           </h3>
           {!isSparseChart ? (
-            <p className={cn("mt-2 text-[30px] font-semibold leading-none", delta >= 0 ? "text-[#B7F500]" : "text-rose-300")}>
+            <p className={cn("mt-2 text-xl font-semibold leading-none sm:text-[30px]", delta >= 0 ? "text-[#B7F500]" : "text-rose-300")}>
               {delta >= 0 ? "+" : ""}
               {delta.toFixed(2)} ({deltaPct >= 0 ? "+" : ""}
               {deltaPct.toFixed(2)}%)
@@ -453,7 +523,7 @@ export function ReleaseDetailPerformanceChart({
                   const cx = el ? el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2 : 0;
                   applyZoomRef.current(cx, false);
                 }}
-                className="rounded-full px-2.5 py-1.5 text-xs font-semibold text-zinc-300 transition hover:bg-[#24272b] hover:text-white"
+                className="min-h-9 min-w-9 rounded-full px-2.5 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-[#24272b] hover:text-white"
                 aria-label={t("analytics.detail.performanceChart.zoomIn")}
               >
                 +
@@ -465,7 +535,7 @@ export function ReleaseDetailPerformanceChart({
                   const cx = el ? el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2 : 0;
                   applyZoomRef.current(cx, true);
                 }}
-                className="rounded-full px-2.5 py-1.5 text-xs font-semibold text-zinc-300 transition hover:bg-[#24272b] hover:text-white"
+                className="min-h-9 min-w-9 rounded-full px-2.5 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-[#24272b] hover:text-white"
                 aria-label={t("analytics.detail.performanceChart.zoomOut")}
               >
                 −
@@ -473,7 +543,7 @@ export function ReleaseDetailPerformanceChart({
               <button
                 type="button"
                 onClick={resetView}
-                className="rounded-full px-2.5 py-1.5 text-xs font-semibold text-zinc-400 transition hover:bg-[#24272b] hover:text-zinc-100"
+                className="min-h-9 rounded-full px-3 py-2 text-xs font-semibold text-zinc-400 transition hover:bg-[#24272b] hover:text-zinc-100"
               >
                 {t("analytics.detail.performanceChart.reset")}
               </button>
@@ -482,14 +552,14 @@ export function ReleaseDetailPerformanceChart({
           {canBuy ? (
             <Link
               href={resolvedBuyHref}
-              className="rounded-full bg-[#B7F500] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#c9ff52]"
+              className="hidden rounded-full bg-[#B7F500] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#c9ff52] sm:inline-flex"
             >
               {resolvedBuyLabel}
             </Link>
           ) : secondaryEnabled && secondaryHref ? (
             <Link
               href={secondaryHref}
-              className="rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+              className="hidden rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 sm:inline-flex"
             >
               {detailPageText(locale, "analytics.detail.cta.openSecondary")}
             </Link>
@@ -497,14 +567,14 @@ export function ReleaseDetailPerformanceChart({
         </div>
       </div>
 
-      <div className="mt-5 flex shrink-0 flex-wrap gap-1.5 lg:justify-center">
+      <div className="mt-4 flex shrink-0 flex-wrap gap-1.5 sm:mt-5 lg:justify-center">
         {PERIOD_IDS.map((periodId) => (
           <button
             key={periodId}
             type="button"
             onClick={() => setPeriod(periodId)}
             className={cn(
-              "rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors",
+              "min-h-9 rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-wide transition-colors",
               period === periodId
                 ? "bg-white/15 text-zinc-100"
                 : "bg-[#161616] text-zinc-500 hover:bg-[#1a1a1a] hover:text-zinc-300",
@@ -514,12 +584,15 @@ export function ReleaseDetailPerformanceChart({
           </button>
         ))}
       </div>
+        </>
+      )}
 
       <div
         ref={svgWrapRef}
         className={cn(
-          "mt-4 w-full select-none touch-none",
+          exchange ? "mt-2 w-full select-none" : "mt-4 w-full select-none",
           chartInteractive && (isPanning ? "cursor-grabbing" : "cursor-crosshair"),
+          chartInteractive ? "touch-pan-y sm:touch-none" : undefined,
         )}
         onPointerDown={chartInteractive ? onPointerDown : undefined}
         onPointerMove={chartInteractive ? onPointerMove : undefined}
@@ -533,12 +606,16 @@ export function ReleaseDetailPerformanceChart({
               }
             : undefined
         }
-        style={{ touchAction: "none" }}
       >
         <svg
           viewBox={`0 0 ${svgW} ${svgH}`}
           preserveAspectRatio="xMidYMid meet"
-          className="block h-[50vh] min-h-[320px] w-full max-h-[600px] sm:h-[48vh] sm:min-h-[380px]"
+          className={cn(
+            "block w-full",
+            exchange
+              ? "h-[36vh] min-h-[220px] max-h-[420px] sm:h-[44vh] sm:min-h-[320px] sm:max-h-[480px]"
+              : "h-[36vh] min-h-[220px] max-h-[420px] sm:h-[48vh] sm:min-h-[380px] sm:max-h-[600px]",
+          )}
           role="img"
           aria-label={t("analytics.detail.performanceChart.aria")}
         >
@@ -693,32 +770,36 @@ export function ReleaseDetailPerformanceChart({
         </svg>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <div className="rounded-xl bg-[#090909] px-2.5 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-zinc-600">Последнее (норм.)</div>
-          <div className="mt-1 text-sm font-semibold tabular-nums text-white">{last.toFixed(1)}</div>
-        </div>
-        <div className="rounded-xl bg-[#090909] px-2.5 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-zinc-600">Δ к шагу</div>
-          <div className={cn("mt-1 text-sm font-semibold tabular-nums", delta >= 0 ? "text-emerald-300" : "text-rose-300")}>
-            {delta >= 0 ? "+" : ""}
-            {delta.toFixed(2)}
+      {!exchange ? (
+        <>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="rounded-xl bg-[#090909] px-2.5 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-zinc-600">Последнее (норм.)</div>
+              <div className="mt-1 text-sm font-semibold tabular-nums text-white">{last.toFixed(1)}</div>
+            </div>
+            <div className="rounded-xl bg-[#090909] px-2.5 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-zinc-600">Δ к шагу</div>
+              <div className={cn("mt-1 text-sm font-semibold tabular-nums", delta >= 0 ? "text-emerald-300" : "text-rose-300")}>
+                {delta >= 0 ? "+" : ""}
+                {delta.toFixed(2)}
+              </div>
+            </div>
+            <div className="rounded-xl bg-[#090909] px-2.5 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-zinc-600">Среднее</div>
+              <div className="mt-1 text-sm font-semibold tabular-nums text-white">{avg.toFixed(1)}</div>
+            </div>
+            {visibleMiniStats.map((s) => (
+              <div key={s.label} className="rounded-xl bg-[#090909] px-2.5 py-2">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-600">{s.label}</div>
+                <div className="mt-1 text-sm font-semibold tabular-nums text-zinc-200">{s.value}</div>
+              </div>
+            ))}
           </div>
-        </div>
-        <div className="rounded-xl bg-[#090909] px-2.5 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-zinc-600">Среднее</div>
-          <div className="mt-1 text-sm font-semibold tabular-nums text-white">{avg.toFixed(1)}</div>
-        </div>
-        {visibleMiniStats.map((s) => (
-          <div key={s.label} className="rounded-xl bg-[#090909] px-2.5 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-zinc-600">{s.label}</div>
-            <div className="mt-1 text-sm font-semibold tabular-nums text-zinc-200">{s.value}</div>
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 text-[11px] text-zinc-600">
-        {detailPageText(locale, "analytics.detail.chart.sourceNote")}
-      </p>
+          <p className="mt-3 text-[11px] text-zinc-600">
+            {detailPageText(locale, "analytics.detail.chart.sourceNote")}
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }

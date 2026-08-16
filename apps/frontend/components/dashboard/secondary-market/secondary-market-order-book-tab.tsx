@@ -378,7 +378,7 @@ function OrderBookRow({
       <div
         className={cn(
           "absolute inset-y-0 opacity-[0.16]",
-          isAsk ? "right-0 rounded-l-sm bg-fuchsia-400" : "right-0 rounded-l-sm bg-[#B7F500]",
+          isAsk ? "right-0 rounded-l-sm bg-zinc-500" : "right-0 rounded-l-sm bg-white",
         )}
         style={{ width: `${pct}%` }}
       />
@@ -388,7 +388,7 @@ function OrderBookRow({
           compact ? "py-px" : "py-0.5 sm:py-1",
         )}
       >
-        <span className={cn(isAsk ? "text-fuchsia-200" : "text-[#c8f06a]")}>{formatUsdt(price)}</span>
+        <span className={cn(isAsk ? "text-zinc-400" : "text-[#c8f06a]")}>{formatUsdt(price)}</span>
         <span className="text-center text-zinc-400">{units}</span>
         <span className="text-right text-zinc-600">{formatUsdt(cumulativeUsdt)}</span>
       </div>
@@ -423,7 +423,7 @@ function TradesPanel({ trades, workspace, t }: { trades: BookTrade[]; workspace?
           className="grid grid-cols-[44px_72px_1fr_44px_88px] items-center gap-1 border-b border-white/4 px-2 py-1 font-mono text-[11px] tabular-nums sm:text-[12px]"
         >
           <span className="text-zinc-600">{tr.time}</span>
-          <span className={tr.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300"}>
+          <span className={tr.side === "buy" ? "text-white" : "text-zinc-400"}>
             {tr.side === "buy" ? t("secondaryMarket.side.buy") : t("secondaryMarket.side.sell")}
           </span>
           <span className="text-right text-zinc-200">{formatUsdt(tr.price)}</span>
@@ -722,8 +722,6 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
       setIsSubmitting(true);
       setOrderFeedback(null);
 
-      await new Promise((r) => setTimeout(r, 420));
-
       const id = `o-${marketId}-${Date.now()}`;
       const now = new Date();
       const iso = now.toISOString();
@@ -988,6 +986,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
           volume24hUsdt={m.volume24hUsdt}
           bid={bestBid}
           ask={bestAsk}
+          bookEmpty={asksAgg.length === 0 && bidsAgg.length === 0}
         />
       ) : null}
 
@@ -1037,7 +1036,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
       <p className="truncate font-mono text-[10px] text-zinc-600">
         {m.track} · {m.symbol}/USDT
         <span className="text-zinc-700"> · </span>
-        <span className={cn("tabular-nums", chPos ? "text-[#B7F500]" : "text-fuchsia-300")}>
+        <span className={cn("tabular-nums", chPos ? "text-white" : "text-zinc-400")}>
           {chPos ? "+" : ""}
           {tm(t, "secondaryMarket.orderBook.change24h", {
             pct: m.change24hPct.toLocaleString("ru-RU", { maximumFractionDigits: 2 }),
@@ -1057,7 +1056,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                 <span
                   className={cn(
                     "rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold",
-                    m.liquidity === "high" && "bg-[#B7F500]/12 text-[#d4f570]",
+                    m.liquidity === "high" && "bg-white/10 text-white",
                     m.liquidity === "med" && "bg-zinc-600/25 text-zinc-400",
                     m.liquidity === "low" && "bg-amber-500/15 text-amber-200/90",
                   )}
@@ -1089,7 +1088,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                 <span
                   className={cn(
                     "font-mono text-sm font-semibold tabular-nums",
-                    chPos ? "text-[#B7F500]" : "text-fuchsia-300",
+                    chPos ? "text-white" : "text-zinc-400",
                   )}
                 >
                   {chPos ? "+" : ""}
@@ -1140,15 +1139,21 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
             </div>
             <div className="min-w-0">
               <p className="truncate uppercase tracking-wider">Bid</p>
-              <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-[#B7F500]">{bestBid ? formatUsdt(bestBid) : "—"}</p>
+              <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-white">
+                {bestBid ? formatUsdt(bestBid) : t("secondaryMarket.orderBook.valueUnavailable")}
+              </p>
             </div>
             <div className="min-w-0">
               <p className="truncate uppercase tracking-wider">Ask</p>
-              <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-fuchsia-300">{bestAsk ? formatUsdt(bestAsk) : "—"}</p>
+              <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-zinc-400">
+                {bestAsk ? formatUsdt(bestAsk) : t("secondaryMarket.orderBook.valueUnavailable")}
+              </p>
             </div>
             <div className="min-w-0">
               <p className="truncate uppercase tracking-wider">{t("secondaryMarket.kpi.spread")}</p>
-              <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-zinc-300">{spread > 0 ? formatUsdt(spread) : "—"}</p>
+              <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-zinc-300">
+                {spread > 0 ? formatUsdt(spread) : t("secondaryMarket.orderBook.valueUnavailable")}
+              </p>
             </div>
             <div className="min-w-0">
               <p className="truncate uppercase tracking-wider">{t("secondaryMarket.orderBook.volume24h")}</p>
@@ -1192,8 +1197,8 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
           className={cn(
             "grid min-h-0 gap-2",
             isWorkspace
-              ? "grid-cols-2 lg:grid-cols-[minmax(300px,360px)_minmax(0,1fr)] lg:items-stretch lg:gap-3"
-              : "xl:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] xl:items-stretch",
+              ? "grid-cols-1 lg:grid-cols-[minmax(300px,360px)_minmax(0,1fr)] lg:items-stretch lg:gap-3"
+              : "grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] xl:items-stretch",
           )}
         >
         <div className={cn("min-w-0", isWorkspace ? "lg:order-1" : "xl:order-2")}>
@@ -1229,7 +1234,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
           className={cn(
             "flex min-w-0 flex-col overflow-hidden bg-black",
             isWorkspace
-              ? "min-h-[280px] max-h-[min(52vh,400px)] lg:min-h-[min(48vh,420px)] lg:max-h-[min(72vh,720px)] lg:order-2 lg:rounded-lg lg:ring-1 lg:ring-white/8"
+              ? "min-h-[320px] max-h-none lg:min-h-[min(48vh,420px)] lg:max-h-[min(72vh,720px)] lg:order-2 lg:rounded-lg lg:ring-1 lg:ring-white/8"
               : "min-h-[min(56vh,480px)] rounded-xl bg-[#0a0a0a] ring-1 ring-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] xl:order-1",
             bookDockHidden && "max-xl:hidden",
           )}
@@ -1276,16 +1281,16 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
 
           {workspaceTab === "book" ? (
             <>
-              <div className="flex items-center justify-between gap-2 border-b border-white/10 px-2 py-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.orderBook.priceStep")}</span>
-                <div className="flex rounded-md bg-black/50 p-0.5 font-mono text-[10px]">
+              <div className="flex items-center justify-between gap-2 border-b border-white/10 px-2.5 py-2">
+                <span className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.priceStep")}</span>
+                <div className="flex rounded-full bg-white/[0.06] p-0.5 font-mono text-[11px]">
                   {TICK_OPTIONS.map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setTick(t)}
                       className={cn(
-                        "rounded px-2 py-1 font-medium",
+                        "rounded-full px-2.5 py-1 font-medium transition-colors",
                         tick === t ? "bg-white text-black" : "text-zinc-500 hover:text-zinc-300",
                       )}
                     >
@@ -1295,7 +1300,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                 </div>
               </div>
 
-              <div className="grid grid-cols-[1fr_56px_80px] border-b border-white/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-zinc-600 sm:text-[10px]">
+              <div className="grid grid-cols-[1fr_56px_80px] border-b border-white/10 px-2.5 py-1.5 text-[12px] text-zinc-400 sm:text-[13px]">
                 <span>{t("secondaryMarket.orderBook.priceHeader")}</span>
                 <span className="text-center">{t("secondaryMarket.orderBook.unitsHeader")}</span>
                 <span className="text-right">{t("secondaryMarket.orderBook.depthHeader")}</span>
@@ -1304,58 +1309,79 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
               {isWorkspace ? (
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
                   <div className="grid min-h-0 flex-[1.08] grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-                    <p className="shrink-0 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-fuchsia-400/90">
+                    <p className="shrink-0 px-2.5 py-1 text-[12px] font-medium text-zinc-400">
                       {t("secondaryMarket.orderBook.sellSide")}
                     </p>
                     <div className="flex min-h-0 flex-col justify-start overflow-y-auto">
-                      {askRows.map((row) => (
-                        <OrderBookRow
-                          key={`ask-${row.price}-${tick}`}
-                          price={row.price}
-                          units={row.units}
-                          cumulativeUsdt={row.cum}
-                          depthMax={depthMax}
-                          variant="ask"
-                          compact
-                          onPick={() => pickLevel(row.price, "ask")}
-                        />
-                      ))}
+                      {askRows.length === 0 ? (
+                        <p className="flex flex-1 items-center justify-center px-3 py-6 text-center text-[12px] text-zinc-500">
+                          {t("secondaryMarket.orderBook.emptyAsks")}
+                        </p>
+                      ) : (
+                        askRows.map((row) => (
+                          <OrderBookRow
+                            key={`ask-${row.price}-${tick}`}
+                            price={row.price}
+                            units={row.units}
+                            cumulativeUsdt={row.cum}
+                            depthMax={depthMax}
+                            variant="ask"
+                            compact
+                            onPick={() => pickLevel(row.price, "ask")}
+                          />
+                        ))
+                      )}
                     </div>
                   </div>
 
-                  <div className="shrink-0 border-y border-white/8 bg-black/55 px-2 py-2 text-center">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-zinc-600">{t("secondaryMarket.orderBook.mid")}</p>
-                    <p className="font-mono text-lg font-semibold tabular-nums tracking-tight text-white sm:text-xl">
-                      {mid > 0 ? formatUsdt(mid) : "—"}
-                    </p>
-                    <p className="mt-0.5 font-mono text-[9px] tabular-nums text-zinc-600">
-                      {tm(t, "secondaryMarket.orderBook.spreadLabel", { spread: spread > 0 ? formatUsdt(spread) : "—" })}
-                    </p>
+                  <div className="shrink-0 border-y border-white/8 bg-black/55 px-2.5 py-2.5 text-center">
+                    {mid > 0 ? (
+                      <>
+                        <p className="font-mono text-[20px] font-semibold tabular-nums tracking-tight text-white sm:text-[22px]">
+                          {formatUsdt(mid)}
+                        </p>
+                        <p className="mt-1 text-[12px] tabular-nums text-zinc-500">
+                          {tm(t, "secondaryMarket.orderBook.spreadLabel", {
+                            spread: spread > 0 ? formatUsdt(spread) : t("secondaryMarket.orderBook.valueUnavailable"),
+                          })}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="py-1 text-[13px] font-medium text-zinc-500">
+                        {t("secondaryMarket.orderBook.noQuotesYet")}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid min-h-0 flex-[1.08] grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-                    <p className="shrink-0 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#B7F500]/90">
+                    <p className="shrink-0 px-2.5 py-1 text-[12px] font-medium text-zinc-200">
                       {t("secondaryMarket.orderBook.buySide")}
                     </p>
                     <div className="flex min-h-0 flex-col justify-start overflow-y-auto">
-                      {bidRows.map((row) => (
-                        <OrderBookRow
-                          key={`bid-${row.price}-${tick}`}
-                          price={row.price}
-                          units={row.units}
-                          cumulativeUsdt={row.cum}
-                          depthMax={depthMax}
-                          variant="bid"
-                          compact
-                          onPick={() => pickLevel(row.price, "bid")}
-                        />
-                      ))}
+                      {bidRows.length === 0 ? (
+                        <p className="flex flex-1 items-center justify-center px-3 py-6 text-center text-[12px] text-zinc-500">
+                          {t("secondaryMarket.orderBook.emptyBids")}
+                        </p>
+                      ) : (
+                        bidRows.map((row) => (
+                          <OrderBookRow
+                            key={`bid-${row.price}-${tick}`}
+                            price={row.price}
+                            units={row.units}
+                            cumulativeUsdt={row.cum}
+                            depthMax={depthMax}
+                            variant="bid"
+                            compact
+                            onPick={() => pickLevel(row.price, "bid")}
+                          />
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <p className="px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-fuchsia-400/90">{t("secondaryMarket.orderBook.sellSide")}</p>
+                  <p className="px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-zinc-400">{t("secondaryMarket.orderBook.sellSide")}</p>
                   {askRows.map((row) => (
                     <OrderBookRow
                       key={`ask-${row.price}-${tick}`}
@@ -1369,14 +1395,24 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                   ))}
 
                   <div className="border-y border-white/10 bg-black/50 px-2 py-3 text-center">
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">Mid</p>
-                    <p className="font-mono text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                      {mid > 0 ? formatUsdt(mid) : "—"}
-                    </p>
-                    <p className="mt-0.5 font-mono text-[10px] text-zinc-600">{tm(t, "secondaryMarket.orderBook.spreadLabel", { spread: spread > 0 ? formatUsdt(spread) : "—" })}</p>
+                    {mid > 0 ? (
+                      <>
+                        <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.orderBook.mid")}</p>
+                        <p className="font-mono text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                          {formatUsdt(mid)}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[10px] text-zinc-600">
+                          {tm(t, "secondaryMarket.orderBook.spreadLabel", {
+                            spread: spread > 0 ? formatUsdt(spread) : t("secondaryMarket.orderBook.valueUnavailable"),
+                          })}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="py-1 text-[13px] font-medium text-zinc-500">{t("secondaryMarket.orderBook.noQuotesYet")}</p>
+                    )}
                   </div>
 
-                  <p className="px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#B7F500]/90">{t("secondaryMarket.orderBook.buySide")}</p>
+                  <p className="px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/90">{t("secondaryMarket.orderBook.buySide")}</p>
                   {bidRows.map((row) => (
                     <OrderBookRow
                       key={`bid-${row.price}-${tick}`}
@@ -1393,7 +1429,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
             </>
           ) : (
             <div className={cn(isWorkspace && "flex min-h-0 flex-1 flex-col")}>
-              <div className="grid grid-cols-[44px_72px_1fr_44px_88px] border-b border-white/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-zinc-600 sm:text-[10px]">
+              <div className="grid grid-cols-[44px_72px_1fr_44px_88px] border-b border-white/10 px-2.5 py-1.5 text-[12px] text-zinc-400 sm:text-[13px]">
                 <span>{t("secondaryMarket.orderBook.tradesTime")}</span>
                 <span>{t("secondaryMarket.orderBook.tradesSide")}</span>
                 <span className="text-right">{t("secondaryMarket.orderBook.tradesPrice")}</span>
@@ -1405,14 +1441,14 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
           )}
 
           {isWorkspace && workspaceTab === "book" ? (
-            <div className="shrink-0 border-t border-white/6 px-2 py-2">
+            <div className="shrink-0 border-t border-white/6 px-2.5 py-2.5">
               <div className="flex h-1 overflow-hidden rounded-full bg-[#161616]">
-                <div className="bg-[#B7F500]" style={{ width: `${buyPct}%` }} />
-                <div className="bg-fuchsia-500" style={{ width: `${100 - buyPct}%` }} />
+                <div className="bg-white" style={{ width: `${buyPct}%` }} />
+                <div className="bg-zinc-700" style={{ width: `${100 - buyPct}%` }} />
               </div>
-              <div className="mt-1 flex justify-between font-mono text-[10px] tabular-nums text-zinc-500">
-                <span className="text-[#B7F500]">B {buyPct.toFixed(1)}%</span>
-                <span className="text-fuchsia-300">S {(100 - buyPct).toFixed(1)}%</span>
+              <div className="mt-1.5 flex justify-between text-[12px] tabular-nums text-zinc-500">
+                <span className="font-medium text-white">B {buyPct.toFixed(1)}%</span>
+                <span className="font-medium text-zinc-400">S {(100 - buyPct).toFixed(1)}%</span>
               </div>
             </div>
           ) : null}
@@ -1484,14 +1520,14 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                 {myOrdersLoading ? (
                   <p className="py-8 text-center font-mono text-[12px] text-zinc-500">{t("secondaryMarket.errors.loadingOrders")}</p>
                 ) : marketOrdersAll.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <p className="text-[16px] font-semibold text-zinc-300">{t("secondaryMarket.orderBook.noRecords")}</p>
-                    <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-zinc-600">
+                  <div className="py-10 text-center">
+                    <p className="text-[15px] font-semibold text-zinc-200">{t("secondaryMarket.orderBook.noOrdersYet")}</p>
+                    <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-zinc-500">
                       {t("secondaryMarket.orderBook.placeOrderHint")}
                     </p>
                   </div>
                 ) : filteredMarketOrders.length === 0 ? (
-                  <p className="py-8 text-center font-mono text-[12px] text-zinc-500">{t("secondaryMarket.orderBook.noOrdersInFilterShort")}</p>
+                  <p className="py-8 text-center text-[13px] text-zinc-500">{t("secondaryMarket.orderBook.noOrdersInFilterShort")}</p>
                 ) : (
                   <>
                     <div className="md:hidden">
@@ -1536,7 +1572,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                                 : o.status === "active" || o.status === "partial";
                             return (
                               <tr key={o.id} className="border-b border-white/5">
-                                <td className={cn("py-2", o.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300")}>
+                                <td className={cn("py-2", o.side === "buy" ? "text-white" : "text-zinc-400")}>
                                   {o.side === "buy" ? t("secondaryMarket.side.buy") : t("secondaryMarket.side.sell")}
                                 </td>
                                 <td className="py-2 text-zinc-500">{orderTypeLabel(o.mode, t)}</td>
@@ -1548,13 +1584,11 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                                     <button
                                       type="button"
                                       onClick={() => void cancelOrder(o.id)}
-                                      className="rounded-md border border-white/10 px-2 py-1 text-[10px] hover:border-fuchsia-400/40"
+                                      className="rounded-md border border-white/10 px-2 py-1 text-[10px] hover:border-white/25"
                                     >
                                       {t("secondaryMarket.actions.cancel")}
                                     </button>
-                                  ) : (
-                                    "—"
-                                  )}
+                                  ) : null}
                                 </td>
                               </tr>
                             );
@@ -1569,44 +1603,45 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
               <div className="py-3 font-mono text-[12px]">
                 {myPosition.unitsTotal <= 0 && myPosition.unitsAvailable <= 0 ? (
                   <div className="py-10 text-center">
-                    <p className="text-[15px] font-semibold text-zinc-300">{t("secondaryMarket.orderBook.noPosition")}</p>
-                    <p className="mt-2 text-[13px] text-zinc-600">{t("secondaryMarket.orderBook.noPositionHint")}</p>
+                    <p className="text-[15px] font-semibold text-zinc-200">{t("secondaryMarket.orderBook.noPosition")}</p>
                   </div>
                 ) : (
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5 sm:grid-cols-3">
                     <div>
-                      <dt className="text-zinc-600">{t("secondaryMarket.orderBook.totalUnt")}</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-white">{myPosition.unitsTotal}</dd>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.totalUnt")}</dt>
+                      <dd className="mt-1 text-[14px] font-semibold tabular-nums text-white">{myPosition.unitsTotal}</dd>
                     </div>
                     <div>
-                      <dt className="text-zinc-600">{t("secondaryMarket.orderBook.freeUnits")}</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-[#B7F500]">{myPosition.unitsAvailable}</dd>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.freeUnits")}</dt>
+                      <dd className="mt-1 text-[14px] font-semibold tabular-nums text-white">{myPosition.unitsAvailable}</dd>
                     </div>
                     <div>
-                      <dt className="text-zinc-600">{t("secondaryMarket.orderBook.lockedUnits")}</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-amber-200">{lockedUnitsForPanel}</dd>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.lockedUnits")}</dt>
+                      <dd className="mt-1 text-[14px] font-semibold tabular-nums text-zinc-200">{lockedUnitsForPanel}</dd>
                     </div>
                     <div>
-                      <dt className="text-zinc-600">{t("secondaryMarket.orderBook.avgEntry")}</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-zinc-200">{formatUsdt(myPosition.avgEntryPrice)}</dd>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.avgEntry")}</dt>
+                      <dd className="mt-1 text-[14px] font-semibold tabular-nums text-zinc-200">{formatUsdt(myPosition.avgEntryPrice)}</dd>
                     </div>
                     <div>
-                      <dt className="text-zinc-600">{t("secondaryMarket.orderBook.mark")}</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-white">{formatUsdt(last)}</dd>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.mark")}</dt>
+                      <dd className="mt-1 text-[14px] font-semibold tabular-nums text-white">{formatUsdt(last)}</dd>
                     </div>
                     <div>
-                      <dt className="text-zinc-600">{t("secondaryMarket.forms.availableUsdt")}</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-zinc-200">{formatUsdt(myPosition.usdtBalance)}</dd>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.forms.availableUsdt")}</dt>
+                      <dd className="mt-1 text-[14px] font-semibold tabular-nums text-zinc-200">{formatUsdt(myPosition.usdtBalance)}</dd>
                     </div>
                     <div className="col-span-2 sm:col-span-3">
-                      <dt className="text-zinc-600">{t("secondaryMarket.orderBook.unrealizedPnl")}</dt>
+                      <dt className="text-[12px] font-medium text-zinc-400">{t("secondaryMarket.orderBook.unrealizedPnl")}</dt>
                       <dd
                         className={cn(
-                          "mt-0.5 font-semibold tabular-nums",
-                          unrealizedPnL > 0 ? "text-[#B7F500]" : unrealizedPnL < 0 ? "text-fuchsia-300" : "text-zinc-400",
+                          "mt-1 text-[14px] font-semibold tabular-nums",
+                          unrealizedPnL > 0 ? "text-white" : unrealizedPnL < 0 ? "text-zinc-400" : "text-zinc-400",
                         )}
                       >
-                        {unrealizedPnL === 0 ? "—" : `${unrealizedPnL > 0 ? "+" : ""}${formatUsdt(unrealizedPnL)} USDT`}
+                        {unrealizedPnL === 0
+                          ? `0 USDT`
+                          : `${unrealizedPnL > 0 ? "+" : ""}${formatUsdt(unrealizedPnL)} USDT`}
                       </dd>
                     </div>
                   </dl>
@@ -1698,7 +1733,7 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                           <td
                             className={cn(
                               "whitespace-nowrap py-1.5 pl-0 pr-2 align-middle",
-                              o.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300",
+                              o.side === "buy" ? "text-white" : "text-zinc-400",
                             )}
                           >
                             {o.side === "buy" ? t("secondaryMarket.side.buy") : t("secondaryMarket.side.sell")}
@@ -1723,13 +1758,11 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                               <button
                                 type="button"
                                 onClick={() => cancelOrder(o.id)}
-                                className="inline-flex h-7 items-center justify-center rounded-md border border-white/12 px-2 font-mono text-[10px] text-zinc-200 transition hover:border-fuchsia-400/35 hover:text-fuchsia-100"
+                                className="inline-flex h-7 items-center justify-center rounded-md border border-white/12 px-2 font-mono text-[10px] text-zinc-200 transition hover:border-white/25 hover:text-white"
                               >
                                 {t("secondaryMarket.actions.cancel")}
                               </button>
-                            ) : (
-                              <span className="inline-block w-full text-right text-zinc-600">—</span>
-                            )}
+                            ) : null}
                           </td>
                         </tr>
                       );
@@ -1780,10 +1813,12 @@ export function SecondaryMarketOrderBookTab(props?: SecondaryMarketOrderBookTabP
                   <dd
                     className={cn(
                       "tabular-nums font-semibold",
-                      unrealizedPnL > 0 ? "text-[#B7F500]" : unrealizedPnL < 0 ? "text-fuchsia-300" : "text-zinc-400",
+                      unrealizedPnL > 0 ? "text-white" : unrealizedPnL < 0 ? "text-zinc-400" : "text-zinc-400",
                     )}
                   >
-                    {unrealizedPnL === 0 ? "—" : `${unrealizedPnL > 0 ? "+" : ""}${formatUsdt(unrealizedPnL)} USDT`}
+                    {unrealizedPnL === 0
+                      ? `0 USDT`
+                      : `${unrealizedPnL > 0 ? "+" : ""}${formatUsdt(unrealizedPnL)} USDT`}
                   </dd>
                 </div>
               </dl>

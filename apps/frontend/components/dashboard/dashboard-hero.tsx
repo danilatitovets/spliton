@@ -11,6 +11,7 @@ import { landingPageMax } from "@/components/dashboard/dashboard-landing-tokens"
 import { UsdtMark } from "@/components/shared/asset-marks";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ROUTES } from "@/constants/routes";
+import { useClientMounted } from "@/hooks/use-client-mounted";
 import { cn } from "@/lib/utils";
 
 function HeroHeadlineBadge({
@@ -35,8 +36,11 @@ function HeroHeadlineBadge({
 
 export function DashboardHero({ className }: { className?: string }) {
   const { t } = useI18n();
+  const mounted = useClientMounted();
   const reduceMotion = useReducedMotion();
   const easeOut = [0.22, 1, 0.36, 1] as const;
+  const animateIn = mounted && !reduceMotion;
+  const HeroMotion = animateIn ? motion.div : "div";
 
   return (
     <section
@@ -47,11 +51,15 @@ export function DashboardHero({ className }: { className?: string }) {
       )}
     >
       <div className={cn(landingPageMax, "sm:px-6 lg:px-8")}>
-        <motion.div
+        <HeroMotion
           className="mx-auto flex max-w-[980px] flex-col items-center text-center"
-          initial={reduceMotion ? false : { opacity: 0, y: 32 }}
-          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, ease: easeOut }}
+          {...(animateIn
+            ? {
+                initial: { opacity: 0, y: 32 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.85, ease: easeOut },
+              }
+            : {})}
         >
           <Link
             href={ROUTES.dashboardSecondaryMarket}
@@ -112,7 +120,7 @@ export function DashboardHero({ className }: { className?: string }) {
               {t("dashboard.hero.ctaSecondary")}
             </Link>
           </div>
-        </motion.div>
+        </HeroMotion>
 
         <motion.div
           className="relative mt-14 w-full sm:mt-16 lg:mt-20"

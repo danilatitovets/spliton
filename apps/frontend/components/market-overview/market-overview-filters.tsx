@@ -75,7 +75,7 @@ export function MarketOverviewFilters({
                 isOpen && "bg-white/9",
               )}
             >
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              <span className="font-mono text-[10px] font-semibold font-medium tracking-wide text-zinc-500">
                 {t(`marketOverview.filter.${group.id}`)}
               </span>
               <span className="inline-flex items-center justify-between gap-2">

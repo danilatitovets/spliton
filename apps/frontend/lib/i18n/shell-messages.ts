@@ -96,6 +96,9 @@ const RU: Record<string, string> = {
   "navigation.header.payoutHistory": "История выплат",
   "navigation.header.balanceUnavailable": "Баланс недоступен",
   "navigation.header.signInPrompt": "Войдите в аккаунт",
+  "navigation.header.demoToggleAria": "Режим данных кабинета",
+  "navigation.header.demoOn": "Демо",
+  "navigation.header.demoOff": "Live",
 
   // Navigation search
   "navigation.search.title": "Поиск",
@@ -369,6 +372,9 @@ const EN: Record<string, string> = {
   "navigation.header.payoutHistory": "Payout history",
   "navigation.header.balanceUnavailable": "Balance unavailable",
   "navigation.header.signInPrompt": "Sign in to your account",
+  "navigation.header.demoToggleAria": "Cabinet data mode",
+  "navigation.header.demoOn": "Demo",
+  "navigation.header.demoOff": "Live",
 
   "navigation.search.title": "Search",
   "navigation.search.subtitle": "Spliton sections and pages",
@@ -631,6 +637,9 @@ const ES: Record<string, string> = {
   "navigation.header.payoutHistory": "Historial de pagos",
   "navigation.header.balanceUnavailable": "Saldo no disponible",
   "navigation.header.signInPrompt": "Inicia sesión en tu cuenta",
+  "navigation.header.demoToggleAria": "Modo de datos del gabinete",
+  "navigation.header.demoOn": "Demo",
+  "navigation.header.demoOff": "Live",
 
   "navigation.search.title": "Búsqueda",
   "navigation.search.subtitle": "Secciones y páginas de Spliton",
@@ -893,6 +902,9 @@ const PT: Record<string, string> = {
   "navigation.header.payoutHistory": "Histórico de pagamentos",
   "navigation.header.balanceUnavailable": "Saldo indisponível",
   "navigation.header.signInPrompt": "Entre na sua conta",
+  "navigation.header.demoToggleAria": "Modo de dados do gabinete",
+  "navigation.header.demoOn": "Demo",
+  "navigation.header.demoOff": "Live",
 
   "navigation.search.title": "Pesquisa",
   "navigation.search.subtitle": "Seções e páginas Spliton",

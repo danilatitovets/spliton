@@ -8,7 +8,6 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import {
   catalogBuyUnitsPath,
   catalogMarketOverviewReleaseAnalyticsPath,
-  ROUTES,
 } from "@/constants/routes";
 import { formatUsdtCompact, formatUnitsCompact } from "@/lib/market-overview/format";
 import { statusLabel } from "@/lib/i18n/status-labels";
@@ -16,7 +15,7 @@ import type { AppLocale } from "@/lib/i18n/types";
 import { cn } from "@/lib/utils";
 import type { MarketOverviewRow, MarketTableSortKey } from "@/types/market-overview";
 
-import { MarketMiniSparkline } from "./ui/market-mini-sparkline";
+import { MarketMiniSparkline, MARKET_SPARK_COLORS } from "./ui/market-mini-sparkline";
 
 function formatSecondaryDemandLabel(
   label: MarketOverviewRow["secondaryLabel"],
@@ -55,14 +54,45 @@ function CoverThumb({ symbol }: { symbol: string }) {
   );
 }
 
-function MarketOverviewMobileRow({ row, live }: { row: MarketOverviewRow; live?: boolean }) {
+function sparkChangePct(sparkline: number[]): number | null {
+  if (sparkline.length < 2) return null;
+  const first = sparkline[0]!;
+  const last = sparkline[sparkline.length - 1]!;
+  if (!Number.isFinite(first) || first === 0) return null;
+  return ((last - first) / Math.abs(first)) * 100;
+}
+
+function formatSignedPct(value: number, locale: AppLocale): string {
+  const nf = new Intl.NumberFormat(locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale === "es" ? "es-ES" : "pt-PT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const abs = nf.format(Math.abs(value));
+  if (value > 0) return `+${abs}%`;
+  if (value < 0) return `-${abs}%`;
+  return `${abs}%`;
+}
+
+function MarketOverviewMobileRow({
+  row,
+  live,
+  locale,
+}: {
+  row: MarketOverviewRow;
+  live?: boolean;
+  locale: AppLocale;
+}) {
   const router = useRouter();
-  const pos = row.trend === "up";
-  const neg = row.trend === "down";
+  const change = sparkChangePct(row.sparkline);
+  const pos = change != null ? change > 0 : row.trend === "up";
+  const neg = change != null ? change < 0 : row.trend === "down";
   const price =
     live && row.lastPriceUsdt != null && row.lastPriceUsdt > 0
       ? `$${formatUsdtCompact(row.lastPriceUsdt)}`
-      : `${row.yieldPct.toFixed(1).replace(".", ",")}%`;
+      : row.primaryUnitPriceUsdt > 0
+        ? `$${formatUsdtCompact(row.primaryUnitPriceUsdt)}`
+        : `${row.yieldPct.toFixed(1).replace(".", ",")}%`;
+  const changeLabel = change != null ? formatSignedPct(change, locale) : "—";
 
   return (
     <button
@@ -74,21 +104,19 @@ function MarketOverviewMobileRow({ row, live }: { row: MarketOverviewRow; live?:
       <CoverThumb symbol={row.symbol} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[15px] font-semibold text-white">{row.symbol}</p>
-        <p className="truncate text-[12px] text-zinc-500">
-          {row.title} · {row.artist}
-        </p>
+        <p className="truncate text-[12px] text-zinc-500">{row.title}</p>
       </div>
       <div className="shrink-0 text-right">
         <p className="font-mono text-[14px] font-semibold tabular-nums text-white">{price}</p>
         <p
           className={cn(
-            "font-mono text-[11px] tabular-nums",
+            "mt-0.5 font-mono text-[12px] tabular-nums",
             pos && "text-[#B7F500]",
-            neg && "text-fuchsia-300",
+            neg && "text-fuchsia-400",
             !pos && !neg && "text-zinc-500",
           )}
         >
-          {pos ? "▲" : neg ? "▼" : "—"} {row.activityScore}
+          {changeLabel}
         </p>
       </div>
     </button>
@@ -113,14 +141,32 @@ export function MarketOverviewTable({
 
   return (
     <div>
-      <div className="flex items-center justify-between py-2.5 text-[11px] text-zinc-500 md:hidden">
-        <span>{t("marketOverview.table.mobile.name")}</span>
-        <span>{t("marketOverview.table.mobile.priceChange")}</span>
+      <div className="flex items-center justify-between border-b border-white/[0.04] py-2.5 text-[11px] text-zinc-500 md:hidden">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1"
+          onClick={() => onSort("activity")}
+        >
+          {t("marketOverview.table.mobile.name")}
+          <span className="text-zinc-600" aria-hidden>
+            {sort === "activity" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1"
+          onClick={() => onSort("yield")}
+        >
+          {t("marketOverview.table.mobile.priceChange")}
+          <span className="text-zinc-600" aria-hidden>
+            {sort === "yield" ? (sortDir === "asc" ? "↑" : "↓") : "↕"}
+          </span>
+        </button>
       </div>
 
       <div className="md:hidden">
         {rows.map((r) => (
-          <MarketOverviewMobileRow key={r.id} row={r} live={live} />
+          <MarketOverviewMobileRow key={r.id} row={r} live={live} locale={locale} />
         ))}
         {rows.length === 0 ? (
           <div className="py-10 text-center text-[13px] text-zinc-500">{t("marketOverview.table.empty")}</div>
@@ -128,14 +174,14 @@ export function MarketOverviewTable({
       </div>
 
       <div className="mt-5 hidden overflow-x-auto rounded-xl bg-[#111111] md:block">
-        <table className="w-full min-w-[1180px] border-collapse text-left text-[13px]">
+        <table className="w-full min-w-[980px] border-collapse text-left text-[13px]">
           <thead>
             <tr className="text-zinc-500">
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.release")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.release")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.artistSegment")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.artistSegment")}</span>
               </th>
               <th className="px-3 py-2.5">
                 <SortHeader
@@ -173,32 +219,36 @@ export function MarketOverviewTable({
                 />
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.vol24h")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.volPeriod")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.last")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.last")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.listings")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.listings")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.spread")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.spread")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.liquidity")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.liquidity")}</span>
               </th>
               <th className="px-3 py-2.5 font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.trend")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.trend")}</span>
               </th>
               <th className="px-3 py-2.5 text-right font-normal">
-                <span className="text-[11px] uppercase tracking-wide">{t("marketOverview.table.action")}</span>
+                <span className="text-[11px] tracking-wide">{t("marketOverview.table.action")}</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => {
+            {rows.map((r, rowIdx) => {
               const deltaClass =
                 r.trend === "up" ? "text-[#B7F500]" : r.trend === "down" ? "text-fuchsia-400" : "text-zinc-500";
+              const sparkColor =
+                r.trend === "down"
+                  ? "#fb7185"
+                  : MARKET_SPARK_COLORS[rowIdx % MARKET_SPARK_COLORS.length]!;
               return (
                 <tr
                   key={r.id}
@@ -223,7 +273,7 @@ export function MarketOverviewTable({
                           <span className="truncate text-[12px] text-zinc-500">{r.title}</span>
                         </div>
                         <div className="mt-1">
-                          <span className="rounded-md bg-[#0a0a0a] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                          <span className="rounded-md bg-[#0a0a0a] px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-zinc-500">
                             {statusLabel("release", r.status, locale)}
                           </span>
                         </div>
@@ -285,7 +335,13 @@ export function MarketOverviewTable({
                   </td>
                   <td className="px-3 py-2 align-middle">
                     <div className="flex items-center gap-2">
-                      <MarketMiniSparkline values={r.sparkline} trend={r.trend} width={96} height={32} />
+                      <MarketMiniSparkline
+                        values={r.sparkline}
+                        trend={r.trend}
+                        width={96}
+                        height={32}
+                        color={sparkColor}
+                      />
                       <span className={cn("font-mono text-[11px] tabular-nums", deltaClass)}>
                         {r.trend === "up" ? "▲" : r.trend === "down" ? "▼" : "■"}
                       </span>

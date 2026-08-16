@@ -162,6 +162,8 @@ const RU: Record<string, string> = {
   "notFound.catalogRelease.description":
     "Данные для этого id не найдены. Вернитесь к обзору рынка и выберите строку из таблицы.",
   "notFound.catalogRelease.cta": "Обзор рынка",
+  "notFound.glass.eyebrow": "Spliton",
+  "notFound.empty.eyebrow": "Spliton",
   "notFound.secondaryListing.eyebrow": "Вторичный рынок",
   "notFound.secondaryListing.title": "Лот не найден",
   "notFound.secondaryListing.description":
@@ -348,6 +350,8 @@ const EN: Record<string, string> = {
   "notFound.catalogRelease.description":
     "No data for this id. Return to market overview and pick a row from the table.",
   "notFound.catalogRelease.cta": "Market overview",
+  "notFound.glass.eyebrow": "Spliton",
+  "notFound.empty.eyebrow": "Spliton",
   "notFound.secondaryListing.eyebrow": "Secondary market",
   "notFound.secondaryListing.title": "Listing not found",
   "notFound.secondaryListing.description":
@@ -534,6 +538,8 @@ const ES: Record<string, string> = {
   "notFound.catalogRelease.description":
     "No hay datos para este id. Vuelve al resumen del mercado y elige una fila de la tabla.",
   "notFound.catalogRelease.cta": "Resumen del mercado",
+  "notFound.glass.eyebrow": "Spliton",
+  "notFound.empty.eyebrow": "Spliton",
   "notFound.secondaryListing.eyebrow": "Mercado secundario",
   "notFound.secondaryListing.title": "Lote no encontrado",
   "notFound.secondaryListing.description":
@@ -720,6 +726,8 @@ const PT: Record<string, string> = {
   "notFound.catalogRelease.description":
     "Sem dados para este id. Volte à visão geral do mercado e escolha uma linha da tabela.",
   "notFound.catalogRelease.cta": "Visão geral do mercado",
+  "notFound.glass.eyebrow": "Spliton",
+  "notFound.empty.eyebrow": "Spliton",
   "notFound.secondaryListing.eyebrow": "Mercado secundário",
   "notFound.secondaryListing.title": "Lote não encontrado",
   "notFound.secondaryListing.description":

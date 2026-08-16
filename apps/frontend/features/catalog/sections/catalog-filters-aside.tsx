@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { RotateCcw, SlidersHorizontal } from "@/lib/lucide";
+import { RotateCcw } from "@/lib/lucide";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import {
@@ -22,21 +22,26 @@ import { CatalogActiveFilterChips } from "../ui/catalog-active-filter-chips";
 import { CatalogGenreFilterSection } from "../ui/catalog-genre-filter-section";
 import { CatalogSearchInput } from "../ui/catalog-search-input";
 
+const FILTERS_HEADER_VIDEO = "/videos/position-holding-bg.mp4";
+
 const sectionTitle =
-  "mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500";
+  "mb-3 text-[11px] font-medium tracking-wide text-zinc-500";
 
 const rowClass = "flex flex-wrap gap-2";
 
 const baseChip =
-  "inline-flex h-10 items-center justify-center rounded-xl px-4 text-[12px] font-medium tracking-[0.02em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20";
+  "inline-flex h-10 items-center justify-center rounded-full px-4 text-[12px] font-medium tracking-[0.02em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20";
 
 const idleChip =
-  "bg-white/[0.03] text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100";
+  "bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-zinc-100";
 
-const activeChip = "bg-white text-black shadow-[0_6px_20px_rgba(0,0,0,0.3)]";
+const activeChip = "bg-white text-black";
 
 const ghostButton =
-  "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200";
+  "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-[11px] font-medium tracking-wide text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200";
+
+const filterInput =
+  "h-11 w-full appearance-none rounded-xl border-0 bg-white/[0.06] px-3 text-[13px] text-zinc-100 shadow-none outline-none ring-0 placeholder:text-zinc-600 transition-[background-color] hover:bg-white/[0.08] focus:bg-white/[0.1]";
 
 function normalizeMarketNumber(value: string): string {
   return value.replace(/[^\d,.\s]/g, "").replace(/\s+/g, " ").trim();
@@ -94,6 +99,8 @@ function FiltersPanel({
   onMinYield,
   minLiquidity,
   onMinLiquidity,
+  favoritesOnly,
+  onFavoritesOnly,
   priceLabel,
   activeFilters,
   onReset,
@@ -127,6 +134,8 @@ function FiltersPanel({
   onMinYield: (value: string) => void;
   minLiquidity: string;
   onMinLiquidity: (value: string) => void;
+  favoritesOnly: boolean;
+  onFavoritesOnly: (value: boolean) => void;
   priceLabel: string;
   onReset: () => void;
   liveMode: boolean;
@@ -167,6 +176,17 @@ function FiltersPanel({
         )}
       </section>
 
+      <FilterSection title={t("catalog.filters.section.favorites")}>
+        <button
+          type="button"
+          onClick={() => onFavoritesOnly(!favoritesOnly)}
+          className={cn(baseChip, favoritesOnly ? activeChip : idleChip)}
+          aria-pressed={favoritesOnly}
+        >
+          {t("catalog.filters.favoritesOnly")}
+        </button>
+      </FilterSection>
+
       <FilterSection title={priceLabel}>
         <div className="grid grid-cols-2 gap-2">
           <input
@@ -176,7 +196,7 @@ function FiltersPanel({
             onChange={(e) => onMinPrice(normalizeMarketNumber(e.target.value))}
             onBlur={(e) => onMinPrice(formatMarketNumber(e.target.value, locale))}
             placeholder={t("catalog.filters.priceFrom")}
-            className="h-11 rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+            className={filterInput}
           />
           <input
             type="text"
@@ -185,7 +205,7 @@ function FiltersPanel({
             onChange={(e) => onMaxPrice(normalizeMarketNumber(e.target.value))}
             onBlur={(e) => onMaxPrice(formatMarketNumber(e.target.value, locale))}
             placeholder={t("catalog.filters.priceTo")}
-            className="h-11 rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+            className={filterInput}
           />
         </div>
       </FilterSection>
@@ -253,7 +273,7 @@ function FiltersPanel({
               onChange={(e) => onMinProgress(normalizeMarketNumber(e.target.value))}
               onBlur={(e) => onMinProgress(formatMarketNumber(e.target.value, locale))}
               placeholder={t("catalog.filters.placeholder.minProgress")}
-              className="h-11 w-full rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+              className={filterInput}
             />
           </FilterSection>
 
@@ -265,7 +285,7 @@ function FiltersPanel({
               onChange={(e) => onMinYield(normalizeMarketNumber(e.target.value))}
               onBlur={(e) => onMinYield(formatMarketNumber(e.target.value, locale))}
               placeholder={t("catalog.filters.placeholder.minYield")}
-              className="h-11 w-full rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+              className={filterInput}
             />
           </FilterSection>
         </>
@@ -278,7 +298,7 @@ function FiltersPanel({
             onChange={(e) => onMinLiquidity(normalizeMarketNumber(e.target.value))}
             onBlur={(e) => onMinLiquidity(formatMarketNumber(e.target.value, locale))}
             placeholder={t("catalog.filters.placeholder.minLiquidity")}
-            className="h-11 w-full rounded-xl bg-black/30 px-3 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:ring-1 focus:ring-white/20"
+            className={filterInput}
           />
         </FilterSection>
       )}
@@ -310,6 +330,8 @@ export function CatalogFiltersAside(props: {
   onMinYield: (value: string) => void;
   minLiquidity: string;
   onMinLiquidity: (value: string) => void;
+  favoritesOnly: boolean;
+  onFavoritesOnly: (value: boolean) => void;
   priceLabel: string;
   filteredCount: number;
   totalCount: number;
@@ -343,6 +365,8 @@ export function CatalogFiltersAside(props: {
     onMinYield,
     minLiquidity,
     onMinLiquidity,
+    favoritesOnly,
+    onFavoritesOnly,
     priceLabel,
     filteredCount,
     totalCount,
@@ -396,6 +420,8 @@ export function CatalogFiltersAside(props: {
     onMinYield,
     minLiquidity,
     onMinLiquidity,
+    favoritesOnly,
+    onFavoritesOnly,
     priceLabel,
     activeFilters,
     onReset,
@@ -420,32 +446,60 @@ export function CatalogFiltersAside(props: {
           <div className="flex shrink-0 flex-col items-center pt-2.5 pb-1">
             <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
           </div>
-          <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-4 py-2.5">
-            <div>
-              <p className="text-base font-semibold text-white">{t("catalog.filters.title")}</p>
-              <p className="text-[11px] text-zinc-500">
-                {tf(t("catalog.filters.countOf"), {
-                  filtered: String(filteredCount),
-                  total: String(totalCount),
-                })}
-              </p>
+          <div className="relative isolate shrink-0 overflow-hidden">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <video
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-[10px] motion-reduce:hidden"
+                src={FILTERS_HEADER_VIDEO}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-[#050505]" />
             </div>
-            <button type="button" onClick={onReset} className={ghostButton}>
-              <RotateCcw className="size-3.5" />
-              {t("catalog.filters.reset")}
-            </button>
+            <div className="relative z-10 flex items-start justify-between gap-3 px-4 py-3">
+              <div>
+                <p className="text-base font-semibold text-white">{t("catalog.filters.title")}</p>
+                <p className="mt-0.5 text-[11px] text-white/55">
+                  {tf(t("catalog.filters.countOf"), {
+                    filtered: String(filteredCount),
+                    total: String(totalCount),
+                  })}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onReset}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black/35 px-3 text-[12px] font-medium text-zinc-300 backdrop-blur-sm"
+              >
+                <RotateCcw className="size-3.5" />
+                {t("catalog.filters.reset")}
+              </button>
+            </div>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 Spliton-scrollbar">
             <FiltersPanel {...panelProps} />
           </div>
-          <div className="shrink-0 border-t border-white/8 bg-[#050505] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <button
-              type="button"
-              className="inline-flex h-11 w-full touch-manipulation items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black transition hover:bg-zinc-200 active:scale-[0.98]"
-              onClick={() => onMobileOpenChange?.(false)}
-            >
-              {tf(t("catalog.filters.showResults"), { count: String(filteredCount) })}
-            </button>
+          <div className="shrink-0 border-t border-white/[0.06] bg-[#050505] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onReset}
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
+              >
+                <RotateCcw className="size-3.5 opacity-70" aria-hidden />
+                {t("catalog.filters.reset")}
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-11 flex-[1.2] touch-manipulation items-center justify-center rounded-full bg-white px-4 text-[13px] font-semibold text-black transition hover:bg-zinc-200 active:scale-[0.98]"
+                onClick={() => onMobileOpenChange?.(false)}
+              >
+                {t("catalog.filters.apply")}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -457,39 +511,60 @@ export function CatalogFiltersAside(props: {
 
       <aside
         className={cn(
-          "hidden w-full shrink-0 flex-col bg-[#050505] text-[13px] text-white lg:flex",
-          "lg:h-full lg:w-[430px] lg:min-w-[380px] lg:max-w-[460px]",
+          "hidden w-full shrink-0 flex-col overflow-hidden bg-[#050505] text-[13px] text-white lg:flex",
+          "lg:h-full lg:w-[400px] lg:min-w-[360px] lg:max-w-[420px]",
         )}
       >
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex items-center justify-between px-4 pb-3 pt-4 sm:px-5">
-            <div className="flex items-center gap-2">
-              <div className="flex size-9 items-center justify-center rounded-2xl bg-white/4">
-                <SlidersHorizontal className="size-4 text-zinc-200" strokeWidth={1.8} />
-              </div>
-              <div>
-                <p className="text-[18px] font-semibold tracking-tight text-white">{t("catalog.filters.title")}</p>
-                <p className="text-[11px] text-zinc-500">
+          <div className="relative isolate shrink-0 overflow-hidden">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <video
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-[10px] motion-reduce:hidden"
+                src={FILTERS_HEADER_VIDEO}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-[#050505]" />
+            </div>
+            <div className="relative z-10 flex items-start justify-between gap-3 px-5 pb-4 pt-5">
+              <div className="min-w-0">
+                <p className="text-[17px] font-semibold tracking-tight text-white">{t("catalog.filters.title")}</p>
+                <p className="mt-1 text-[12px] text-white/55">
                   {tf(t("catalog.filters.countOf"), {
                     filtered: String(filteredCount),
                     total: String(totalCount),
                   })}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={onReset}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-black/35 px-3 text-[12px] font-medium text-zinc-300 backdrop-blur-sm transition hover:bg-black/50 hover:text-white"
+              >
+                <RotateCcw className="size-3.5" strokeWidth={1.9} aria-hidden />
+                {t("catalog.filters.reset")}
+              </button>
             </div>
-            <button type="button" onClick={onReset} className={ghostButton}>
-              <RotateCcw className="size-3.5" strokeWidth={1.9} aria-hidden />
-              {t("catalog.filters.reset")}
-            </button>
           </div>
-          <div className="Spliton-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5">
+          <div className="Spliton-scrollbar min-h-0 flex-1 overflow-y-auto px-5 pb-4">
             <FiltersPanel {...panelProps} />
           </div>
-          <div className="px-4 pb-4 pt-2 sm:px-5">
-            <div className="text-center">
+          <div className="shrink-0 px-5 pb-5 pt-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onReset}
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
+              >
+                <RotateCcw className="size-3.5 opacity-70" aria-hidden />
+                {t("catalog.filters.reset")}
+              </button>
               <Link
                 href="/assets/unt"
-                className="inline-flex items-center justify-center font-sans text-[11px] font-medium text-zinc-500 transition hover:text-zinc-200"
+                className="inline-flex h-11 flex-[1.15] items-center justify-center rounded-full bg-white px-4 text-[13px] font-semibold text-black transition hover:bg-zinc-200"
               >
                 {t("catalog.filters.untLink")}
               </Link>

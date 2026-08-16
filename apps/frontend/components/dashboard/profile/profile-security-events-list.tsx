@@ -1,66 +1,129 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronRight } from "@/lib/lucide";
+import { useMemo, useState } from "react";
 
-import { ROUTES } from "@/constants/routes";
+import { profileLineIcon } from "@/components/dashboard/profile/profile-shared";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { formatDate } from "@/lib/i18n/formatters";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
+import { ROUTES } from "@/constants/routes";
 import {
+  formatSecurityEventIp,
+  formatSecurityEventWhen,
   parseUserAgentShort,
+  securityEventHint,
   securityEventLabel,
+  securityEventTone,
 } from "@/lib/profile/security-labels";
 import type { SecurityEventItem } from "@/services/user-me.service";
+import { cn } from "@/lib/utils";
+
+const NOISE_ACTIONS = new Set(["REFRESH_SUCCESS"]);
+const PREVIEW_COUNT = 3;
+const EXPANDED_COUNT = 12;
+
+function orderedEvents(events: SecurityEventItem[]): SecurityEventItem[] {
+  const meaningful = events.filter((ev) => !NOISE_ACTIONS.has(ev.action.trim().toUpperCase()));
+  if (meaningful.length > 0) return meaningful;
+  return events;
+}
+
+function toneDotClass(tone: ReturnType<typeof securityEventTone>): string {
+  switch (tone) {
+    case "ok":
+      return "bg-[#B7F500]";
+    case "warn":
+      return "bg-amber-400";
+    case "danger":
+      return "bg-red-400";
+    default:
+      return "bg-zinc-500";
+  }
+}
 
 export function ProfileSecurityEventsList({
   events,
+  timeZone,
 }: {
   events: SecurityEventItem[];
   timeZone?: string | null;
 }) {
   const { locale, t } = useI18n();
+  const [expanded, setExpanded] = useState(false);
+  const all = useMemo(() => orderedEvents(events), [events]);
+  const canExpand = all.length > PREVIEW_COUNT;
+  const visible = expanded ? all.slice(0, EXPANDED_COUNT) : all.slice(0, PREVIEW_COUNT);
 
-  if (events.length === 0) {
+  if (all.length === 0) {
     return (
-      <p className="mt-3 text-sm text-neutral-500">{t("profile.security.events.empty")}</p>
+      <p className="px-5 py-8 text-center text-[13px] text-zinc-500 sm:px-6">
+        {t("profile.security.events.empty")}
+      </p>
     );
   }
 
   return (
     <>
-      <ul className="mt-4 divide-y divide-neutral-100">
-        {events.slice(0, 5).map((ev) => (
-          <li key={ev.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-neutral-900">
-                {securityEventLabel(ev.action, locale)}
-              </p>
-              <p className="mt-0.5 text-xs text-neutral-500">
-                {formatDate(new Date(ev.createdAt), locale, {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-                {ev.ip ? ` · ${ev.ip}` : ""}
-              </p>
-              {ev.userAgent ? (
-                <p className="mt-0.5 truncate text-xs text-neutral-400">
-                  {parseUserAgentShort(ev.userAgent, locale)}
-                </p>
-              ) : null}
-            </div>
-          </li>
-        ))}
+      <ul className="divide-y divide-white/[0.06]">
+        {visible.map((ev) => {
+          const tone = securityEventTone(ev.action);
+          const hint = securityEventHint(ev.action, locale);
+          const ip = formatSecurityEventIp(ev.ip, locale);
+          const device = parseUserAgentShort(ev.userAgent, locale);
+          const when = formatSecurityEventWhen(ev.createdAt, locale, timeZone);
+          const meta = [when, ip, device !== t("profile.security.events.deviceUnknown") ? device : null]
+            .filter(Boolean)
+            .join(" · ");
+
+          return (
+            <li
+              key={ev.id}
+              className="flex items-start gap-3.5 px-5 py-[1.15rem] sm:gap-4 sm:px-6"
+            >
+              {profileLineIcon("alert")}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn("size-1.5 shrink-0 rounded-full", toneDotClass(tone))}
+                    aria-hidden
+                  />
+                  <p className="text-[15px] font-semibold text-white">
+                    {securityEventLabel(ev.action, locale)}
+                  </p>
+                </div>
+                {hint ? (
+                  <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{hint}</p>
+                ) : null}
+                <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{meta}</p>
+              </div>
+            </li>
+          );
+        })}
       </ul>
-      <Link
-        href={ROUTES.dashboardActivity}
-        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-neutral-800 hover:text-neutral-950"
-      >
-        {t("profile.security.events.viewHistory")}
-        <ChevronRight className="size-4" aria-hidden />
-      </Link>
+
+      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
+        {canExpand ? (
+          <SplitonCtaPill
+            type="button"
+            tone="onDark"
+            variant="ghost"
+            withArrow={false}
+            className="w-full sm:w-auto sm:min-w-[10.5rem]"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+          >
+            {expanded ? t("profile.security.events.showLess") : t("profile.security.events.showMore")}
+          </SplitonCtaPill>
+        ) : (
+          <span className="hidden sm:block" />
+        )}
+        <SplitonCtaPill
+          href={ROUTES.dashboardActivity}
+          tone="onDark"
+          className="w-full min-w-0 sm:w-auto sm:min-w-[14rem]"
+        >
+          {t("profile.security.events.viewHistory")}
+        </SplitonCtaPill>
+      </div>
     </>
   );
 }

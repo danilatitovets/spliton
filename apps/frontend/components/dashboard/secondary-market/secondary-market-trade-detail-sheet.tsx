@@ -7,10 +7,7 @@ import { SplitonLoader } from "@/components/ui/spliton-loader";
 
 import type { SecondaryMarketUserTradeMock } from "@/components/dashboard/secondary-market/secondary-market-trade-history-tab";
 import { SecondaryMarketResponsiveSheet } from "@/components/dashboard/secondary-market/secondary-market-responsive-sheet";
-import {
-  smTableActionReleasePill,
-  smTableActionSecondaryPill,
-} from "@/components/dashboard/secondary-market/secondary-market-table-action-styles";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { statusLabel } from "@/lib/i18n/status-labels";
@@ -52,13 +49,13 @@ function settlementLabel(s: SettlementStatus, locale: AppLocale): string {
 function settlementPillClass(s: SettlementStatus) {
   switch (s) {
     case "settled":
-      return "bg-[#B7F500]/12 text-[#d4f570] ring-1 ring-[#B7F500]/22";
+      return "bg-white/[0.08] text-zinc-200";
     case "processing":
-      return "bg-amber-500/12 text-amber-200/95 ring-1 ring-amber-400/20";
+      return "bg-amber-500/12 text-amber-200/95";
     case "failed":
-      return "bg-fuchsia-500/12 text-fuchsia-200/90 ring-1 ring-fuchsia-400/22";
+      return "bg-white/[0.05] text-zinc-400";
     default:
-      return "bg-zinc-600/20 text-zinc-400";
+      return "bg-white/[0.04] text-zinc-500";
   }
 }
 
@@ -127,6 +124,8 @@ export function SecondaryMarketTradeDetailSheet({
     <SecondaryMarketResponsiveSheet
       open={trade != null}
       onOpenChange={onOpenChange}
+      side="right"
+      headerVideo
       title={trade?.title ?? t("secondaryMarket.actions.tradeDetails")}
       description={
         trade ? `${trade.artist} · ${trade.ticker} · ${formatDateTime(trade.timestamp)}` : undefined
@@ -135,24 +134,27 @@ export function SecondaryMarketTradeDetailSheet({
       footer={
         trade ? (
           <div className="space-y-2">
-            <button
+            <SplitonCtaPill
               type="button"
+              tone="onDark"
               disabled={receiptLoading}
               onClick={() => void handleReceipt()}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-white/10 font-mono text-[12px] font-semibold text-zinc-200 transition hover:bg-white/14 disabled:opacity-50"
+              className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[13px] font-semibold disabled:opacity-50"
             >
-              {receiptLoading ? (
-                <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
-              ) : (
-                <Download className="size-4" aria-hidden />
-              )}
-              {t("secondaryMarket.market.downloadReceipt")}
-            </button>
+              <span className="inline-flex items-center gap-2">
+                {receiptLoading ? (
+                  <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
+                ) : (
+                  <Download className="size-4" aria-hidden />
+                )}
+                {t("secondaryMarket.market.downloadReceipt")}
+              </span>
+            </SplitonCtaPill>
             <div className="flex flex-wrap gap-2">
               <Link
                 href={releaseAssetHref(trade.releaseId)}
                 scroll={false}
-                className={cn(smTableActionReleasePill, "h-10 flex-1 justify-center px-4")}
+                className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white/[0.06] px-4 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
                 onClick={() => onOpenChange(false)}
               >
                 {t("secondaryMarket.actions.release")}
@@ -162,7 +164,7 @@ export function SecondaryMarketTradeDetailSheet({
                 <Link
                   href={stackHref}
                   scroll={false}
-                  className={cn(smTableActionSecondaryPill, "h-10 flex-1 justify-center")}
+                  className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-white/[0.06] px-4 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
                   onClick={() => onOpenChange(false)}
                 >
                   {t("secondaryMarket.actions.orderBook")}
@@ -179,7 +181,7 @@ export function SecondaryMarketTradeDetailSheet({
             <span
               className={cn(
                 "rounded-full px-2.5 py-1 font-mono text-[10px] font-semibold uppercase",
-                trade.side === "buy" ? "bg-[#B7F500]/14 text-[#d4f570]" : "bg-fuchsia-500/14 text-fuchsia-200/90",
+                trade.side === "buy" ? "bg-white/10 text-white" : "bg-white/5 text-zinc-400",
               )}
             >
               {t(`secondaryMarket.side.${trade.side}`)}

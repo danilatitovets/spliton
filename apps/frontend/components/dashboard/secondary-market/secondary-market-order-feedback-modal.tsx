@@ -33,14 +33,14 @@ export function SecondaryMarketOrderFeedbackModal({
 
   const accentRing =
     feedback.tone === "success"
-      ? "ring-[#B7F500]/30"
+      ? "ring-white/25"
       : feedback.tone === "warn"
         ? "ring-amber-400/25"
         : "ring-white/12";
 
   const titleAccent =
     feedback.tone === "success"
-      ? "text-[#d4f570]"
+      ? "text-white"
       : feedback.tone === "warn"
         ? "text-amber-100"
         : "text-zinc-100";
@@ -75,7 +75,7 @@ export function SecondaryMarketOrderFeedbackModal({
           <p
             className={cn(
               "font-mono text-[10px] font-semibold uppercase tracking-[0.18em]",
-              feedback.tone === "success" && "text-[#B7F500]/90",
+              feedback.tone === "success" && "text-white/90",
               feedback.tone === "warn" && "text-amber-300/90",
               feedback.tone === "info" && "text-zinc-500",
             )}
@@ -101,9 +101,9 @@ export function SecondaryMarketOrderFeedbackModal({
               onClick={() => onOpenChange(false)}
               className={cn(
                 "h-10 min-w-[120px] rounded-full px-5 font-mono text-[12px] font-semibold transition",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B7F500]/40",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
                 feedback.tone === "success" &&
-                  "bg-[#B7F500] text-black hover:bg-[#c5f52a] active:scale-[0.99]",
+                  "bg-white text-black hover:bg-[#c5f52a] active:scale-[0.99]",
                 feedback.tone === "warn" &&
                   "bg-amber-500/20 text-amber-50 ring-1 ring-amber-400/30 hover:bg-amber-500/28",
                 feedback.tone === "info" &&

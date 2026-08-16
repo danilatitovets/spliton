@@ -3,7 +3,7 @@ import { MARKET_OVERVIEW_ROWS } from "@/mocks/market-overview-rows";
 import { buildReleaseMarketAnalyticsPageData } from "@/mocks/catalog/release-market-analytics.mock";
 import { catalogDetailToMarketRow } from "@/lib/catalog/catalog-adapter";
 import { adaptMarketOverviewRow } from "@/lib/market-overview/market-overview-adapter";
-import { fetchCatalogReleaseById, isLiveCatalogEnabled } from "@/services/catalog.service";
+import { isLiveCatalogEnabled, resolveCatalogReleaseForPage } from "@/services/catalog.service";
 import { fetchMarketOverviewDetail } from "@/services/market-overview.service";
 import type { ReleaseMarketAnalyticsPageData } from "@/types/catalog/release-market-analytics";
 import type { MarketOverviewRow } from "@/types/market-overview";
@@ -29,7 +29,7 @@ export async function resolveMarketOverviewRowForPage(
   id: string,
 ): Promise<MarketOverviewRow | undefined> {
   if (isLiveCatalogEnabled()) {
-    const catalog = await fetchCatalogReleaseById(id);
+    const catalog = await resolveCatalogReleaseForPage(id);
     if (catalog) return catalogDetailToMarketRow(catalog);
     try {
       const detail = await fetchMarketOverviewDetail(id);

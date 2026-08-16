@@ -39,9 +39,9 @@ function ActionRow({
       className={cn(
         "group flex items-center gap-3 rounded-xl px-3 py-3 ring-1 transition",
         variant === "primary" &&
-          "bg-[#B7F500] text-black ring-[#B7F500]/40 hover:bg-[#c8ff3d]",
+          "bg-white text-black ring-white/30 hover:bg-[#e8e8e8]",
         variant === "secondary" &&
-          "bg-white/[0.03] text-zinc-100 ring-white/10 hover:bg-white/[0.06] hover:ring-[#B7F500]/25",
+          "bg-white/[0.03] text-zinc-100 ring-white/10 hover:bg-white/[0.06] hover:ring-white/20",
         variant === "ghost" &&
           "bg-transparent text-zinc-400 ring-white/6 hover:bg-white/[0.04] hover:text-zinc-200",
       )}
@@ -49,7 +49,7 @@ function ActionRow({
       <span
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-xl",
-          variant === "primary" ? "bg-black/10 text-black" : "bg-[#B7F500]/10 text-[#B7F500]",
+          variant === "primary" ? "bg-black/10 text-black" : "bg-white/10 text-white",
         )}
         aria-hidden
       >
@@ -98,7 +98,7 @@ export function SecondaryMarketListingActionPanel({
 
   return (
     <div className="overflow-hidden rounded-2xl bg-[#111111] ring-1 ring-white/10">
-      <div className="border-b border-white/8 bg-gradient-to-br from-[#B7F500]/8 via-transparent to-transparent px-5 py-5">
+      <div className="border-b border-white/8 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent px-5 py-5">
         <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
           {t("secondaryMarket.listingDetail.linkedRelease")}
         </p>

@@ -20,7 +20,7 @@ export function FeesFaqList({ items, defaultOpenId = null }: FeesFaqListProps) {
   }, []);
 
   return (
-    <ul className="mt-4 divide-y divide-neutral-200/80 border-t border-neutral-200/80" role="list">
+    <ul className="mt-2 divide-y divide-neutral-200/90 border-t border-neutral-200/90" role="list">
       {items.map((item) => {
         const open = openId === item.id;
         const panelId = `${baseId}-${item.id}-panel`;
@@ -33,16 +33,19 @@ export function FeesFaqList({ items, defaultOpenId = null }: FeesFaqListProps) {
               aria-expanded={open}
               aria-controls={panelId}
               onClick={() => toggle(item.id)}
-              className="flex w-full items-start justify-between gap-3 py-4 text-left transition hover:bg-neutral-100/50"
+              className="flex w-full items-start justify-between gap-3 py-4 text-left transition hover:bg-neutral-50"
             >
               <span className="text-sm font-semibold leading-snug text-neutral-900">{item.question}</span>
               <ChevronDown
-                className={cn("mt-0.5 size-4 shrink-0 text-neutral-400 transition-transform", open && "rotate-180")}
+                className={cn(
+                  "mt-0.5 size-4 shrink-0 text-neutral-400 transition-transform",
+                  open && "rotate-180 text-neutral-700",
+                )}
                 aria-hidden
               />
             </button>
             <div id={panelId} role="region" aria-labelledby={btnId} hidden={!open}>
-              <p className="pb-4 pr-8 text-sm leading-relaxed text-neutral-600">{item.answer}</p>
+              <p className="pb-4 pr-8 text-sm leading-relaxed text-neutral-500">{item.answer}</p>
             </div>
           </li>
         );

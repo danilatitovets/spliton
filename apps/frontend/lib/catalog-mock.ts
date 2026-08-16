@@ -23,6 +23,7 @@ export type FundingCard = {
   nextPayoutDate?: string | null;
   secondaryMarketEnabled?: boolean;
   activeListingsCount?: number;
+  liquidityScore?: number;
   hasSparkline?: boolean;
   hasAudioPreview?: boolean;
   slug?: string;
@@ -45,6 +46,7 @@ export type MarketCard = {
   volume24hUsdt?: string;
   volume7dUsdt?: string;
   liquidityLabel?: string;
+  liquidityScore?: number;
   secondaryMarketEnabled?: boolean;
   hasSparkline?: boolean;
   hasAudioPreview?: boolean;

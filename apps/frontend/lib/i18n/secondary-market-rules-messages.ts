@@ -25,8 +25,7 @@ const RU: Record<string, string> = {
   "secondaryMarket.rules.settlementCardTitle": "Units и rights",
   "secondaryMarket.rules.settlementCardBody":
     "После успешного settlement units и связанные права учитываются на вашем счёте внутри Spliton; внешний transfer токенов не выполняется.",
-  "secondaryMarket.rules.detailsIntro":
-    "Раскрывайте блоки ниже — формат как в FAQ гида, на полупрозрачном фоне для читаемости.",
+  "secondaryMarket.rules.detailsIntro": "Раскройте блок — только нужные правила.",
   "secondaryMarket.rules.section.fees.title": "Комиссии и удержания",
   "secondaryMarket.rules.section.fees.b1":
     "Сбор удерживается в USDT при исполнении; отображается в истории сделок и влияет на итоговую сумму к зачислению или списанию.",
@@ -121,8 +120,7 @@ const EN: Record<string, string> = {
   "secondaryMarket.rules.settlementCardTitle": "Units and rights",
   "secondaryMarket.rules.settlementCardBody":
     "After successful settlement, units and related rights are credited to your Spliton account; no external token transfer occurs.",
-  "secondaryMarket.rules.detailsIntro":
-    "Expand sections below — FAQ-style layout on a semi-transparent background for readability.",
+  "secondaryMarket.rules.detailsIntro": "Expand a section — only the rules you need.",
   "secondaryMarket.rules.section.fees.title": "Fees and withholdings",
   "secondaryMarket.rules.section.fees.b1":
     "Fees are withheld in USDT on execution; shown in trade history and affect net credit or debit.",
@@ -218,8 +216,7 @@ const ES: Record<string, string> = {
   "secondaryMarket.rules.settlementCardTitle": "Units y rights",
   "secondaryMarket.rules.settlementCardBody":
     "Tras settlement exitoso, units y derechos se acreditan en su cuenta Spliton; no hay transferencia externa de tokens.",
-  "secondaryMarket.rules.detailsIntro":
-    "Despliegue las secciones — formato FAQ sobre fondo semitransparente.",
+  "secondaryMarket.rules.detailsIntro": "Abra un bloque — solo las reglas necesarias.",
   "secondaryMarket.rules.section.fees.title": "Comisiones y retenciones",
   "secondaryMarket.rules.section.listing.title": "Listados y volumen",
   "secondaryMarket.rules.section.orders.title": "Órdenes: límite y mercado",
@@ -261,8 +258,7 @@ const PT: Record<string, string> = {
   "secondaryMarket.rules.settlementCardTitle": "Units e rights",
   "secondaryMarket.rules.settlementCardBody":
     "Após settlement, units e direitos são creditados na sua conta Spliton; sem transferência externa de tokens.",
-  "secondaryMarket.rules.detailsIntro":
-    "Expanda as secções — formato FAQ sobre fundo semitransparente.",
+  "secondaryMarket.rules.detailsIntro": "Abra um bloco — só as regras necessárias.",
   "secondaryMarket.rules.section.fees.title": "Comissões e retenções",
   "secondaryMarket.rules.section.listing.title": "Listagens e volume",
   "secondaryMarket.rules.section.orders.title": "Ordens: limite e mercado",

@@ -8,6 +8,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { DEFAULT_CHART_PERIOD, type ChartPeriodId } from "@/lib/analytics/chart-period";
 import { formatDate } from "@/lib/i18n/formatters";
 import type { AppLocale } from "@/lib/i18n/types";
+import { useCabinetDemoPreview } from "@/hooks/use-cabinet-demo-preview";
 import { isLivePortfolioEnabled } from "@/lib/public-env";
 import { portfolioErrorMessage, fetchPortfolioValueChart } from "@/services/portfolio.service";
 
@@ -29,7 +30,8 @@ function toMetricsPoints(
 export function usePortfolioValueChartLive() {
   const { authorizedFetch, isAuthenticated } = useAuth();
   const { locale } = useI18n();
-  const live = isLivePortfolioEnabled() && isAuthenticated;
+  const demoPreview = useCabinetDemoPreview();
+  const live = isLivePortfolioEnabled() && isAuthenticated && !demoPreview;
   const [period, setPeriod] = useState<ChartPeriodId>(DEFAULT_CHART_PERIOD);
   const [series, setSeries] = useState<MetricsPoint[]>([]);
   const [loading, setLoading] = useState(false);

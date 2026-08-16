@@ -1,6 +1,7 @@
 import { localeMessage } from "@/lib/i18n/normalize-locale";
 import { PROFILE_MESSAGES } from "@/lib/i18n/profile-messages";
 import type { AppLocale } from "@/lib/i18n/types";
+import { securityEventLabel as resolveSecurityEventLabel } from "@/lib/profile/security-event-display";
 
 export function completenessItemLabel(itemId: string, locale: AppLocale): string {
   const key = `profile.overview.readiness.item.${itemId}`;
@@ -28,8 +29,7 @@ export function securityLevelLabel(level: string, locale: AppLocale): string {
 }
 
 export function securityEventLabel(action: string, locale: AppLocale): string {
-  const key = `profile.overview.activity.event.${action}`;
-  return localeMessage(PROFILE_MESSAGES, locale, key, action);
+  return resolveSecurityEventLabel(action, locale);
 }
 
 export function accessLabel(allowed: boolean | undefined, locale: AppLocale): string {

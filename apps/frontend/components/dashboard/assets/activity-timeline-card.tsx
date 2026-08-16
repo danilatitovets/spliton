@@ -77,7 +77,11 @@ export function ActivityTimelineCard({ rows }: { rows: ActivityRecord[] }) {
                   {activityDetailsLabel(row, t)}
                 </p>
                 <div className="mt-2 flex items-center justify-between text-xs text-neutral-500">
-                  <span>{row.amount}</span>
+                  <span>
+                    {row.amount === "—" || row.amount === "-"
+                      ? t("activity.widgets.amountNone")
+                      : row.amount}
+                  </span>
                   <span>{activityRelativeLabel(row, t)}</span>
                 </div>
               </div>

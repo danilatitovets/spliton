@@ -78,7 +78,7 @@ export class MeApiController {
 
   @Get('sessions')
   listSessions(@CurrentUser() user: AuthUser) {
-    return this.usersService.listSessions(user.id);
+    return this.usersService.listSessions(user.id, user.sessionId);
   }
 
   @Delete('sessions/:id')

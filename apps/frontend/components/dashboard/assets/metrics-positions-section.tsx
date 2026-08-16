@@ -128,9 +128,6 @@ export function MetricsPositionsSection({
       aria-label={t("assets.metrics.positionsTableAria")}
     >
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
-          Metrics · Positions
-        </p>
         <h3 className="text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">
           {t("assets.metrics.positionsTableTitle")}
         </h3>
@@ -183,7 +180,7 @@ export function MetricsPositionsSection({
       </div>
 
       {loading && !rows ? (
-        <div className="h-64 animate-pulse rounded-2xl bg-neutral-50 ring-1 ring-neutral-100" />
+        <div className="h-64 animate-pulse rounded-2xl bg-neutral-50" />
       ) : error ? (
         <ReadOnlySectionError
           sectionId="metrics-positions"
@@ -191,10 +188,10 @@ export function MetricsPositionsSection({
           onRetry={onRetry}
         />
       ) : !rows?.length ? (
-        <EmptyState message={t("assets.metrics.afterFirstPurchase")} />
+        <EmptyState situation="portfolioEmpty" message={t("assets.metrics.afterFirstPurchase")} />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-2xl ring-1 ring-neutral-100">
+          <div className="overflow-x-auto rounded-2xl bg-white/70">
             <table className="w-full min-w-[1100px] text-left text-sm">
               <thead className="bg-neutral-50/90 text-[11px] uppercase tracking-wide text-neutral-500">
                 <tr>
@@ -242,8 +239,8 @@ export function MetricsPositionsSection({
                   });
                 }}
                 className={cn(
-                  "rounded-lg border px-3 py-1.5",
-                  page <= 1 ? "opacity-40" : "hover:bg-neutral-50",
+                  "rounded-lg bg-neutral-100 px-3 py-1.5",
+                  page <= 1 ? "opacity-40" : "hover:bg-neutral-200/80",
                 )}
               >
                 {t("actions.prev")}
@@ -263,8 +260,8 @@ export function MetricsPositionsSection({
                   });
                 }}
                 className={cn(
-                  "rounded-lg border px-3 py-1.5",
-                  rows.length < 20 || page * 20 >= total ? "opacity-40" : "hover:bg-neutral-50",
+                  "rounded-lg bg-neutral-100 px-3 py-1.5",
+                  rows.length < 20 || page * 20 >= total ? "opacity-40" : "hover:bg-neutral-200/80",
                 )}
               >
                 {t("actions.next")}

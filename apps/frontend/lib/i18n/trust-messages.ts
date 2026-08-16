@@ -5,74 +5,60 @@ const RU: Record<string, string> = {
   "meta.trust.description":
     "Прозрачность Spliton: как устроены операции, риски, безопасность аккаунта и ссылки на документы.",
 
-  "trust.hero.eyebrow": "Прозрачность · USDT (TRC20)",
+  "trust.hero.eyebrow": "Прозрачность · USDT",
   "trust.hero.title": "Центр доверия Spliton",
-  "trust.hero.subtitle":
-    "Как устроены операции, контроли treasury и compliance, публичный статус и документы — в одном месте.",
+  "trust.hero.subtitle": "Операции, контроли, статус и документы — в одном месте.",
   "trust.hero.systemStatus": "Статус системы",
   "trust.hero.support": "Поддержка",
 
   "trust.metrics.aria": "Ключевые показатели",
   "trust.metrics.heading.title": "На чём держится доверие",
-  "trust.metrics.heading.subtitle":
-    "Четыре простых ответа для обычного пользователя: деньги, история операций, вывод и честный статус сервисов.",
-  "trust.metrics.m1.label": "В какой валюте считаем",
+  "trust.metrics.heading.subtitle": "Валюта, история, вывод и статус сервисов.",
+  "trust.metrics.m1.label": "Валюта",
   "trust.metrics.m1.value": "USDT (TRC20)",
-  "trust.metrics.m1.hint":
-    "Баланс, покупки UNT и выводы — в USDT по сети TRC20. В кабинете видно сумму до подтверждения каждой операции.",
-  "trust.metrics.m2.label": "Где смотреть операции",
+  "trust.metrics.m1.hint": "Баланс, покупки и выводы — в USDT.",
+  "trust.metrics.m2.label": "Операции",
   "trust.metrics.m2.value": "История в кабинете",
-  "trust.metrics.m2.hint":
-    "Пополнения, сделки и выводы не «пропадают» — каждая операция с датой, суммой и статусом в ленте и выписках.",
-  "trust.metrics.m3.label": "Как устроен вывод",
+  "trust.metrics.m2.hint": "Каждая операция с датой, суммой и статусом.",
+  "trust.metrics.m3.label": "Вывод",
   "trust.metrics.m3.value": "Заявка → проверка → отправка",
-  "trust.metrics.m3.hint":
-    "Вывод на внешний кошелёк проходит проверку лимитов и правил. До отправки видно, сколько USDT спишется и сколько дойдёт до адреса.",
-  "trust.metrics.m4.label": "Если что-то сломалось",
+  "trust.metrics.m3.hint": "Лимиты и правила видны до отправки.",
+  "trust.metrics.m4.label": "Сбои",
   "trust.metrics.m4.value": "Публичный статус",
-  "trust.metrics.m4.hint":
-    "Сбои, техработы и восстановление сервисов публикуем открыто — не нужно гадать, работает ли вывод или торги.",
+  "trust.metrics.m4.hint": "Инциденты и техработы — открыто.",
   "trust.metrics.m4.hrefLabel": "Открыть статус",
 
-  "trust.pillars.title": "Как Spliton обеспечивает прозрачность",
-  "trust.pillars.subtitle": "Публичные разделы, контроли операций и документы — до входа в сделку.",
+  "trust.pillars.title": "Прозрачность Spliton",
+  "trust.pillars.subtitle": "Разделы, контроли и документы до сделки.",
 
   "trust.section.howItWorks.title": "Как работает Spliton",
   "trust.section.howItWorks.body":
-    "Биржа долей музыкальных активов: покупка юнитов на первичном рынке и торговля на вторичном. Баланс — в USDT (TRC20).",
-  "trust.section.howItWorks.detail":
-    "Перед сделкой доступны параметры релиза, data room и условия участия. Вторичный рынок даёт ликвидность между держателями долей.",
+    "Доли музыкальных активов: первичный и вторичный рынок. Баланс — USDT (TRC20).",
+  "trust.section.howItWorks.detail": "",
 
   "trust.section.ledger.title": "Защита средств и ledger",
   "trust.section.ledger.body":
-    "Каждое движение средств фиксируется во внутреннем ledger с двойной записью по счетам пользователя и платформы.",
-  "trust.section.ledger.detail":
-    "Пополнения и выводы проходят операторский контроль. Действия staff фиксируются в журнале аудита, выводы — с лимитами treasury.",
+    "Каждое движение фиксируется в ledger. Пополнения и выводы — с контролем оператора.",
+  "trust.section.ledger.detail": "",
 
   "trust.section.systemStatus.title": "Статус системы",
   "trust.section.systemStatus.body":
-    "Инциденты, деградации и плановые работы публикуются на отдельной странице — торги, выплаты и кабинет.",
-  "trust.section.systemStatus.detail":
-    "При сбоях видны ETA восстановления и история событий. При необходимости — переход в поддержку.",
+    "Инциденты и плановые работы — на отдельной странице: торги, выплаты, кабинет.",
+  "trust.section.systemStatus.detail": "",
   "trust.section.systemStatus.hrefLabel": "Открыть статус",
 
   "trust.section.support.title": "Поддержка и споры",
-  "trust.section.support.body":
-    "Финансовые и торговые кейсы — через почту, кабинет или центр споров с фиксацией обращения.",
-  "trust.section.support.detail":
-    "Среднее время ответа по почте — до 24 часов. Спорные операции можно передать в центр споров.",
+  "trust.section.support.body": "Финансовые и торговые кейсы — через поддержку или центр споров.",
+  "trust.section.support.detail": "",
 
   "trust.section.risks.title": "Риски и раскрытия",
   "trust.section.risks.body":
-    "Доли музыкальных активов связаны с рыночным, операционным и правовым риском. Доходность не гарантируется.",
-  "trust.section.risks.detail":
-    "Перед входом в сделку изучите документы релиза. Материалы центра доверия не являются инвестиционной рекомендацией.",
+    "Рыночный, операционный и правовой риск. Доходность не гарантируется.",
+  "trust.section.risks.detail": "",
 
   "trust.section.fees.title": "Комиссии и документы",
-  "trust.section.fees.body":
-    "Тарифы, квитанции, выписки и правовой центр — в кабинете и публичных разделах без скрытых удержаний.",
-  "trust.section.fees.detail":
-    "Комиссии с примерами расчёта, история операций по счёту и принятые согласия по политикам платформы.",
+  "trust.section.fees.body": "Тарифы, выписки и правовой центр — без скрытых удержаний.",
+  "trust.section.fees.detail": "",
 
   "trust.link.support": "Поддержка",
   "trust.link.disputes": "Центр споров",

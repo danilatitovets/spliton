@@ -1,18 +1,22 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "@/lib/lucide";
 
 import { ExchangeNeonSparkline, type ExchangeNeonTrend } from "@/components/shared/charts/exchange-neon-sparkline";
+import { AnalyticsHeaderTip } from "../ui/analytics-header-tip";
 import { analyticsReleaseDetailPath } from "@/constants/routes";
 import { directionFromChangePct, parseSignedPercentChange } from "@/lib/analytics/change-pct";
 import { releaseAnalyticsPeriodLabel } from "@/lib/analytics/period-label";
+import { resolveCatalogCoverUrl } from "@/lib/catalog/catalog-demo-covers";
 import { cn } from "@/lib/utils";
 import type { ReleaseAnalyticsPeriod, ReleaseAnalyticsRow } from "@/types/analytics/releases";
 
-const shell = "rounded-2xl bg-[#101010] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.42)] md:p-5";
-const card = cn("group relative flex h-full min-h-[168px] flex-col overflow-hidden", shell, "transition-colors hover:bg-[#121212]");
+const shell = "rounded-xl bg-[#111111] p-4 md:p-5";
+const UP = "#C1FF72";
+const DOWN = "#FF4D8D";
+const BLUE = "#6B7CFF";
 
 function parseYield(y: string) {
   return Number(y.replace("%", "").replace(",", ".").replace("−", "-")) || 0;
@@ -44,18 +48,21 @@ function buildStabilitySparkline(values: number[]): number[] {
     const window = values.slice(Math.max(0, index - 2), index + 1);
     return window.reduce((sum, v) => sum + v, 0) / window.length;
   });
-  return smoothed.map((v) => mean + (v - mean) * 0.1);
+  return smoothed.map((v) => mean + (v - mean) * 0.18);
 }
 
 /** Кумулятивное Δ от первой точки — форма роста/падения по changePct. */
 function buildGrowthSparkline(values: number[], changePct: string): number[] {
   if (values.length < 2) return values;
   const change = parseSignedPercentChange(changePct);
-  if (Math.abs(change) < 1e-6) {
-    return values.map(() => 0);
-  }
   const base = values[0] ?? 1;
-  return values.map((v) => ((v - base) / Math.max(Math.abs(base), 1e-6)) * 100);
+  const path = values.map((v) => ((v - base) / Math.max(Math.abs(base), 1e-6)) * 100);
+  if (Math.abs(change) < 1e-6) {
+    // Flat Δ still needs shape — mild oscillation so the line draws, not a blank bar.
+    const mid = path.reduce((s, v) => s + v, 0) / path.length;
+    return path.map((v, i) => mid + Math.sin(i * 0.9) * 0.35 + (v - mid) * 0.15);
+  }
+  return path;
 }
 
 type InsightPicks = {
@@ -106,74 +113,120 @@ function genreRu(g: ReleaseAnalyticsRow["genre"]) {
   return "Electronic";
 }
 
+function statusRu(s: ReleaseAnalyticsRow["status"]) {
+  if (s === "Active") return "Активен";
+  if (s === "Paused") return "Пауза";
+  return "Закрыт";
+}
+
 function deltaTone(n: number) {
-  if (n > 0) return "text-[#B7F500]";
-  if (n < 0) return "text-rose-400";
-  return "text-sky-400";
+  if (n > 0) return "text-[#C1FF72]";
+  if (n < 0) return "text-[#FF4D8D]";
+  return "text-zinc-500";
+}
+
+function formatVol(v: number) {
+  if (v < 0.005) return "низкая";
+  if (v < 0.05) return v.toFixed(3).replace(".", ",");
+  return v.toFixed(2).replace(".", ",");
 }
 
 function InsightCard({
+  accent,
   eyebrow,
+  tip,
   row,
   heroLabel,
   heroValue,
-  heroHint,
-  showChangeChip = true,
+  heroTone,
+  metaLeft,
+  metaRight,
   sparkValues,
   sparkTrend,
 }: {
+  accent: string;
   eyebrow: string;
+  tip?: string;
   row: ReleaseAnalyticsRow;
   heroLabel: string;
   heroValue: string;
-  heroHint: string;
-  showChangeChip?: boolean;
+  heroTone?: string;
+  metaLeft: string;
+  metaRight: string;
   sparkValues: number[];
   sparkTrend: ExchangeNeonTrend;
 }) {
+  const cover = resolveCatalogCoverUrl(undefined, row.id);
   const d = parseSignedPercentChange(row.changePct);
 
   return (
-    <Link href={analyticsReleaseDetailPath(row.id)} className={card} title="Открыть карточку релиза">
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">{eyebrow}</div>
-        <span className="inline-flex items-center gap-0.5 font-mono text-[10px] font-semibold text-zinc-600 transition group-hover:text-zinc-300">
-          <span className="hidden sm:inline">Открыть</span>
-          <ChevronRight className="size-3.5 opacity-70" aria-hidden />
+    <Link
+      href={analyticsReleaseDetailPath(row.id)}
+      className={cn(shell, "group relative flex h-full min-h-[220px] flex-col transition-colors hover:bg-[#141414]")}
+      title={`${row.release} — открыть`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="size-1.5 shrink-0 rounded-full"
+            style={{ background: accent, boxShadow: `0 0 8px ${accent}` }}
+            aria-hidden
+          />
+          <p className="truncate text-[13px] font-semibold tracking-tight text-white">
+            <AnalyticsHeaderTip label={eyebrow} tip={tip} />
+          </p>
+        </div>
+        <span className="shrink-0 font-mono text-[10px] tabular-nums text-zinc-600">
+          {genreRu(row.genre)} · {statusRu(row.status)}
         </span>
       </div>
 
-      <div className="relative mt-3 flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-xl font-semibold tracking-tight text-white md:text-2xl">{row.release}</div>
-          <div className="mt-1 truncate font-mono text-[12px] text-zinc-500">
-            {row.symbol} · {row.artist}
-          </div>
-          <div className="mt-2 truncate font-mono text-[11px] text-zinc-600">
-            {genreRu(row.genre)} · {row.status === "Active" ? "Активен" : row.status === "Paused" ? "Пауза" : "Закрыт"}
-          </div>
-
-          <div className="mt-5">
-            <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">{heroLabel}</div>
-            <div className="mt-1 flex flex-wrap items-end gap-x-3 gap-y-1">
-              <div className="font-mono text-3xl font-semibold tabular-nums tracking-tight text-white md:text-[34px]">{heroValue}</div>
-              {showChangeChip ? (
-                <div className={cn("font-mono text-sm font-semibold tabular-nums", deltaTone(d))}>{row.changePct}</div>
-              ) : null}
-            </div>
-            <div className="mt-2 font-mono text-[11px] text-zinc-600">{heroHint}</div>
-          </div>
+      <div className="mt-4 flex items-center gap-2.5">
+        <div className="relative size-9 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-1 ring-white/10">
+          <Image src={cover} alt="" fill sizes="36px" className="object-cover" />
         </div>
-
-        <div className="relative shrink-0 rounded-2xl bg-black/30 px-3 py-2">
-          <ExchangeNeonSparkline
-            values={sparkValues}
-            trend={sparkTrend}
-            width={132}
-            height={44}
-            detailSegments={5}
-          />
+        <div className="min-w-0">
+          <p className="truncate font-mono text-[14px] font-semibold text-white">
+            {row.symbol}
+            <span className="font-normal text-zinc-500"> / USDT</span>
+          </p>
+          <p className="truncate text-[12px] text-zinc-500">
+            {row.release}
+            <span className="text-zinc-600"> · {row.artist}</span>
+          </p>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">{heroLabel}</p>
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+          <span
+            className={cn(
+              "font-mono text-[32px] font-semibold leading-none tracking-tight tabular-nums sm:text-[36px]",
+              heroTone ?? "text-white",
+            )}
+          >
+            {heroValue}
+          </span>
+          <span className={cn("font-mono text-[13px] font-semibold tabular-nums", deltaTone(d))}>{row.changePct}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 min-h-0 flex-1">
+        <ExchangeNeonSparkline
+          values={sparkValues}
+          trend={sparkTrend}
+          width={280}
+          height={56}
+          fitContainer
+          detailSegments={6}
+          animateDraw
+        />
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
+        <span className="truncate text-[11px] text-zinc-500">{metaLeft}</span>
+        <span className="shrink-0 font-mono text-[11px] font-semibold tabular-nums text-zinc-300">{metaRight}</span>
       </div>
     </Link>
   );
@@ -189,72 +242,73 @@ export function ReleaseAnalyticsInsights({
   stats: { avgYield: string; active: string; payouts: string; payoutLag: string };
 }) {
   const periodLabel = releaseAnalyticsPeriodLabel(period);
-
   const picks = React.useMemo(() => pickInsightRows(rows), [rows]);
-
   const empty = !rows.length;
-  const canRenderCards = Boolean(picks);
 
   return (
-    <div className="mt-6">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-0.5">
-        <div className="min-w-0">
-          <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Инсайты</div>
-          <h2 className="mt-1 font-sans text-base font-semibold tracking-tight text-white md:text-lg">Срез выборки</h2>
-        </div>
-        <div className="shrink-0 rounded-full bg-[#0a0a0a] px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+    <section className="mt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+        <p className="text-[13px] font-semibold tracking-tight text-white">
+          <AnalyticsHeaderTip
+            label="Инсайты"
+            tip="Автовыбор лидеров по доходности, стабильности линии и изменению Δ в текущей выборке."
+          />
+        </p>
+        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] font-medium tabular-nums text-zinc-500">
           {periodLabel} · {rows.length}
-        </div>
+        </span>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
-        {empty ? (
-          <div className="lg:col-span-3">
-            <div className={cn("items-start", shell)}>
-              <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Нет данных</div>
-              <p className="mt-2 font-sans text-sm text-zinc-400">Ослабьте фильтры — и инсайты появятся снова.</p>
-            </div>
+      <div className="mt-3 grid gap-3 lg:grid-cols-3">
+        {empty || !picks ? (
+          <div className={cn("lg:col-span-3", shell)}>
+            <p className="text-[13px] font-semibold text-white">Нет данных</p>
+            <p className="mt-1.5 text-[12px] text-zinc-500">Ослабьте фильтры — и инсайты появятся снова.</p>
           </div>
-        ) : canRenderCards && picks ? (
+        ) : (
           <>
             <InsightCard
+              accent={UP}
               eyebrow="Лидер доходности"
+              tip="Релиз с максимальной доходностью в текущей выборке."
               row={picks.yield}
               heroLabel="Доходность"
               heroValue={picks.yield.yieldPct}
-              heroHint={`Среднее по сводке: ${stats.avgYield}`}
+              heroTone="text-[#C1FF72]"
+              metaLeft={`Среднее: ${stats.avgYield}`}
+              metaRight={picks.yield.payouts}
               sparkValues={buildYieldSparkline(picks.yield.sparkline, picks.yield.yieldPct)}
               sparkTrend={rowTrend(picks.yield)}
             />
             <InsightCard
+              accent={BLUE}
               eyebrow="Стабильность"
+              tip="Минимальная волатильность линии sparkline при спокойном Δ."
               row={picks.stable}
-              heroLabel="Волатильность линии"
-              heroValue={sparkVolatility(picks.stable.sparkline).toFixed(2)}
-              heroHint={`Лаг выплат: ${stats.payoutLag}`}
+              heroLabel="Волатильность"
+              heroValue={formatVol(sparkVolatility(picks.stable.sparkline))}
+              heroTone="text-white"
+              metaLeft={`Лаг выплат: ${stats.payoutLag || "—"}`}
+              metaRight={picks.stable.yieldPct}
               sparkValues={buildStabilitySparkline(picks.stable.sparkline)}
               sparkTrend="flat"
             />
             <InsightCard
+              accent={DOWN}
               eyebrow="Рост Δ"
+              tip="Максимальное положительное изменение Δ за период."
               row={picks.growth}
               heroLabel="Изменение Δ"
               heroValue={picks.growth.changePct}
-              heroHint={`Доходность ${picks.growth.yieldPct}`}
-              showChangeChip={false}
+              heroTone={deltaTone(parseSignedPercentChange(picks.growth.changePct))}
+              metaLeft={`Доходность ${picks.growth.yieldPct}`}
+              metaRight={picks.growth.payouts}
               sparkValues={buildGrowthSparkline(picks.growth.sparkline, picks.growth.changePct)}
               sparkTrend={directionFromChangePct(picks.growth.changePct)}
             />
           </>
-        ) : (
-          <div className="lg:col-span-3">
-            <div className={cn("items-start", shell)}>
-              <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Нет данных</div>
-              <p className="mt-2 font-sans text-sm text-zinc-400">Не удалось построить инсайты для текущей выборки.</p>
-            </div>
-          </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }

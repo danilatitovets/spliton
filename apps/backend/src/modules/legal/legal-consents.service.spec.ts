@@ -9,8 +9,12 @@ import { LegalAuditService } from './legal-audit.service';
 
 describe('LegalConsentsService', () => {
   const prisma = {
-    legalPolicy: { findFirst: jest.fn(), findUnique: jest.fn() },
-    userLegalConsent: { upsert: jest.fn(), findUnique: jest.fn(), findMany: jest.fn() },
+    legalPolicy: { findFirst: jest.fn(), findUnique: jest.fn(), findMany: jest.fn() },
+    userLegalConsent: {
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
   };
   const legalAudit = { logUserConsent: jest.fn() };
 
@@ -93,15 +97,41 @@ describe('LegalConsentsService', () => {
   });
 
   it('throws when active consent missing via assertConsentsForSource', async () => {
-    prisma.legalPolicy.findFirst.mockResolvedValue({
-      id: 'pol-2',
-      type: LegalPolicyType.TERMS_OF_SERVICE,
-      version: '2.0.0',
-      title: 'Terms',
-      requiresUserConsent: true,
-      status: LegalPolicyStatus.ACTIVE,
-    });
-    prisma.userLegalConsent.findUnique.mockResolvedValue(null);
+    prisma.legalPolicy.findMany.mockResolvedValue([
+      {
+        id: 'pol-2',
+        type: LegalPolicyType.TERMS_OF_SERVICE,
+        version: '2.0.0',
+        title: 'Terms',
+        requiresUserConsent: true,
+        publishedAt: new Date('2026-01-02'),
+      },
+      {
+        id: 'pol-r',
+        type: LegalPolicyType.RISK_DISCLOSURE,
+        version: '1.0.0',
+        title: 'Risk',
+        requiresUserConsent: true,
+        publishedAt: new Date('2026-01-01'),
+      },
+      {
+        id: 'pol-i',
+        type: LegalPolicyType.INVESTOR_AGREEMENT,
+        version: '1.0.0',
+        title: 'Investor',
+        requiresUserConsent: true,
+        publishedAt: new Date('2026-01-01'),
+      },
+      {
+        id: 'pol-f',
+        type: LegalPolicyType.FEE_POLICY,
+        version: '1.0.0',
+        title: 'Fees',
+        requiresUserConsent: true,
+        publishedAt: new Date('2026-01-01'),
+      },
+    ]);
+    prisma.userLegalConsent.findMany.mockResolvedValue([]);
 
     await expect(
       service.assertConsentsForSource('user-1', ConsentSource.PRIMARY_PURCHASE),
@@ -113,20 +143,17 @@ describe('LegalConsentsService', () => {
   });
 
   it('fail-closed when required ACTIVE policy missing for financial source', async () => {
-    prisma.legalPolicy.findFirst.mockImplementation(async ({ where }) => {
-      if (where.type === LegalPolicyType.TERMS_OF_SERVICE) return null;
-      if (where.type === LegalPolicyType.RISK_DISCLOSURE) {
-        return {
-          id: 'pol-r',
-          type: LegalPolicyType.RISK_DISCLOSURE,
-          version: '1.0.0',
-          title: 'Risk',
-          requiresUserConsent: true,
-          status: LegalPolicyStatus.ACTIVE,
-        };
-      }
-      return null;
-    });
+    prisma.legalPolicy.findMany.mockResolvedValue([
+      {
+        id: 'pol-r',
+        type: LegalPolicyType.RISK_DISCLOSURE,
+        version: '1.0.0',
+        title: 'Risk',
+        requiresUserConsent: true,
+        publishedAt: new Date('2026-01-01'),
+      },
+    ]);
+    prisma.userLegalConsent.findMany.mockResolvedValue([]);
 
     const missing = await service.getMissingConsents(
       'user-1',
@@ -149,7 +176,8 @@ describe('LegalConsentsService', () => {
   });
 
   it('does not fail-closed for REGISTER when ACTIVE policy missing', async () => {
-    prisma.legalPolicy.findFirst.mockResolvedValue(null);
+    prisma.legalPolicy.findMany.mockResolvedValue([]);
+    prisma.userLegalConsent.findMany.mockResolvedValue([]);
     const missing = await service.getMissingConsents(
       'user-1',
       ConsentSource.REGISTER,

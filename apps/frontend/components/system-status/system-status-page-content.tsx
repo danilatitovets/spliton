@@ -1,11 +1,10 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
-import { ArrowRight, LifeBuoy, Search } from "@/lib/lucide";
+import { Search } from "@/lib/lucide";
 import Link from "next/link";
 
 import { useI18n } from "@/components/providers/i18n-provider";
-import { buttonVariants } from "@/components/ui/button";
 import {
   StatusPill,
   UptimeBars,
@@ -13,7 +12,6 @@ import {
   getServiceStatusTone,
   getUptimeBars,
 } from "@/components/system-status/system-status-indicators";
-import { SystemStatusOverallHero } from "@/components/system-status/system-status-overall-hero";
 import {
   type IncidentRow,
   type ServiceStatusRow,
@@ -102,9 +100,8 @@ function IncidentRowItem({
 function LoadingSkeleton() {
   return (
     <div className="space-y-8 sm:space-y-10">
-      <div className="h-64 animate-pulse bg-zinc-900/40" />
       <div className="space-y-0 divide-y divide-white/[0.06]">
-        {Array.from({ length: 20 }).map((_, index) => (
+        {Array.from({ length: 12 }).map((_, index) => (
           <div key={index} className="h-16 animate-pulse bg-transparent" />
         ))}
       </div>
@@ -199,14 +196,7 @@ export function SystemStatusPageContent() {
         />
       ) : null}
 
-      <SystemStatusOverallHero
-        tone={data.overall.tone}
-        headline={data.overall.headline}
-        subline={data.overall.subline}
-        explanation={data.overall.explanation}
-        lastUpdatedLabel={data.overall.lastUpdatedLabel}
-        flyLabels={data.services.map((service) => service.name)}
-      />
+      <p className="font-mono text-[11px] tracking-wide text-zinc-500">{data.overall.lastUpdatedLabel}</p>
 
       <section aria-labelledby="services-title">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -221,13 +211,19 @@ export function SystemStatusPageContent() {
             </p>
           </div>
           <label className="relative block w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden />
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("systemStatus.services.searchPlaceholder")}
-              className="h-10 w-full rounded-lg bg-zinc-900/50 pl-9 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:bg-zinc-900/70"
+              className={cn(
+                "h-10 w-full rounded-full bg-white/[0.06] py-2 pl-10 pr-4 font-mono text-sm text-white",
+                "placeholder:text-zinc-600 outline-none transition-[background-color,box-shadow,ring-color] duration-300",
+                "ring-1 ring-white/10 hover:bg-white/[0.08] hover:ring-white/20",
+                "focus:bg-white/[0.1] focus:ring-white/55",
+                "focus:shadow-[0_0_0_1px_rgba(255,255,255,0.35),0_0_24px_rgba(255,255,255,0.2)]",
+              )}
             />
           </label>
         </div>
@@ -346,30 +342,19 @@ export function SystemStatusPageContent() {
         </ul>
       </section>
 
-      <section className="border-t border-white/[0.06] pt-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center text-zinc-400">
-              <LifeBuoy className="size-5" aria-hidden />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight text-white">{t("systemStatus.help.title")}</h2>
-              <p className="mt-1 max-w-xl text-sm text-zinc-500">{t("systemStatus.help.body")}</p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <Link
-              href={ROUTES.support}
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "inline-flex h-10 border-0 bg-white px-6 text-sm font-semibold text-neutral-950 hover:bg-zinc-200",
-              )}
-            >
-              {t("systemStatus.help.cta")}
-              <ArrowRight className="ml-1.5 size-4" aria-hidden />
-            </Link>
-          </div>
-        </div>
+      <section className="border-t border-white/[0.08] pt-8" aria-labelledby="help-title">
+        <h2 id="help-title" className="text-lg font-semibold tracking-tight text-white">
+          {t("systemStatus.help.title")}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">{t("systemStatus.help.body")}</p>
+        <p className="mt-4">
+          <Link
+            href={ROUTES.support}
+            className="text-sm font-medium text-white underline-offset-4 transition hover:text-zinc-200 hover:underline"
+          >
+            {t("systemStatus.help.cta")}
+          </Link>
+        </p>
       </section>
     </div>
   );

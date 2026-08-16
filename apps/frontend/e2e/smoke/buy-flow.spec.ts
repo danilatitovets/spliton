@@ -35,12 +35,17 @@ async function gotoBuyPage(
     return null;
   }
 
-  const roundClosed = await page
-    .getByText(
-      /Первичный раунд завершён|Primary round (is )?closed|Покупка недоступна|sold out/i,
-    )
-    .isVisible()
-    .catch(() => false);
+  // Wait until the page settles on either the login gate or a closed/unavailable state.
+  const loginGate = page.getByTestId('buy-login-gate');
+  const unavailable = page.getByText(
+    /Первичный раунд завершён|Primary round (is )?closed|Покупка недоступна|sold out|Недоступно/i,
+  );
+  await Promise.race([
+    loginGate.waitFor({ state: 'visible', timeout: 30_000 }),
+    unavailable.waitFor({ state: 'visible', timeout: 30_000 }),
+  ]).catch(() => undefined);
+
+  const roundClosed = await unavailable.isVisible().catch(() => false);
   if (roundClosed) {
     test.skip(
       true,
@@ -123,6 +128,15 @@ test.describe('Buy flow smoke', () => {
       await page.goto(`/catalog/buy/${encodeURIComponent(releaseId)}`);
       const notFound = await page.getByTestId('catalog-buy-not-found').isVisible().catch(() => false);
       test.skip(notFound, 'Release not found for auth buy smoke');
+
+      const noUnits = await page
+        .getByText(/нет доступных UNT|no available UNT|Покупка недоступна/i)
+        .isVisible()
+        .catch(() => false);
+      test.skip(
+        noUnits,
+        `Release ${releaseId} shows 0 primary units after mock — pick a live purchasable release or fix primary-round mock.`,
+      );
 
       await expect(page.getByTestId('buy-submit-button')).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(/Недостаточно USDT|Insufficient USDT/i)).toBeVisible({

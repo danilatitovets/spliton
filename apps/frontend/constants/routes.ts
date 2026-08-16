@@ -66,6 +66,10 @@ export const ROUTES = {
   dashboardStatement: "/dashboard/statement",
   /** Кабинет: профиль, верификация, безопасность (макет в стиле exchange account). */
   dashboardProfile: "/dashboard/profile",
+  dashboardProfileLegalDoc: (policyId: string, requireConfirm = true) => {
+    const q = requireConfirm ? "?confirm=1" : "";
+    return `/dashboard/profile/legal/${encodeURIComponent(policyId)}${q}`;
+  },
   dashboardNotifications: "/dashboard/notifications",
   adminNotifications: "/admin/notifications",
   adminUpdates: "/admin/updates",
@@ -162,13 +166,22 @@ export function catalogBuyUnitsPath(idOrSlug: string): string {
   return `${ROUTES.dashboardCatalog}/buy/${encodeURIComponent(key)}`;
 }
 
+/**
+ * Prefer stable UUID over slug — backend UUID path is one parallel DB wave;
+ * slug forces a serial resolve (~2× pooler RTT on cold cache).
+ */
 export function catalogBuyUnitsPathForRelease(release: { id: string; slug?: string | null }): string {
-  return catalogBuyUnitsPath(release.slug?.trim() || release.id);
+  return catalogBuyUnitsPath(release.id || release.slug?.trim() || "");
 }
 
 /** Продажа UNT из кабинета (лимитная цена; id — каталожный id mock-строки). */
 export function assetsSellUnitsPath(id: string): string {
   return `${ROUTES.myAssetsSellUnits}/${encodeURIComponent(id)}`;
+}
+
+/** Карточка позиции / релиза в кабинете (вместо модалки действий). */
+export function assetsPositionDetailPath(id: string): string {
+  return `${ROUTES.dashboardPositions}/${encodeURIComponent(id)}`;
 }
 
 /** Страница лота на вторичке — параметры предложения (id из макета, например `lst-mnr`). */

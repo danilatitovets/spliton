@@ -1,11 +1,12 @@
 "use client";
 
-import { Search, SlidersHorizontal } from "@/lib/lucide";
 import { useMemo, useState } from "react";
 
-import { AssetsFilterField, AssetsFilterSelect } from "@/components/dashboard/assets/assets-filter-field";
-import { AssetsUnderlineTabs } from "@/components/dashboard/assets/assets-underline-tabs";
-import { assetsFilterInputClass } from "@/components/dashboard/assets/assets-ui";
+import { AssetsGptMenu } from "@/components/dashboard/assets/assets-gpt-menu";
+import { AssetsFilterSelect } from "@/components/dashboard/assets/assets-filter-field";
+import { AssetsSearchField } from "@/components/dashboard/assets/assets-search-field";
+import { MetricsGptToggle } from "@/components/dashboard/assets/metrics-gpt-toggle";
+import { assetsMutedCardClass } from "@/components/dashboard/assets/assets-ui";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +60,7 @@ export function ActivityFiltersBar({
   disabled?: boolean;
 }) {
   const { t } = useI18n();
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const tabs = useMemo(
     () =>
@@ -78,12 +79,12 @@ export function ActivityFiltersBar({
 
   const periodOptions = useMemo(
     () => [
-      { value: ACTIVITY_PERIOD_7D, label: t("activity.period.7d") },
-      { value: ACTIVITY_PERIOD_30D, label: t("activity.period.30d") },
-      { value: ACTIVITY_PERIOD_90D, label: t("activity.period.90d") },
-      { value: ACTIVITY_PERIOD_180D, label: t("activity.period.180d") },
-      { value: ACTIVITY_PERIOD_1Y, label: t("activity.period.1y") },
-      { value: ACTIVITY_PERIOD_ALL, label: t("activity.period.all") },
+      { id: ACTIVITY_PERIOD_7D, label: t("activity.period.7d") },
+      { id: ACTIVITY_PERIOD_30D, label: t("activity.period.30d") },
+      { id: ACTIVITY_PERIOD_90D, label: t("activity.period.90d") },
+      { id: ACTIVITY_PERIOD_180D, label: t("activity.period.180d") },
+      { id: ACTIVITY_PERIOD_1Y, label: t("activity.period.1y") },
+      { id: ACTIVITY_PERIOD_ALL, label: t("activity.period.all") },
     ],
     [t],
   );
@@ -98,9 +99,9 @@ export function ActivityFiltersBar({
 
   const statusOptions = useMemo(
     () => [
-      { value: ACTIVITY_STATUS_ALL, label: t("activity.filterAllStatuses") },
+      { id: ACTIVITY_STATUS_ALL, label: t("activity.filterAllStatuses") },
       ...STATUS_VALUES.map((v) => ({
-        value: v,
+        id: v,
         label: t(`activity.widgets.status.${v.toLowerCase()}`),
       })),
     ],
@@ -118,86 +119,97 @@ export function ActivityFiltersBar({
 
   const sortOptions = useMemo(
     () => [
-      { value: "newest", label: t("activity.sort.newest") },
-      { value: "oldest", label: t("activity.sort.oldest") },
-      { value: "amount_desc", label: t("activity.sort.amountDesc") },
-      { value: "amount_asc", label: t("activity.sort.amountAsc") },
+      { id: "newest", label: t("activity.sort.newest") },
+      { id: "oldest", label: t("activity.sort.oldest") },
+      { id: "amount_desc", label: t("activity.sort.amountDesc") },
+      { id: "amount_asc", label: t("activity.sort.amountAsc") },
     ],
     [t],
   );
 
-  return (
-    <div className="space-y-4">
-      <AssetsUnderlineTabs
-        value={activeTab}
-        onChange={onTabChange}
-        items={tabs}
-        disabled={disabled}
-        ariaLabel={t("activity.filters.tabsAria")}
-      />
+  const hasExtraFilters =
+    release !== ACTIVITY_RELEASE_ALL ||
+    direction !== ACTIVITY_DIRECTION_ALL ||
+    query.trim().length > 0;
 
-      <div className="flex flex-wrap items-end gap-3 sm:gap-4">
-        <AssetsFilterField label={t("activity.filters.dateLabel")} className="sm:min-w-[10rem]">
-          <AssetsFilterSelect
+  return (
+    <section className={cn(assetsMutedCardClass, "space-y-3 sm:space-y-4 sm:px-5 sm:py-4")}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <MetricsGptToggle
+          value={activeTab}
+          onChange={(id) => onTabChange(id as ActivityFilterTab)}
+          options={tabs}
+          ariaLabel={t("activity.filters.tabsAria")}
+          size="sm"
+          className={cn(disabled && "pointer-events-none opacity-50")}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <AssetsGptMenu
             value={period}
+            onChange={onPeriodChange}
             options={periodOptions}
-            onSelect={onPeriodChange}
+            ariaLabel={t("activity.filters.dateLabel")}
             disabled={disabled}
           />
-        </AssetsFilterField>
+          <AssetsGptMenu
+            value={status}
+            onChange={onStatusChange}
+            options={statusOptions}
+            ariaLabel={t("activity.filters.statusLabel")}
+            disabled={disabled}
+          />
+          <AssetsGptMenu
+            value={sort}
+            onChange={onSortChange}
+            options={sortOptions}
+            ariaLabel={t("activity.filters.sortLabel")}
+            disabled={disabled}
+          />
+          <button
+            type="button"
+            disabled={disabled}
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((v) => !v)}
+            className={cn(
+              "inline-flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
+              moreOpen || hasExtraFilters
+                ? "bg-[#212121] text-white ring-1 ring-white/10"
+                : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200/80",
+            )}
+          >
+            {t("activity.filters.more")}
+          </button>
+        </div>
+      </div>
 
-        <AssetsFilterField label={t("activity.filters.releaseLabel")}>
+      {moreOpen ? (
+        <div className="grid gap-3 border-t border-neutral-200/80 pt-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
+          <AssetsSearchField
+            value={query}
+            onSubmit={onQueryChange}
+            disabled={disabled}
+            placeholder={t("activity.searchPlaceholder")}
+            aria-label={t("activity.filters.searchLabel")}
+            size="md"
+            inputClassName="bg-white focus:bg-white"
+          />
           <AssetsFilterSelect
             value={release}
             options={releaseFilterOptions}
             onSelect={onReleaseChange}
             disabled={disabled}
+            className="min-w-[10rem] bg-white hover:bg-white"
           />
-        </AssetsFilterField>
-
-        <AssetsFilterField label={t("activity.filters.statusLabel")} className="hidden sm:block">
-          <AssetsFilterSelect value={status} options={statusOptions} onSelect={onStatusChange} disabled={disabled} />
-        </AssetsFilterField>
-
-        <AssetsFilterField label={t("activity.searchPlaceholder")} className="min-w-[12rem] flex-[1.4]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
-            <input
-              value={query}
-              disabled={disabled}
-              onChange={(e) => onQueryChange(e.target.value)}
-              placeholder={t("activity.searchPlaceholder")}
-              className={cn(assetsFilterInputClass, "pl-9")}
-            />
-          </div>
-        </AssetsFilterField>
-
-        <button
-          type="button"
-          onClick={() => setAdvancedOpen((v) => !v)}
-          className="mb-0.5 inline-flex h-10 items-center gap-1.5 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200/70 sm:hidden"
-        >
-          <SlidersHorizontal className="size-4" aria-hidden />
-          {t("activity.filters.more")}
-        </button>
-      </div>
-
-      <div className={cn("flex flex-wrap items-end gap-3 sm:gap-4", !advancedOpen && "hidden sm:flex")}>
-        <AssetsFilterField label={t("activity.filters.statusLabel")} className="sm:hidden">
-          <AssetsFilterSelect value={status} options={statusOptions} onSelect={onStatusChange} disabled={disabled} />
-        </AssetsFilterField>
-        <AssetsFilterField label={t("activity.filters.directionLabel")}>
           <AssetsFilterSelect
             value={direction}
             options={directionOptions}
             onSelect={onDirectionChange}
             disabled={disabled}
+            className="min-w-[9rem] bg-white hover:bg-white"
           />
-        </AssetsFilterField>
-        <AssetsFilterField label={t("activity.filters.sortLabel")}>
-          <AssetsFilterSelect value={sort} options={sortOptions} onSelect={onSortChange} disabled={disabled} />
-        </AssetsFilterField>
-      </div>
-    </div>
+        </div>
+      ) : null}
+    </section>
   );
 }

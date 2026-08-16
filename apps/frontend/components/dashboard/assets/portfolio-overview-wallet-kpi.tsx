@@ -51,7 +51,7 @@ export function PortfolioOverviewWalletKpi({
   if (error && !summary) {
     return (
       <section aria-label={t("assets.overview.walletKpiAria")}>
-        <EmptyState message={t("assets.overview.metricsUnavailable")} />
+        <EmptyState situation="chartEmpty" message={t("assets.overview.metricsUnavailable")} />
       </section>
     );
   }
@@ -59,7 +59,7 @@ export function PortfolioOverviewWalletKpi({
   if (!summary) {
     return (
       <section aria-label={t("assets.overview.walletKpiAria")}>
-        <EmptyState message={t("assets.overview.insufficientData")} />
+        <EmptyState situation="chartSparse" message={t("assets.overview.insufficientData")} />
       </section>
     );
   }

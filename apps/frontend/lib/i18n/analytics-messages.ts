@@ -16,6 +16,7 @@ const RU: Record<string, string> = {
   "analytics.detail.hero.back.catalog": "Рекомендации",
   "analytics.detail.hero.back.secondary": "Вторичный рынок",
   "analytics.detail.hero.back.analytics": "Аналитика релизов",
+  "analytics.detail.hero.back.positions": "Мои позиции",
   "analytics.detail.hero.back.releaseCard": "Карточка релиза",
 
   "analytics.detail.status.active": "Активен",
@@ -150,6 +151,17 @@ const RU: Record<string, string> = {
   "analytics.detail.term.raiseTarget": "Цель сбора",
   "analytics.detail.term.hardCap": "Верхний предел (cap)",
   "analytics.detail.term.totalUnits": "Всего UNT",
+  "analytics.detail.term.promoBudget": "Промо-бюджет",
+  "analytics.detail.term.artistUpfront": "Аванс артисту",
+  "analytics.detail.term.platformUpfront": "Аванс платформе",
+  "analytics.detail.term.group.shares": "Доли",
+  "analytics.detail.term.group.sharesTitle": "Как делится доход",
+  "analytics.detail.term.group.round": "Раунд",
+  "analytics.detail.term.group.roundTitle": "Параметры размещения",
+  "analytics.detail.term.group.cash": "Платежи",
+  "analytics.detail.term.group.cashTitle": "Разовые выплаты",
+  "analytics.detail.term.group.status": "Статус",
+  "analytics.detail.term.group.statusTitle": "Состояние раунда",
 
   "analytics.releases.searchPlaceholder": "Поиск",
   "analytics.releases.table.localMarkAria": "Локальная пометка",
@@ -170,14 +182,33 @@ const RU: Record<string, string> = {
   "analytics.releases.charts.hintPrimary": "Появится после первых primary-покупок",
   "analytics.releases.charts.hintSecondary": "Появится после первых сделок на вторичке",
   "analytics.releases.charts.hintPayouts": "Появится после первого периода выплат",
-  "analytics.releases.charts.insufficientData": "Недостаточно данных",
-  "analytics.releases.charts.insufficientChart": "Недостаточно данных для графика",
+  "analytics.releases.charts.insufficientData": "Нет данных",
+  "analytics.releases.charts.insufficientChart": "Нет данных для графика",
+  "analytics.releases.charts.emptyTitle": "Нет данных",
+  "analytics.releases.charts.emptyBody": "Метрики за выбранный период ещё не накопились. Обновите или попробуйте позже.",
+  "analytics.releases.charts.retry": "Обновить",
+  "analytics.releases.charts.metricsUnavailable": "Метрики временно недоступны",
+  "analytics.releases.charts.titlePrimary": "Первичный объём",
+  "analytics.releases.charts.titleSecondary": "Вторичный объём",
+  "analytics.releases.charts.titlePayouts": "Начисления и выплаты",
+  "analytics.releases.charts.titleFunnel": "Воронка релиза",
+  "analytics.releases.charts.titleCompare": "Сравнение релизов",
+  "analytics.releases.charts.titleGenres": "По жанрам",
+  "analytics.releases.charts.compareEmpty": "Нет релизов для сравнения за период",
+  "analytics.releases.charts.genresEmpty": "Нет распределения по жанрам",
   "analytics.releases.charts.funnelReleases": "Релизы",
   "analytics.releases.charts.funnelActiveRounds": "Активные раунды",
+  "analytics.releases.charts.funnelSold": "UNT продано",
+  "analytics.releases.charts.funnelHolders": "Холдеры",
+  "analytics.releases.charts.funnelPayouts": "Релизы с выплатами",
+  "analytics.releases.charts.funnelListings": "Листинги",
+  "analytics.releases.charts.funnelTrades": "Сделки (период)",
   "analytics.releases.pagination.back": "Назад",
   "analytics.releases.pagination.next": "Далее",
   "analytics.releases.pagination.page": "Страница {page} из {total}",
   "analytics.yieldChart.aria": "Динамика доходности",
+  "analytics.yieldChart.emptyTitle": "Нет данных",
+  "analytics.yieldChart.emptyBody": "Динамика доходности появится после накопления метрик",
   "analytics.yieldChart.stat.last": "Последнее",
   "analytics.yieldChart.stat.deltaStep": "Δ за 1 шаг",
   "analytics.yieldChart.stat.avg": "Среднее",
@@ -215,6 +246,7 @@ const EN: Record<string, string> = {
   "analytics.detail.hero.back.catalog": "Recommendations",
   "analytics.detail.hero.back.secondary": "Secondary market",
   "analytics.detail.hero.back.analytics": "Release analytics",
+  "analytics.detail.hero.back.positions": "My positions",
   "analytics.detail.hero.back.releaseCard": "Release card",
 
   "analytics.detail.status.active": "Active",
@@ -349,6 +381,17 @@ const EN: Record<string, string> = {
   "analytics.detail.term.raiseTarget": "Raise target",
   "analytics.detail.term.hardCap": "Hard cap",
   "analytics.detail.term.totalUnits": "Total UNT",
+  "analytics.detail.term.promoBudget": "Promo budget",
+  "analytics.detail.term.artistUpfront": "Artist upfront",
+  "analytics.detail.term.platformUpfront": "Platform upfront",
+  "analytics.detail.term.group.shares": "Shares",
+  "analytics.detail.term.group.sharesTitle": "How revenue is split",
+  "analytics.detail.term.group.round": "Round",
+  "analytics.detail.term.group.roundTitle": "Placement parameters",
+  "analytics.detail.term.group.cash": "Payments",
+  "analytics.detail.term.group.cashTitle": "One-time payouts",
+  "analytics.detail.term.group.status": "Status",
+  "analytics.detail.term.group.statusTitle": "Round state",
 
   "analytics.releases.searchPlaceholder": "Search",
   "analytics.releases.table.localMarkAria": "Local mark",
@@ -369,14 +412,33 @@ const EN: Record<string, string> = {
   "analytics.releases.charts.hintPrimary": "Appears after first primary purchases",
   "analytics.releases.charts.hintSecondary": "Appears after first secondary trades",
   "analytics.releases.charts.hintPayouts": "Appears after the first payout period",
-  "analytics.releases.charts.insufficientData": "Insufficient data",
-  "analytics.releases.charts.insufficientChart": "Not enough data for the chart",
+  "analytics.releases.charts.insufficientData": "No data",
+  "analytics.releases.charts.insufficientChart": "No chart data",
+  "analytics.releases.charts.emptyTitle": "No data",
+  "analytics.releases.charts.emptyBody": "Metrics for this period are not available yet. Refresh or try again later.",
+  "analytics.releases.charts.retry": "Refresh",
+  "analytics.releases.charts.metricsUnavailable": "Metrics temporarily unavailable",
+  "analytics.releases.charts.titlePrimary": "Primary volume",
+  "analytics.releases.charts.titleSecondary": "Secondary volume",
+  "analytics.releases.charts.titlePayouts": "Payouts / accruals",
+  "analytics.releases.charts.titleFunnel": "Release funnel",
+  "analytics.releases.charts.titleCompare": "Release comparison",
+  "analytics.releases.charts.titleGenres": "By genre",
+  "analytics.releases.charts.compareEmpty": "No releases to compare for this period",
+  "analytics.releases.charts.genresEmpty": "No genre breakdown yet",
   "analytics.releases.charts.funnelReleases": "Releases",
   "analytics.releases.charts.funnelActiveRounds": "Active rounds",
+  "analytics.releases.charts.funnelSold": "UNT sold",
+  "analytics.releases.charts.funnelHolders": "Holders",
+  "analytics.releases.charts.funnelPayouts": "Releases with payouts",
+  "analytics.releases.charts.funnelListings": "Listings",
+  "analytics.releases.charts.funnelTrades": "Trades (period)",
   "analytics.releases.pagination.back": "Back",
   "analytics.releases.pagination.next": "Next",
   "analytics.releases.pagination.page": "Page {page} of {total}",
   "analytics.yieldChart.aria": "Yield dynamics",
+  "analytics.yieldChart.emptyTitle": "No data",
+  "analytics.yieldChart.emptyBody": "Yield dynamics will appear after metrics accumulate",
   "analytics.yieldChart.stat.last": "Latest",
   "analytics.yieldChart.stat.deltaStep": "Δ per step",
   "analytics.yieldChart.stat.avg": "Average",
@@ -414,6 +476,7 @@ const ES: Record<string, string> = {
   "analytics.detail.hero.back.catalog": "Recomendaciones",
   "analytics.detail.hero.back.secondary": "Mercado secundario",
   "analytics.detail.hero.back.analytics": "Analítica de lanzamientos",
+  "analytics.detail.hero.back.positions": "Mis posiciones",
   "analytics.detail.hero.back.releaseCard": "Ficha del lanzamiento",
 
   "analytics.detail.status.active": "Activo",
@@ -548,6 +611,17 @@ const ES: Record<string, string> = {
   "analytics.detail.term.raiseTarget": "Objetivo de recaudación",
   "analytics.detail.term.hardCap": "Límite superior (cap)",
   "analytics.detail.term.totalUnits": "Total UNT",
+  "analytics.detail.term.promoBudget": "Presupuesto promo",
+  "analytics.detail.term.artistUpfront": "Anticipo artista",
+  "analytics.detail.term.platformUpfront": "Anticipo plataforma",
+  "analytics.detail.term.group.shares": "Participaciones",
+  "analytics.detail.term.group.sharesTitle": "Cómo se reparte el ingreso",
+  "analytics.detail.term.group.round": "Ronda",
+  "analytics.detail.term.group.roundTitle": "Parámetros de colocación",
+  "analytics.detail.term.group.cash": "Pagos",
+  "analytics.detail.term.group.cashTitle": "Pagos únicos",
+  "analytics.detail.term.group.status": "Estado",
+  "analytics.detail.term.group.statusTitle": "Estado de la ronda",
 
   "analytics.releases.searchPlaceholder": "Buscar",
   "analytics.releases.table.localMarkAria": "Marca local",
@@ -568,14 +642,33 @@ const ES: Record<string, string> = {
   "analytics.releases.charts.hintPrimary": "Aparecerá tras las primeras compras primarias",
   "analytics.releases.charts.hintSecondary": "Aparecerá tras las primeras operaciones secundarias",
   "analytics.releases.charts.hintPayouts": "Aparecerá tras el primer periodo de pagos",
-  "analytics.releases.charts.insufficientData": "Datos insuficientes",
-  "analytics.releases.charts.insufficientChart": "Datos insuficientes para el gráfico",
+  "analytics.releases.charts.insufficientData": "Sin datos",
+  "analytics.releases.charts.insufficientChart": "Sin datos para el gráfico",
+  "analytics.releases.charts.emptyTitle": "Sin datos",
+  "analytics.releases.charts.emptyBody": "Aún no hay métricas para este periodo. Actualiza o inténtalo más tarde.",
+  "analytics.releases.charts.retry": "Actualizar",
+  "analytics.releases.charts.metricsUnavailable": "Métricas temporalmente no disponibles",
+  "analytics.releases.charts.titlePrimary": "Volumen primario",
+  "analytics.releases.charts.titleSecondary": "Volumen secundario",
+  "analytics.releases.charts.titlePayouts": "Pagos / acumulaciones",
+  "analytics.releases.charts.titleFunnel": "Embudo del lanzamiento",
+  "analytics.releases.charts.titleCompare": "Comparación de lanzamientos",
+  "analytics.releases.charts.titleGenres": "Por género",
+  "analytics.releases.charts.compareEmpty": "No hay lanzamientos para comparar en este periodo",
+  "analytics.releases.charts.genresEmpty": "Aún no hay desglose por género",
   "analytics.releases.charts.funnelReleases": "Lanzamientos",
   "analytics.releases.charts.funnelActiveRounds": "Rondas activas",
+  "analytics.releases.charts.funnelSold": "UNT vendidos",
+  "analytics.releases.charts.funnelHolders": "Holders",
+  "analytics.releases.charts.funnelPayouts": "Lanzamientos con pagos",
+  "analytics.releases.charts.funnelListings": "Listados",
+  "analytics.releases.charts.funnelTrades": "Operaciones (periodo)",
   "analytics.releases.pagination.back": "Atrás",
   "analytics.releases.pagination.next": "Siguiente",
   "analytics.releases.pagination.page": "Página {page} de {total}",
   "analytics.yieldChart.aria": "Dinámica de rentabilidad",
+  "analytics.yieldChart.emptyTitle": "Sin datos",
+  "analytics.yieldChart.emptyBody": "La dinámica de rentabilidad aparecerá tras acumular métricas",
   "analytics.yieldChart.stat.last": "Último",
   "analytics.yieldChart.stat.deltaStep": "Δ por paso",
   "analytics.yieldChart.stat.avg": "Media",
@@ -613,6 +706,7 @@ const PT: Record<string, string> = {
   "analytics.detail.hero.back.catalog": "Recomendações",
   "analytics.detail.hero.back.secondary": "Mercado secundário",
   "analytics.detail.hero.back.analytics": "Análise de lançamentos",
+  "analytics.detail.hero.back.positions": "As minhas posições",
   "analytics.detail.hero.back.releaseCard": "Ficha do lançamento",
 
   "analytics.detail.status.active": "Ativo",
@@ -747,6 +841,17 @@ const PT: Record<string, string> = {
   "analytics.detail.term.raiseTarget": "Objetivo de angariação",
   "analytics.detail.term.hardCap": "Limite superior (cap)",
   "analytics.detail.term.totalUnits": "Total UNT",
+  "analytics.detail.term.promoBudget": "Orçamento promo",
+  "analytics.detail.term.artistUpfront": "Adiantamento artista",
+  "analytics.detail.term.platformUpfront": "Adiantamento plataforma",
+  "analytics.detail.term.group.shares": "Participações",
+  "analytics.detail.term.group.sharesTitle": "Como a receita é dividida",
+  "analytics.detail.term.group.round": "Ronda",
+  "analytics.detail.term.group.roundTitle": "Parâmetros de colocação",
+  "analytics.detail.term.group.cash": "Pagamentos",
+  "analytics.detail.term.group.cashTitle": "Pagamentos únicos",
+  "analytics.detail.term.group.status": "Estado",
+  "analytics.detail.term.group.statusTitle": "Estado da ronda",
 
   "analytics.releases.searchPlaceholder": "Pesquisar",
   "analytics.releases.table.localMarkAria": "Marca local",
@@ -767,14 +872,33 @@ const PT: Record<string, string> = {
   "analytics.releases.charts.hintPrimary": "Aparecerá após as primeiras compras primárias",
   "analytics.releases.charts.hintSecondary": "Aparecerá após as primeiras operações secundárias",
   "analytics.releases.charts.hintPayouts": "Aparecerá após o primeiro período de pagamentos",
-  "analytics.releases.charts.insufficientData": "Dados insuficientes",
-  "analytics.releases.charts.insufficientChart": "Dados insuficientes para o gráfico",
+  "analytics.releases.charts.insufficientData": "Sem dados",
+  "analytics.releases.charts.insufficientChart": "Sem dados para o gráfico",
+  "analytics.releases.charts.emptyTitle": "Sem dados",
+  "analytics.releases.charts.emptyBody": "Ainda não há métricas neste período. Atualize ou tente mais tarde.",
+  "analytics.releases.charts.retry": "Atualizar",
+  "analytics.releases.charts.metricsUnavailable": "Métricas temporariamente indisponíveis",
+  "analytics.releases.charts.titlePrimary": "Volume primário",
+  "analytics.releases.charts.titleSecondary": "Volume secundário",
+  "analytics.releases.charts.titlePayouts": "Pagamentos / acumulações",
+  "analytics.releases.charts.titleFunnel": "Funil do lançamento",
+  "analytics.releases.charts.titleCompare": "Comparação de lançamentos",
+  "analytics.releases.charts.titleGenres": "Por gênero",
+  "analytics.releases.charts.compareEmpty": "Não há lançamentos para comparar neste período",
+  "analytics.releases.charts.genresEmpty": "Ainda não há distribuição por gênero",
   "analytics.releases.charts.funnelReleases": "Lançamentos",
   "analytics.releases.charts.funnelActiveRounds": "Rondas activas",
+  "analytics.releases.charts.funnelSold": "UNT vendidos",
+  "analytics.releases.charts.funnelHolders": "Holders",
+  "analytics.releases.charts.funnelPayouts": "Lançamentos com pagamentos",
+  "analytics.releases.charts.funnelListings": "Listagens",
+  "analytics.releases.charts.funnelTrades": "Negócios (período)",
   "analytics.releases.pagination.back": "Anterior",
   "analytics.releases.pagination.next": "Seguinte",
   "analytics.releases.pagination.page": "Página {page} de {total}",
   "analytics.yieldChart.aria": "Dinâmica de rentabilidade",
+  "analytics.yieldChart.emptyTitle": "Sem dados",
+  "analytics.yieldChart.emptyBody": "A dinâmica de rentabilidade aparecerá após acumular métricas",
   "analytics.yieldChart.stat.last": "Último",
   "analytics.yieldChart.stat.deltaStep": "Δ por passo",
   "analytics.yieldChart.stat.avg": "Média",
@@ -820,16 +944,22 @@ export function analyticsReleaseStatusLabel(
 
 export function analyticsTermLabel(rawKey: string, locale: AppLocale): string {
   const k = rawKey.toLowerCase();
-  const pick = (key: string) => localeMessage(ANALYTICS_MESSAGES, locale, key, rawKey.replace(/\s*\(.*?\)\s*/g, "").trim());
+  const pick = (key: string) =>
+    localeMessage(ANALYTICS_MESSAGES, locale, key, rawKey.replace(/\s*\(.*?\)\s*/g, "").trim());
   if (k.includes("investor")) return pick("analytics.detail.term.investorShare");
-  if (k.includes("artist_share")) return pick("analytics.detail.term.artistShare");
+  if (k.includes("artist_share") || k.includes("artist share")) return pick("analytics.detail.term.artistShare");
   if (k.includes("distribution")) return pick("analytics.detail.term.distribution");
-  if (k.includes("platform_fee")) return pick("analytics.detail.term.platformFee");
-  if (k.includes("raise_target")) return pick("analytics.detail.term.raiseTarget");
-  if (k.includes("hard_cap")) return pick("analytics.detail.term.hardCap");
-  if (k.includes("total_units")) return pick("analytics.detail.term.totalUnits");
-  if (k.includes("текущий статус")) return pick("analytics.detail.secondary.terms.roundStatus");
-  return rawKey.replace(/\s*\(.*?\)\s*/g, "").trim();
+  if (k.includes("platform_fee") || k.includes("platform fee")) return pick("analytics.detail.term.platformFee");
+  if (k.includes("raise_target") || k.includes("raise target")) return pick("analytics.detail.term.raiseTarget");
+  if (k.includes("hard_cap") || k.includes("hard cap")) return pick("analytics.detail.term.hardCap");
+  if (k.includes("total_units") || k.includes("total units")) return pick("analytics.detail.term.totalUnits");
+  if (k.includes("promo_budget") || k.includes("promo budget")) return pick("analytics.detail.term.promoBudget");
+  if (k.includes("artist_upfront") || k.includes("artist upfront")) return pick("analytics.detail.term.artistUpfront");
+  if (k.includes("platform_upfront") || k.includes("platform upfront"))
+    return pick("analytics.detail.term.platformUpfront");
+  if (k.includes("текущий статус") || k.includes("round status") || k.includes("статус"))
+    return pick("analytics.detail.secondary.terms.roundStatus");
+  return rawKey.replace(/\s*\(.*?\)\s*/g, "").replace(/_/g, " ").trim();
 }
 
 export function analyticsHeroBackLabel(
@@ -840,5 +970,6 @@ export function analyticsHeroBackLabel(
   if (override) return override;
   if (source === "catalog") return localeMessage(ANALYTICS_MESSAGES, locale, "analytics.detail.hero.back.catalog");
   if (source === "secondary") return localeMessage(ANALYTICS_MESSAGES, locale, "analytics.detail.hero.back.secondary");
+  if (source === "positions") return localeMessage(ANALYTICS_MESSAGES, locale, "analytics.detail.hero.back.positions");
   return localeMessage(ANALYTICS_MESSAGES, locale, "analytics.detail.hero.back.analytics");
 }

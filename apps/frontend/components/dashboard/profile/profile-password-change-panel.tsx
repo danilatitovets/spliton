@@ -9,10 +9,14 @@ import {
   ProfileSecurityModalFieldList,
   ProfileSecurityModalHints,
 } from "@/components/dashboard/profile/profile-security-modal";
-import { profileModalInputClass, profilePrimaryButtonClass } from "@/components/dashboard/profile/profile-ui";
+import { profileOkxPillClass } from "@/components/dashboard/profile/profile-okx";
+import { PROFILE_GLASS } from "@/components/dashboard/profile/profile-shared";
+import { profileModalInputClass } from "@/components/dashboard/profile/profile-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import { formatApiError } from "@/lib/i18n/format-api-error";
 import { changeUserPassword } from "@/services/user-me.service";
 
 type Props = {
@@ -23,7 +27,7 @@ type Props = {
 
 export function ProfilePasswordChangePanel({ open, onOpenChange, onSuccess }: Props) {
   const { authorizedFetch } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -66,8 +70,12 @@ export function ProfilePasswordChangePanel({ open, onOpenChange, onSuccess }: Pr
       onOpenChange(false);
       onSuccess();
     } catch (e) {
-      const key = e instanceof Error ? e.message : "profile.security.password.error.generic";
-      setError(key.startsWith("profile.") ? t(key) : key);
+      const raw = e instanceof Error ? e.message : "";
+      if (raw.startsWith("profile.")) {
+        setError(t(raw));
+      } else {
+        setError(formatApiError(e, locale));
+      }
     } finally {
       setBusy(false);
     }
@@ -75,6 +83,7 @@ export function ProfilePasswordChangePanel({ open, onOpenChange, onSuccess }: Pr
     authorizedFetch,
     confirmPassword,
     currentPassword,
+    locale,
     newPassword,
     onOpenChange,
     onSuccess,
@@ -92,43 +101,34 @@ export function ProfilePasswordChangePanel({ open, onOpenChange, onSuccess }: Pr
     <ProfileSecurityModal
       open={open}
       onOpenChange={close}
-      eyebrow={t("profile.security.password.title")}
-      title={t("profile.security.password.changeTitle")}
+      title={t("profile.security.password.title")}
+      headline={t("profile.security.password.changeHeadline")}
       description={t("profile.security.password.changeDescription")}
+      hero={PROFILE_GLASS.password}
+      detailsHref={ROUTES.dashboardSupport}
+      detailsLabel={t("profile.okx.details")}
       footer={
-        <div className="space-y-2">
+        <div className="space-y-3">
           {error ? (
-            <p className="text-sm text-red-700" role="alert">
+            <p className="text-center text-sm text-red-400" role="alert">
               {error}
             </p>
           ) : null}
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <button
-              type="button"
-              disabled={busy || !currentPassword || !newPassword || !confirmPassword}
-              onClick={() => void submit()}
-              className={cn(
-                profilePrimaryButtonClass,
-                "h-10 flex-1 bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-60",
-              )}
-            >
-              {busy ? (
-                <>
-                  <SplitonLoader size="xxs" variant="dark" className="mr-2 inline" />
-                  {t("profile.security.password.submitting")}
-                </>
-              ) : (
-                t("profile.security.password.submit")
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => close(false)}
-              className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-[#F5F5F5] text-sm font-semibold text-neutral-900 transition hover:bg-[#EBEBEB]"
-            >
-              {t("profile.security.password.cancel")}
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={busy || !currentPassword || !newPassword || !confirmPassword}
+            onClick={() => void submit()}
+            className={cn(profileOkxPillClass, "disabled:opacity-60")}
+          >
+            {busy ? (
+              <>
+                <SplitonLoader size="xxs" variant="dark" className="mr-2 inline" />
+                {t("profile.security.password.submitting")}
+              </>
+            ) : (
+              t("profile.security.password.submit")
+            )}
+          </button>
         </div>
       }
     >

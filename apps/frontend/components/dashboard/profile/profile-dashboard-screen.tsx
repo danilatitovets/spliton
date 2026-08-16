@@ -59,12 +59,12 @@ export function ProfileDashboardScreen() {
 export function ProfileDashboardScreenFallback() {
   return (
     <div className="scroll-mt-24 space-y-3 sm:space-y-4" aria-busy="true">
-      <div className="h-28 animate-pulse rounded-2xl bg-neutral-100" />
+      <div className="h-28 animate-pulse rounded-2xl bg-white/[0.06]" />
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
-        <div className="h-40 animate-pulse rounded-2xl bg-neutral-100" />
-        <div className="h-40 animate-pulse rounded-2xl bg-neutral-100" />
-        <div className="h-44 animate-pulse rounded-2xl bg-neutral-100" />
-        <div className="h-44 animate-pulse rounded-2xl bg-neutral-100" />
+        <div className="h-40 animate-pulse rounded-2xl bg-white/[0.06]" />
+        <div className="h-40 animate-pulse rounded-2xl bg-white/[0.06]" />
+        <div className="h-44 animate-pulse rounded-2xl bg-white/[0.06]" />
+        <div className="h-44 animate-pulse rounded-2xl bg-white/[0.06]" />
       </div>
     </div>
   );

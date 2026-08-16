@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 
-import { AssetsPageShell } from "@/components/dashboard/assets/assets-page-shell";
-import { PayoutsSectionHeader } from "@/components/dashboard/assets/payouts-section-header";
-
+/** Header/subheader live in parent `assets/layout` so they stay mounted across tabs. */
 export default function AssetsPayoutsLayout({ children }: { children: ReactNode }) {
-  return <AssetsPageShell subheader={<PayoutsSectionHeader />}>{children}</AssetsPageShell>;
+  return children;
 }

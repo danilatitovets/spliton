@@ -20,29 +20,32 @@ export function ReferralFaqList({ items, defaultOpenId = null }: ReferralFaqList
   }, []);
 
   return (
-    <ul className="mt-4 space-y-3" role="list">
+    <ul className="mt-4 divide-y divide-white/[0.08] border-t border-white/[0.08]" role="list">
       {items.map((item) => {
         const open = openId === item.id;
         const panelId = `${baseId}-${item.id}-panel`;
         const btnId = `${baseId}-${item.id}-btn`;
         return (
-          <li key={item.id} className="overflow-hidden rounded-2xl bg-zinc-900/70 backdrop-blur-[2px]">
+          <li key={item.id} className="py-0">
             <button
               id={btnId}
               type="button"
               aria-expanded={open}
               aria-controls={panelId}
               onClick={() => toggle(item.id)}
-              className="flex w-full items-start justify-between gap-3 px-5 py-4 text-left transition hover:bg-white/8"
+              className="flex w-full items-start justify-between gap-3 py-4 text-left transition hover:bg-white/[0.03]"
             >
-              <span className="text-sm font-semibold leading-snug text-neutral-100">{item.question}</span>
+              <span className="text-sm font-semibold leading-snug text-white">{item.question}</span>
               <ChevronDown
-                className={cn("mt-0.5 size-4 shrink-0 text-neutral-500 transition-transform", open && "rotate-180")}
+                className={cn(
+                  "mt-0.5 size-4 shrink-0 text-zinc-500 transition-transform",
+                  open && "rotate-180 text-zinc-300",
+                )}
                 aria-hidden
               />
             </button>
             <div id={panelId} role="region" aria-labelledby={btnId} hidden={!open}>
-              <p className="px-5 pb-5 pr-10 text-sm leading-relaxed text-neutral-300">{item.answer}</p>
+              <p className="pb-4 pr-8 text-sm leading-relaxed text-zinc-400">{item.answer}</p>
             </div>
           </li>
         );

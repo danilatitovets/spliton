@@ -1,76 +1,77 @@
 "use client";
 
-import { Workflow } from "@/lib/lucide";
+import Image from "next/image";
 
 import { useI18n } from "@/components/providers/i18n-provider";
-import type { ReleaseDetailMechanicsBlock, ReleaseDetailPageData } from "@/types/analytics/release-detail";
+import type { ReleaseDetailPageData } from "@/types/analytics/release-detail";
 import { detailPageText } from "@/lib/i18n/analytics-detail-page-messages";
-import { cn } from "@/lib/utils";
 
-import { DetailEmptyState } from "./detail-empty-state";
-import { DetailSection } from "./detail-section";
-
-function HowItWorksBlock({ heading, rows, body }: ReleaseDetailMechanicsBlock) {
-  const hasRows = Boolean(rows?.length);
-
-  return (
-    <article className="min-h-[120px] rounded-xl bg-[#090909] px-4 py-4 ring-1 ring-white/6 md:min-h-[132px] md:px-5 md:py-5">
-      <h3 className="text-sm font-semibold text-white">{heading}</h3>
-      {hasRows ? (
-        <dl
-          className={cn(
-            "mt-3.5 gap-2.5",
-            rows!.length > 1 ? "grid sm:grid-cols-2 lg:grid-cols-3" : "space-y-0",
-          )}
-        >
-          {rows!.map((row) => (
-            <div
-              key={row.label}
-              className={cn(
-                rows!.length > 1 && "rounded-lg bg-black/35 px-3 py-2.5",
-                rows!.length === 1 && "flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4",
-              )}
-            >
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{row.label}</dt>
-              <dd className="font-mono text-[15px] font-semibold leading-snug text-white sm:text-[16px]">
-                {row.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : body ? (
-        <p className="mt-2.5 text-[13px] leading-relaxed text-zinc-400">{body}</p>
-      ) : null}
-    </article>
-  );
-}
+const RINGS_ART = "/images/analytics/release-detail-trust-rings.png";
 
 export function ReleaseDetailHow({ data }: { data: ReleaseDetailPageData }) {
   const { locale } = useI18n();
-  const eyebrow = detailPageText(locale, "analytics.detail.mechanics.eyebrow");
-  const { blocks, title, description } = data.howItWorks;
-  const isEmpty = blocks.length === 0;
+  const { blocks } = data.howItWorks;
+
+  const title = detailPageText(locale, "analytics.detail.trust.growTitle").replace(
+    "{release}",
+    data.row.release,
+  );
+
+  const pillars =
+    blocks.length > 0
+      ? blocks.map((b) => ({
+          heading: b.heading,
+          body: b.body ?? b.rows?.map((r) => `${r.label}: ${r.value}`).join(" · ") ?? "",
+        }))
+      : [
+          {
+            heading: detailPageText(locale, "analytics.detail.trust.pillar1Title"),
+            body: detailPageText(locale, "analytics.detail.trust.pillar1Body"),
+          },
+          {
+            heading: detailPageText(locale, "analytics.detail.trust.pillar2Title"),
+            body: detailPageText(locale, "analytics.detail.trust.pillar2Body"),
+          },
+          {
+            heading: detailPageText(locale, "analytics.detail.trust.pillar3Title"),
+            body: detailPageText(locale, "analytics.detail.trust.pillar3Body"),
+          },
+        ];
+
+  if (pillars.every((p) => !p.heading && !p.body)) {
+    return null;
+  }
 
   return (
-    <DetailSection eyebrow={eyebrow} title={title} description={description}>
-      {isEmpty ? (
-        <div className="rounded-xl bg-[#090909] ring-1 ring-white/6">
-          <DetailEmptyState
-            icon={Workflow}
-            title={detailPageText(locale, "analytics.detail.mechanics.emptyTitle")}
-            body={detailPageText(locale, "analytics.detail.mechanics.empty")}
-            imageSize="sm"
-          />
-        </div>
-      ) : (
-        <div className="grid gap-2.5 md:grid-cols-2">
-          {blocks.map((block) => (
-            <div key={block.heading} className={cn(blocks.length === 1 && "md:col-span-2")}>
-              <HowItWorksBlock {...block} />
-            </div>
-          ))}
-        </div>
-      )}
-    </DetailSection>
+    <section className="mt-14 w-full space-y-8 md:mt-20 md:space-y-10" aria-label={title}>
+      <h2 className="mx-auto max-w-[28ch] text-balance text-center text-[1.65rem] font-semibold leading-[1.15] tracking-tight text-white sm:text-3xl lg:text-[2.1rem]">
+        {title}
+      </h2>
+
+      <div className="relative mx-auto aspect-square w-full max-w-[280px] sm:max-w-[320px]">
+        <Image
+          src={RINGS_ART}
+          alt=""
+          fill
+          sizes="(max-width:640px) 280px, 320px"
+          className="object-contain"
+        />
+      </div>
+
+      <div className="grid w-full gap-x-8 gap-y-10 sm:grid-cols-2 lg:gap-x-12 lg:gap-y-12">
+        {pillars.map((pillar) => (
+          <article key={pillar.heading} className="min-w-0">
+            <h3 className="text-[15px] font-semibold tracking-tight text-white sm:text-base">
+              {pillar.heading}
+            </h3>
+            {pillar.body ? (
+              <p className="mt-2 text-[13px] leading-relaxed tracking-normal text-white/45">
+                {pillar.body}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }

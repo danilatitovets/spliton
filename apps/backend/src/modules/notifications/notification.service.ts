@@ -7,6 +7,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TtlCacheService } from '../../common/cache/ttl-cache.service';
 import { resolvePagination } from '../../common/pagination/pagination.util';
 import { throwAdminError } from '../admin/common/admin-http.util';
 import { EmailService } from '../email/email.service';
@@ -38,6 +39,7 @@ export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
+    private readonly cache: TtlCacheService,
   ) {}
 
   async notifyUser(
@@ -342,13 +344,39 @@ export class NotificationService {
   }
 
   async unreadCountForUser(userId: string, roles: string[]) {
-    const count = await this.prisma.inAppNotification.count({
-      where: {
-        ...this.audienceWhereForUser(userId, roles),
-        readAt: null,
-      },
+    const roleKey = [...roles].sort().join(',') || '__none__';
+    const cacheKey = `notif:unread:${userId}:${roleKey}`;
+    return this.cache.getOrSet(cacheKey, 60_000, async () => {
+      const started = performance.now();
+      const roleList = roles.length ? roles : ['__none__'];
+      // Single RTT — three parallel counts still cost ~3× pooler latency on miss.
+      const rows = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(*)::bigint AS count
+        FROM in_app_notifications n
+        WHERE n.dismissed_at IS NULL
+          AND n.read_at IS NULL
+          AND (
+            (n.audience = 'USER' AND n.recipient_user_id = ${userId}::uuid)
+            OR (n.audience = 'ADMIN' AND n.recipient_user_id = ${userId}::uuid)
+            OR (
+              n.audience = 'ROLE'
+              AND n.recipient_role_code IN (${Prisma.join(roleList)})
+            )
+          )
+      `;
+      const count = Number(rows[0]?.count ?? 0);
+      const durationMs = Math.round(performance.now() - started);
+      if (durationMs >= 200) {
+        this.logger.warn(
+          JSON.stringify({
+            event: 'notifications.unreadCount.slow',
+            durationMs,
+            count,
+          }),
+        );
+      }
+      return { count };
     });
-    return { count };
   }
 
   async markRead(userId: string, roles: string[], notificationId: string) {
@@ -357,6 +385,7 @@ export class NotificationService {
       where: { id: notificationId },
       data: { readAt: new Date() },
     });
+    this.cache.invalidatePrefix(`notif:unread:${userId}`);
     return this.mapRow(row);
   }
 
@@ -368,6 +397,7 @@ export class NotificationService {
       },
       data: { readAt: new Date() },
     });
+    this.cache.invalidatePrefix(`notif:unread:${userId}`);
     return { updated: result.count };
   }
 

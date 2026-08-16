@@ -169,7 +169,6 @@ export function HoldingsMetricsScene() {
       </div>
 
       <section className="relative min-h-0 flex-1 overflow-visible rounded-lg bg-white px-1.5 py-1 ring-1 ring-neutral-200/60">
-        <p className="text-[4px] font-semibold uppercase tracking-[0.12em] text-neutral-400">Metrics · PnL</p>
         <p className="mt-0.5 text-[6.5px] font-semibold text-neutral-900">{t("metrics.pnlTitle")}</p>
         <p className="font-mono text-[10px] font-semibold tabular-nums text-emerald-700">+4,2%</p>
         <div className="mt-1 flex gap-0.5 rounded-md bg-neutral-100 p-0.5" aria-hidden>

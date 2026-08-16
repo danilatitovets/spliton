@@ -7,6 +7,7 @@ import {
   useCatalogPhaseOptions,
   useCatalogSortOptions,
 } from "@/hooks/use-catalog-i18n";
+import { catalogGenreLabelKey } from "@/lib/catalog/catalog-genre";
 import { tf } from "@/lib/i18n/financial-messages";
 import { intlLocaleFor } from "@/lib/i18n/formatters";
 import type { AppLocale } from "@/lib/i18n/types";
@@ -44,6 +45,7 @@ export function useCatalogActiveFilters({
   minProgress,
   minYield,
   minLiquidity,
+  favoritesOnly,
   onQuery,
   onKind,
   onPhase,
@@ -54,6 +56,7 @@ export function useCatalogActiveFilters({
   onMinProgress,
   onMinYield,
   onMinLiquidity,
+  onFavoritesOnly,
   locale,
   t,
 }: {
@@ -67,6 +70,7 @@ export function useCatalogActiveFilters({
   minProgress: string;
   minYield: string;
   minLiquidity: string;
+  favoritesOnly?: boolean;
   onQuery: (value: string) => void;
   onKind: (value: CatalogKindFilter) => void;
   onPhase: (value: CatalogFundingPhase) => void;
@@ -77,6 +81,7 @@ export function useCatalogActiveFilters({
   onMinProgress: (value: string) => void;
   onMinYield: (value: string) => void;
   onMinLiquidity: (value: string) => void;
+  onFavoritesOnly?: (value: boolean) => void;
   locale: AppLocale;
   t: (key: string) => string;
 }): CatalogActiveFilter[] {
@@ -87,6 +92,13 @@ export function useCatalogActiveFilters({
   return useMemo(() => {
     const filters: CatalogActiveFilter[] = [];
 
+    if (favoritesOnly) {
+      filters.push({
+        id: "favorites",
+        label: t("catalog.filters.chip.favorites"),
+        onClear: () => onFavoritesOnly?.(false),
+      });
+    }
     if (kind !== "all") {
       filters.push({
         id: "kind",
@@ -102,7 +114,12 @@ export function useCatalogActiveFilters({
       });
     }
     if (genre) {
-      filters.push({ id: "genre", label: genre, onClear: () => onGenre("") });
+      const labelKey = catalogGenreLabelKey(genre);
+      filters.push({
+        id: "genre",
+        label: labelKey ? t(labelKey) : genre,
+        onClear: () => onGenre(""),
+      });
     }
     if (sort !== "catalog_order") {
       filters.push({
@@ -166,6 +183,7 @@ export function useCatalogActiveFilters({
 
     return filters;
   }, [
+    favoritesOnly,
     genre,
     kind,
     kindOptions,
@@ -175,6 +193,7 @@ export function useCatalogActiveFilters({
     minPrice,
     minProgress,
     minYield,
+    onFavoritesOnly,
     onGenre,
     onKind,
     onMaxPrice,

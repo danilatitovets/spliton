@@ -1,29 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import type { ReactNode } from "react";
 import {
   AlertTriangle,
-  Banknote,
-  BookOpen,
   CheckCircle2,
-  ExternalLink,
-  Info,
+  ChevronRight,
   XCircle,
 } from "@/lib/lucide";
 
 import { SplitonLoader } from "@/components/ui/spliton-loader";
-import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
-import {
-  smTableActionReleasePill,
-  smTableActionSecondaryPill,
-} from "@/components/dashboard/secondary-market/secondary-market-table-action-styles";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { secondaryMarketHref } from "@/constants/dashboard/secondary-market";
 import { analyticsReleaseDetailPath, secondaryMarketListingInfoPath } from "@/constants/routes";
 import { tf } from "@/lib/i18n/financial-messages";
 import type { AdaptedListing } from "@/lib/secondary-market/secondary-market-adapter";
 import type { LotPurchaseFailedKind } from "@/lib/secondary-market/classify-lot-purchase-error";
 import { formatUsdtRu } from "@/lib/wallet/format-money";
-import { cn } from "@/lib/utils";
 import type { BuyTradeResult, FeePreviewDto } from "@/services/secondary-market.service";
 
 import { BreakdownRow } from "./secondary-market-lot-purchase-breakdown";
@@ -34,9 +28,46 @@ import {
   LOT_PURCHASE_DEPOSIT_PATH,
 } from "./secondary-market-lot-purchase-flow-utils";
 
-const actionRow = "inline-flex h-11 w-full items-center justify-center gap-2";
-
 type TFn = (key: string) => string;
+
+function LotNavLink({
+  children,
+  href,
+  onClick,
+  scroll,
+}: {
+  children: ReactNode;
+  href?: string;
+  onClick?: () => void;
+  scroll?: boolean;
+}) {
+  const className =
+    "group flex h-12 w-full items-center justify-between gap-3 px-4 text-left text-[13px] font-medium tracking-[-0.01em] text-white/85 transition hover:bg-white/[0.04] hover:text-white";
+
+  if (href) {
+    return (
+      <Link href={href} scroll={scroll} className={className} onClick={onClick}>
+        <span className="min-w-0 truncate">{children}</span>
+        <ChevronRight
+          className="size-4 shrink-0 text-zinc-600 transition group-hover:text-zinc-400"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" className={className} onClick={onClick}>
+      <span className="min-w-0 truncate">{children}</span>
+      <ChevronRight
+        className="size-4 shrink-0 text-zinc-600 transition group-hover:text-zinc-400"
+        strokeWidth={1.75}
+        aria-hidden
+      />
+    </button>
+  );
+}
 
 type ActionsScreenProps = {
   t: TFn;
@@ -53,6 +84,8 @@ type ActionsScreenProps = {
   onBuyClick: () => void;
   onOpenOrderBook: () => void;
   onClose: () => void;
+  /** Primary CTA rendered in the sheet footer instead. */
+  hidePrimaryCta?: boolean;
 };
 
 export function LotPurchaseActionsScreen({
@@ -70,131 +103,114 @@ export function LotPurchaseActionsScreen({
   onBuyClick,
   onOpenOrderBook,
   onClose,
+  hidePrimaryCta = false,
 }: ActionsScreenProps) {
+  const previewBusy = feeLoading || walletLoading;
+  const priceLabel = formatUsdtRu(String(listing.pricePerUnit)).replace(/ USDT$/, "");
+
   return (
-    <div className="space-y-3.5">
-      <div className="rounded-xl bg-white/4 px-4 py-3.5 ring-1 ring-white/8">
-        <p className="font-mono text-[11px] text-zinc-500">
-          {tf(t("secondaryMarket.lotPurchase.summaryLine"), {
-            units: String(listing.unitsAvailable),
-            price: formatUsdtRu(String(listing.pricePerUnit)).replace(/ USDT$/, ""),
-          })}
-        </p>
-        <dl className="mt-3 space-y-0.5">
+    <div className="space-y-5">
+      <section className="overflow-hidden rounded-2xl bg-white/[0.035] ring-1 ring-white/[0.08]">
+        <div className="border-b border-white/[0.06] px-4 py-3.5">
+          <p className="font-mono text-[12px] tabular-nums text-zinc-500">
+            {tf(t("secondaryMarket.lotPurchase.summaryLine"), {
+              units: String(listing.unitsAvailable),
+              price: priceLabel,
+            })}
+          </p>
+        </div>
+
+        <dl className="space-y-0 px-4 py-2">
           <BreakdownRow
             label={t("secondaryMarket.lotPurchase.lotGross")}
             value={formatUsdtRu(feePreview?.grossAmount ?? String(listing.listingValueUsdt))}
           />
-          {feeLoading ? (
-            <p className="flex items-center gap-2 py-1 font-mono text-[11px] text-zinc-500">
-              <SplitonLoader size="xxs" variant="light" />
-              {t("secondaryMarket.lotPurchase.feePreviewLoading")}
-            </p>
-          ) : feePreview ? (
+          {feePreview ? (
             <BreakdownRow
               label={formatLotMessage(t("secondaryMarket.lotPurchase.feeLine"), { pct: feePreview.feePct })}
               value={formatUsdtRu(feePreview.feeAmount)}
             />
           ) : null}
-          <BreakdownRow
-            label={t("secondaryMarket.lotPurchase.buyerTotal")}
-            value={formatUsdtRu(feePreview?.buyerTotal ?? String(listing.listingValueUsdt))}
-            highlight
-          />
-          {walletLoading ? (
-            <p className="flex items-center gap-2 py-1 font-mono text-[11px] text-zinc-500">
-              <SplitonLoader size="xxs" variant="light" />
-              {t("secondaryMarket.lotPurchase.walletLoading")}
-            </p>
-          ) : walletBalance != null ? (
+          <div className="border-t border-white/[0.06] pt-1">
+            <BreakdownRow
+              label={t("secondaryMarket.lotPurchase.buyerTotal")}
+              value={formatUsdtRu(feePreview?.buyerTotal ?? String(listing.listingValueUsdt))}
+              highlight
+            />
+          </div>
+          {walletBalance != null ? (
             <BreakdownRow
               label={t("secondaryMarket.lotPurchase.walletAvailable")}
               value={formatUsdtRu(walletBalance)}
             />
           ) : null}
         </dl>
+
+        <div className="flex items-center justify-between gap-3 border-t border-white/[0.06] px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="relative inline-flex size-5 overflow-hidden rounded-full bg-[#26A17B]/20 ring-1 ring-[#26A17B]/30">
+              <Image src="/images/currency/usdt.svg" alt="" width={20} height={20} className="object-contain p-0.5" />
+            </span>
+            <span className="text-[11px] font-medium text-zinc-500">USDT</span>
+          </div>
+          {previewBusy ? (
+            <div className="flex items-center gap-2 text-white/35" aria-busy="true">
+              <SplitonLoader size="xxs" variant="light" />
+            </div>
+          ) : null}
+        </div>
+
         {feeError ? (
-          <p className="mt-3 rounded-lg bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200" role="alert">
+          <p className="mx-4 mb-3 rounded-xl bg-rose-500/10 px-3 py-2 text-[11px] leading-relaxed text-rose-200" role="alert">
             {feeError}
           </p>
         ) : null}
         {walletError ? (
-          <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100" role="alert">
+          <p className="mx-4 mb-3 rounded-xl bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-100" role="alert">
             {walletError}
           </p>
         ) : null}
-      </div>
+      </section>
 
-      <p className="text-[11px] leading-relaxed text-zinc-600">{t("secondaryMarket.lotPurchase.lotExplain")}</p>
-
-      {canBuy ? (
-        <button
-          type="button"
-          disabled={previewBlocking || !feePreview}
-          onClick={onBuyClick}
-          className={cn(smExchange.submitBuy, actionRow, "disabled:opacity-50")}
-        >
-          <Banknote className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-          {t("secondaryMarket.listings.buyLot")}
-        </button>
-      ) : (
-        <p className="rounded-lg bg-white/4 px-3 py-2.5 text-[12px] text-zinc-500" role="status">
-          {t("secondaryMarket.lotPurchase.cannotBuyNote")}
-        </p>
-      )}
-
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
-        {t("secondaryMarket.lotPurchase.secondaryActions")}
-      </p>
-      <div className="space-y-2">
-        {bookId ? (
-          <button
+      {!hidePrimaryCta ? (
+        canBuy ? (
+          <SplitonCtaPill
             type="button"
-            title={t("secondaryMarket.listings.modalTooltipOrderBook")}
-            onClick={onOpenOrderBook}
-            className={cn(smTableActionReleasePill, actionRow, "text-[13px]")}
+            tone="onDark"
+            disabled={previewBlocking || !feePreview}
+            onClick={onBuyClick}
+            className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-45"
           >
-            <BookOpen className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-            {t("secondaryMarket.actions.openOrderBook")}
-          </button>
+            {t("secondaryMarket.listings.buyLot")}
+          </SplitonCtaPill>
         ) : (
-          <Link
-            href={secondaryMarketHref("market")}
-            title={t("secondaryMarket.listings.modalTooltipGoToMarket")}
-            className={cn(smTableActionReleasePill, actionRow, "text-[13px]")}
-            onClick={onClose}
-          >
-            <BookOpen className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-[12px] leading-relaxed text-zinc-500 ring-1 ring-white/[0.06]" role="status">
+            {t("secondaryMarket.lotPurchase.cannotBuyNote")}
+          </p>
+        )
+      ) : null}
+
+      <nav className="overflow-hidden rounded-2xl ring-1 ring-white/[0.08]" aria-label={t("secondaryMarket.lotPurchase.actionsTitle")}>
+        {bookId ? (
+          <LotNavLink onClick={onOpenOrderBook}>{t("secondaryMarket.actions.openOrderBook")}</LotNavLink>
+        ) : (
+          <LotNavLink href={secondaryMarketHref("market")} onClick={onClose}>
             {t("secondaryMarket.trade.openMarket")}
-          </Link>
+          </LotNavLink>
         )}
-        <Link
+        <div className="mx-4 h-px bg-white/[0.06]" aria-hidden />
+        <LotNavLink
           href={`${analyticsReleaseDetailPath(listing.analyticsCatalogId)}?from=secondary`}
           scroll={false}
-          title={t("secondaryMarket.listings.modalTooltipRelease")}
-          className={cn(smTableActionSecondaryPill, actionRow, "text-[12px]")}
           onClick={onClose}
         >
-          <ExternalLink className="size-3.5 shrink-0 opacity-70" strokeWidth={2} aria-hidden />
           {t("secondaryMarket.actions.openRelease")}
-        </Link>
-        <Link
-          href={secondaryMarketListingInfoPath(listing.id)}
-          title={t("secondaryMarket.listings.modalTooltipListing")}
-          className={cn(smTableActionSecondaryPill, actionRow, "text-[12px]")}
-          onClick={onClose}
-        >
-          <Info className="size-3.5 shrink-0 opacity-70" strokeWidth={2} aria-hidden />
+        </LotNavLink>
+        <div className="mx-4 h-px bg-white/[0.06]" aria-hidden />
+        <LotNavLink href={secondaryMarketListingInfoPath(listing.id)} onClick={onClose}>
           {t("secondaryMarket.listingDetail.moreAboutLot")}
-        </Link>
-      </div>
-      <p className="text-[11px] leading-relaxed text-zinc-600">
-        {tf(t("secondaryMarket.listings.modalLegendHint"), {
-          book: t("secondaryMarket.listings.modalLegendBook"),
-          lot: t("secondaryMarket.listings.modalLegendLot"),
-          release: t("secondaryMarket.listings.modalLegendRelease"),
-        })}
-      </p>
+        </LotNavLink>
+      </nav>
     </div>
   );
 }
@@ -228,7 +244,7 @@ export function LotPurchaseConfirmScreen({
 
   return (
     <div className="space-y-4">
-      <dl className="rounded-xl bg-white/4 px-4 py-3.5 ring-1 ring-white/8">
+      <dl className="overflow-hidden rounded-2xl bg-white/[0.035] px-4 py-2 ring-1 ring-white/[0.08]">
         <BreakdownRow label={t("secondaryMarket.lotPurchase.summaryUnits")} value={listing.unitsAvailable} />
         <BreakdownRow
           label={t("secondaryMarket.listingDetail.pricePerUnit")}
@@ -242,7 +258,7 @@ export function LotPurchaseConfirmScreen({
           label={formatLotMessage(t("secondaryMarket.lotPurchase.feeLine"), { pct: feePreview?.feePct ?? "-" })}
           value={formatUsdtRu(feePreview?.feeAmount ?? "0")}
         />
-        <div className="border-t border-white/10 pt-2">
+        <div className="border-t border-white/[0.06] pt-1">
           <BreakdownRow
             label={t("secondaryMarket.lotPurchase.buyerTotal")}
             value={formatUsdtRu(feePreview?.buyerTotal ?? String(listing.listingValueUsdt))}
@@ -335,7 +351,7 @@ export function LotPurchaseSuccessScreen({
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-[#B7F500]" aria-hidden />
+        <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-white" aria-hidden />
         <div>
           <p className="text-[15px] font-semibold text-white">{t("secondaryMarket.lotPurchase.successTitle")}</p>
           <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
@@ -343,7 +359,7 @@ export function LotPurchaseSuccessScreen({
           </p>
         </div>
       </div>
-      <dl className="rounded-xl bg-white/4 px-4 py-3.5 font-mono text-[12px] ring-1 ring-white/8">
+      <dl className="overflow-hidden rounded-2xl bg-white/[0.035] px-4 py-2 font-mono text-[12px] ring-1 ring-white/[0.08]">
         <BreakdownRow label={t("secondaryMarket.lotPurchase.unitsBought")} value={buyResult.units} />
         <BreakdownRow label={t("secondaryMarket.lotPurchase.debited")} value={formatUsdtRu(buyResult.grossAmount)} />
         <BreakdownRow label={t("secondaryMarket.lotPurchase.feeCharged")} value={formatUsdtRu(buyResult.feeAmount)} />

@@ -183,3 +183,57 @@ export async function reconcileAdminDeposit(
   }
   return patchAdminDepositStatus(id, "completed", note, client);
 }
+
+export type AdminCryptoHealth = {
+  provider: { ok: boolean; mode: string; message?: string; lastBlock?: string; network?: string };
+  workerEnabled: boolean;
+  watcherStatus: string | null;
+  lastRunAt: string | null;
+  lastScannedBlock: string | null;
+  lastError: string | null;
+  addressesWatched: number;
+  pendingDeposits: number;
+  failedDeposits: number;
+  unknownAddresses: number;
+  ingestionLagMs: number | null;
+  killSwitchCredit: boolean;
+  depositsEnabled: boolean;
+};
+
+export async function recoverAdminDepositByTxHash(
+  txHash: string,
+  client?: AdminApiClient,
+): Promise<{ depositId: string | null; status: string; reason?: string }> {
+  if (getAdminDataSource() === "live") {
+    requireAdminLiveClient(client);
+    return client.post(ADMIN_API_PATHS.depositRecover, { txHash });
+  }
+  await adminMockDelay(200);
+  return { depositId: null, status: "mock", reason: "Live recovery only" };
+}
+
+export async function recheckAdminDeposit(
+  id: string,
+  client?: AdminApiClient,
+): Promise<{ id: string; status: string }> {
+  if (getAdminDataSource() === "live") {
+    requireAdminLiveClient(client);
+    return client.post(`${ADMIN_API_PATHS.deposit(id)}/recheck`, {});
+  }
+  await adminMockDelay(120);
+  return { id, status: "pending" };
+}
+
+export async function getAdminCryptoHealth(client?: AdminApiClient): Promise<AdminCryptoHealth | null> {
+  if (getAdminDataSource() !== "live") return null;
+  requireAdminLiveClient(client);
+  return client.get<AdminCryptoHealth>(ADMIN_API_PATHS.depositIngestionHealth);
+}
+
+export async function listUnattributedOnchainTransfers(
+  client?: AdminApiClient,
+): Promise<Array<{ id: string; blockchainTxid: string; toAddress: string; amount: string; reason: string }>> {
+  if (getAdminDataSource() !== "live") return [];
+  requireAdminLiveClient(client);
+  return client.get(ADMIN_API_PATHS.depositUnattributed);
+}

@@ -461,31 +461,12 @@ export class UserAnalyticsService {
     userId: string | null,
     locale: AppLocale = AppLocale.ru,
   ): Promise<UserAnalyticsDetailDto> {
-    const releaseId = await this.resolve.resolveReleaseId(releaseKey);
-    await this.resolve.assertPublicRelease(releaseId);
-    const release = await this.resolve.loadRelease(releaseId);
+    const release = await this.resolve.loadPublicReleaseByKey(releaseKey);
+    const releaseId = release.id;
     const meta = this.mapReleaseMeta(release);
 
-    let holding = null;
-    if (userId) {
-      const pos = await this.positions.loadPositionForRelease(userId, releaseId);
-      if (pos) {
-        holding = {
-          unitsTotal: pos.unitsTotal,
-          unitsAvailable: pos.unitsAvailable,
-          unitsLocked: pos.unitsLocked,
-          avgEntryPrice: pos.avgEntryPrice,
-          currentPrice: pos.currentPrice,
-          marketValueUsdt: pos.marketValue,
-          costBasisUsdt: pos.costBasis,
-          pnlUnrealizedUsdt: pos.pnlUnrealized,
-          pnlPct: pos.pnlPct,
-          portfolioSharePct: pos.portfolioSharePct,
-        };
-      }
-    }
-
-    const [metrics, faq, payoutSummary] = await Promise.all([
+    const [holdingPos, metrics, faq, payoutSummary] = await Promise.all([
+      userId ? this.positions.loadPositionForRelease(userId, releaseId) : Promise.resolve(null),
       this.prisma.releaseMetricsDaily.findFirst({
         where: { releaseId },
         orderBy: { asOfDate: 'desc' },
@@ -493,6 +474,21 @@ export class UserAnalyticsService {
       this.loadPublishedFaq(releaseId, locale),
       this.computePayoutSummary(releaseId),
     ]);
+
+    const holding = holdingPos
+      ? {
+          unitsTotal: holdingPos.unitsTotal,
+          unitsAvailable: holdingPos.unitsAvailable,
+          unitsLocked: holdingPos.unitsLocked,
+          avgEntryPrice: holdingPos.avgEntryPrice,
+          currentPrice: holdingPos.currentPrice,
+          marketValueUsdt: holdingPos.marketValue,
+          costBasisUsdt: holdingPos.costBasis,
+          pnlUnrealizedUsdt: holdingPos.pnlUnrealized,
+          pnlPct: holdingPos.pnlPct,
+          portfolioSharePct: holdingPos.portfolioSharePct,
+        }
+      : null;
 
     return {
       release: meta,
@@ -516,14 +512,30 @@ export class UserAnalyticsService {
     userId: string | null,
     locale: AppLocale = AppLocale.ru,
   ): Promise<ReleaseDetailFullDto> {
-    const releaseId = await this.resolve.resolveReleaseId(releaseKey);
-    await this.resolve.assertPublicRelease(releaseId);
-    const [detail, market, payouts] = await Promise.all([
-      this.getDetail(releaseKey, userId, locale),
-      this.getMarket(releaseKey),
-      this.getPayouts(releaseKey, userId),
-    ]);
-    const release = await this.resolve.loadRelease(releaseId);
+    // Cache BEFORE resolve — warm path must not pay a DB RTT.
+    const publicCacheKey = `ua:fullDetail:v2:key:${releaseKey}:${locale}`;
+    const publicDto = await this.cache.getOrSet(
+      publicCacheKey,
+      CACHE_TTL_MS.analyticsReleasesOverview,
+      async () => {
+        const release = await this.resolve.loadPublicReleaseByKey(releaseKey);
+        return this.buildFullDetailPublic(release, locale);
+      },
+      { staleTtlMs: 300_000 },
+    );
+
+    if (!userId) return publicDto;
+
+    const release = await this.resolve.loadPublicReleaseByKey(releaseKey);
+    return this.attachUserToFullDetail(publicDto, release, userId);
+  }
+
+  private async buildFullDetailPublic(
+    release: Awaited<ReturnType<UserAnalyticsResolveService['loadPublicReleaseByKey']>>,
+    locale: AppLocale,
+  ): Promise<ReleaseDetailFullDto> {
+    const releaseId = release.id;
+    const meta = this.mapReleaseMeta(release);
     const round = release.primaryRaiseRounds[0];
     const soldUnits = round
       ? round.soldUnits
@@ -545,12 +557,50 @@ export class UserAnalyticsService {
       soldUnits,
       release.totalUnits,
     );
+    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const [trades30dVol, lastTrade, obSnap] = await Promise.all([
+    // Single parallel wave — previously nested getDetail/getMarket/getPayouts
+    // re-resolved the release 3× and then ran more serial queries.
+    const [
+      metrics,
+      faq,
+      payoutSummary,
+      ctxMap,
+      activeListings,
+      trades7d,
+      trades30dVol,
+      lastTrade,
+      obSnap,
+      docs,
+      distributions,
+    ] = await Promise.all([
+      this.prisma.releaseMetricsDaily.findFirst({
+        where: { releaseId },
+        orderBy: { asOfDate: 'desc' },
+      }),
+      this.loadPublishedFaq(releaseId, locale),
+      this.computePayoutSummary(releaseId),
+      this.enrichment.loadByReleaseIds([releaseId]),
+      this.prisma.marketListing.count({
+        where: {
+          releaseId,
+          deletedAt: null,
+          status: 'ACTIVE',
+          unitsAvailable: { gt: 0 },
+        },
+      }),
+      this.prisma.trade.count({
+        where: {
+          releaseId,
+          executedAt: { gte: since7d },
+          settlementStatus: TradeSettlementStatus.SETTLED,
+        },
+      }),
       this.prisma.trade.aggregate({
         where: {
           releaseId,
-          executedAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+          executedAt: { gte: since30d },
           settlementStatus: TradeSettlementStatus.SETTLED,
         },
         _sum: { grossAmount: true },
@@ -563,66 +613,91 @@ export class UserAnalyticsService {
         where: { releaseId },
         orderBy: { capturedAt: 'desc' },
       }),
+      this.prisma.releaseDocument.findMany({
+        where: {
+          releaseId,
+          status: ReleaseDocumentStatus.PUBLISHED,
+          visibility: { not: ReleaseDocumentVisibility.ADMIN_ONLY },
+        },
+        orderBy: [{ docType: 'asc' }, { version: 'desc' }],
+      }),
+      this.prisma.earningDistribution.findMany({
+        where: {
+          releaseId,
+          earningPeriod: {
+            status: {
+              in: [EarningPeriodStatus.DISTRIBUTED, EarningPeriodStatus.APPROVED],
+            },
+          },
+        },
+        include: {
+          earningPeriod: {
+            include: { reports: { take: 1, orderBy: { createdAt: 'desc' } } },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 24,
+      }),
     ]);
 
-    const docs = await this.prisma.releaseDocument.findMany({
-      where: {
-        releaseId,
-        status: ReleaseDocumentStatus.PUBLISHED,
-        visibility: { not: ReleaseDocumentVisibility.ADMIN_ONLY },
-      },
-      orderBy: [{ docType: 'asc' }, { version: 'desc' }],
+    const ctx = ctxMap.get(releaseId) ?? {
+      bestBid: null,
+      bestAsk: null,
+      volume24hUsdt: '0',
+      change7dPct: '0,0',
+      deals7d: 0,
+      liquidity: 'thin' as const,
+    };
+    const deals7d = Math.max(trades7d, ctx.deals7d ?? 0);
+    const holderPoolPct = release.holderSharePct
+      ? `${Number(release.holderSharePct).toFixed(1).replace('.', ',')}%`
+      : '—';
+    const periods = distributions.map((d) => {
+      const periodLabel = `${d.earningPeriod.periodStart.toISOString().slice(0, 7)}`;
+      const grossReport = d.earningPeriod.reports[0]?.grossRevenue;
+      const gross = grossReport
+        ? formatUsdt(grossReport)
+        : formatUsdt(d.totalDistributable);
+      const paidAt =
+        d.earningPeriod.status === EarningPeriodStatus.DISTRIBUTED
+          ? d.updatedAt.toISOString()
+          : null;
+      return {
+        period: periodLabel,
+        gross,
+        poolShare: holderPoolPct,
+        distribution: formatUsdt(d.totalDistributable),
+        perUnit: `${decToMoney(d.perUnitAmount)} USDT`,
+        toHolders: formatUsdt(
+          d.holdersTotalPaid.gt(0) ? d.holdersTotalPaid : d.totalDistributable,
+        ),
+        status: d.earningPeriod.status,
+        paidAt,
+      };
     });
-    const isHolder = Boolean(detail.holding);
+
     const documents = docs.map((doc) => ({
       id: doc.id,
       title: doc.title || doc.docType,
       type: doc.docType,
       visibility: doc.visibility.toLowerCase(),
       locale: doc.locale,
-      downloadable: this.canAccessDocument(doc.visibility, Boolean(userId), isHolder),
-      downloadUrl: this.canAccessDocument(doc.visibility, Boolean(userId), isHolder)
-        ? doc.url
-        : null,
+      downloadable: this.canAccessDocument(doc.visibility, false, false),
+      downloadUrl: this.canAccessDocument(doc.visibility, false, false) ? doc.url : null,
       requiresAuth: doc.visibility !== ReleaseDocumentVisibility.PUBLIC,
       requiresHolding: doc.visibility === ReleaseDocumentVisibility.HOLDERS_ONLY,
       status: doc.status.toLowerCase(),
     }));
 
-    const r = detail.release;
+    const r = meta;
     const canBuyPrimary =
       lifecycleStatus === 'active_primary' &&
       release.status === ReleaseStatus.ACTIVE &&
       release.unitsAvailablePrimary.gt(0);
-    const userBlock = userId
-      ? {
-          userUnits: detail.holding?.unitsTotal ?? null,
-          userAvailableUnits: detail.holding?.unitsAvailable ?? null,
-          userLockedUnits: detail.holding?.unitsLocked ?? null,
-          userAvgEntryPrice: detail.holding?.avgEntryPrice ?? null,
-          userCurrentValue: detail.holding?.marketValueUsdt ?? null,
-          userPnl: detail.holding?.pnlUnrealizedUsdt ?? null,
-          userPayoutsReceived: payouts.userPayouts.length
-            ? formatUsdt(
-                payouts.userPayouts
-                  .filter((p) => p.status === PayoutStatus.PAID)
-                  .reduce(
-                    (acc, p) =>
-                      acc.plus(new Prisma.Decimal(p.amountNet.replace(/\s/g, '').replace(',', '.'))),
-                    new Prisma.Decimal(0),
-                  ),
-              )
-            : null,
-          canSell: Boolean(
-            detail.holding &&
-              Number.parseFloat(detail.holding.unitsAvailable.replace(',', '.')) > 0 &&
-              release.secondaryEnabled,
-          ),
-          canBuyMore: canBuyPrimary || release.secondaryEnabled,
-          complianceRestrictions: [] as string[],
-        }
+    const expectedYieldPct = metrics?.yieldPct
+      ? `${Number(metrics.yieldPct).toFixed(1)}%`
       : null;
-
+    const volume30d = formatUsdt(trades30dVol._sum.grossAmount ?? new Prisma.Decimal(0));
     const artistId = release.releaseArtists[0]?.artistId ?? null;
 
     return {
@@ -650,19 +725,19 @@ export class UserAnalyticsService {
         updatedAt: r.updatedAt,
       },
       pulse: {
-        grossYieldReference: detail.expectedYieldPct,
+        grossYieldReference: expectedYieldPct,
         grossYieldLabel: 'Ориентир gross',
         roundStatusLabel: r.statusLabel,
-        payoutWindowAmount: detail.payoutSummary.payouts30d,
+        payoutWindowAmount: payoutSummary.payouts30d,
         payoutWindowPeriod: '30D',
         unitsInCirculation: soldUnits.toString(),
         availablePrimaryUnits: r.unitsAvailablePrimary,
-        secondaryVolume30d: formatUsdt(trades30dVol._sum.grossAmount ?? new Prisma.Decimal(0)),
+        secondaryVolume30d: volume30d,
         minEntryAmount: r.minPurchaseUnits
           ? `${decToMoney(release.primaryUnitPrice.mul(release.minPurchaseUnits ?? new Prisma.Decimal(0)))} USDT`
           : null,
-        walletCtaAvailable: detail.walletCta.available,
-        walletCtaHref: detail.walletCta.href,
+        walletCtaAvailable: false,
+        walletCtaHref: '/login',
         lastUpdatedAt: r.updatedAt,
       },
       primaryRound: {
@@ -674,12 +749,14 @@ export class UserAnalyticsService {
         raiseTarget: r.raiseTargetUsdt,
         raisedAmount: r.raisedAmountUsdt,
         hardCap: r.hardCapUsdt,
-        minPurchaseAmount: r.minPurchaseUnits && release.primaryUnitPrice
-          ? `${decToMoney(release.primaryUnitPrice.mul(r.minPurchaseUnits))} USDT`
-          : null,
-        maxPurchaseAmount: r.maxPurchaseUnits && release.primaryUnitPrice
-          ? `${decToMoney(release.primaryUnitPrice.mul(r.maxPurchaseUnits))} USDT`
-          : null,
+        minPurchaseAmount:
+          r.minPurchaseUnits && release.primaryUnitPrice
+            ? `${decToMoney(release.primaryUnitPrice.mul(r.minPurchaseUnits))} USDT`
+            : null,
+        maxPurchaseAmount:
+          r.maxPurchaseUnits && release.primaryUnitPrice
+            ? `${decToMoney(release.primaryUnitPrice.mul(r.maxPurchaseUnits))} USDT`
+            : null,
         closeAt: round?.endDate?.toISOString() ?? null,
         canBuyPrimary,
         primaryBlockingReason: canBuyPrimary
@@ -706,31 +783,31 @@ export class UserAnalyticsService {
         modelNotes: release.distributionNotes,
       },
       payoutSummary: {
-        payouts30d: detail.payoutSummary.payouts30d,
-        payoutsAllTime: detail.payoutSummary.payoutsAllTime,
+        payouts30d: payoutSummary.payouts30d,
+        payoutsAllTime: payoutSummary.payoutsAllTime,
         nextPayoutDate: null,
-        lastPayoutDate: detail.payoutSummary.lastPayoutDate,
-        averagePayoutPerUnit: payouts.periods[0]?.perUnit ?? null,
+        lastPayoutDate: payoutSummary.lastPayoutDate,
+        averagePayoutPerUnit: periods[0]?.perUnit ?? null,
         payoutCurrency: 'USDT',
       },
       secondarySummary: {
-        activeListings: market.activeListings,
-        trades7d: market.deals7d,
+        activeListings,
+        trades7d: deals7d,
         averageSpread: obSnap?.spreadAmount ? decToMoney(obSnap.spreadAmount) : null,
         medianFillTime: null,
         averageUnitPrice: lastTrade ? decToMoney(lastTrade.price) : null,
-        liquidityLabel: market.liquidity,
-        secondaryVolume24h: market.volume24hUsdt,
-        secondaryVolume30d: formatUsdt(trades30dVol._sum.grossAmount ?? new Prisma.Decimal(0)),
-        bestBid: market.bestBid,
-        bestAsk: market.bestAsk,
+        liquidityLabel: ctx.liquidity,
+        secondaryVolume24h: ctx.volume24hUsdt,
+        secondaryVolume30d: volume30d,
+        bestBid: ctx.bestBid,
+        bestAsk: ctx.bestAsk,
         lastTradePrice: lastTrade ? decToMoney(lastTrade.price) : null,
-        priceChange7d: market.change7dPct,
+        priceChange7d: ctx.change7dPct,
         priceChange30d: null,
-        secondaryAvailable: release.secondaryEnabled && market.activeListings > 0,
+        secondaryAvailable: release.secondaryEnabled && activeListings > 0,
       },
-      user: userBlock,
-      faq: detail.faq.map((f) => ({
+      user: null,
+      faq: faq.map((f) => ({
         question: f.question,
         answer: f.answer,
         order: f.order,
@@ -739,10 +816,113 @@ export class UserAnalyticsService {
         isPublished: true,
       })),
       documents,
-      payoutHistory: payouts.periods,
-      expectedYieldPct: detail.expectedYieldPct,
-      riskLabel: detail.riskLabel,
-      holding: detail.holding,
+      payoutHistory: periods,
+      expectedYieldPct,
+      riskLabel: this.riskLabel(release.status, false),
+      holding: null,
+    };
+  }
+
+  private async attachUserToFullDetail(
+    publicDto: ReleaseDetailFullDto,
+    release: Awaited<ReturnType<UserAnalyticsResolveService['loadPublicReleaseByKey']>>,
+    userId: string,
+  ): Promise<ReleaseDetailFullDto> {
+    const releaseId = release.id;
+    const [pos, userPayoutRows] = await Promise.all([
+      this.positions.loadPositionForRelease(userId, releaseId),
+      this.prisma.payout.findMany({
+        where: { userId, releaseId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    ]);
+
+    const holding = pos
+      ? {
+          unitsTotal: pos.unitsTotal,
+          unitsAvailable: pos.unitsAvailable,
+          unitsLocked: pos.unitsLocked,
+          avgEntryPrice: pos.avgEntryPrice,
+          currentPrice: pos.currentPrice,
+          marketValueUsdt: pos.marketValue,
+          costBasisUsdt: pos.costBasis,
+          pnlUnrealizedUsdt: pos.pnlUnrealized,
+          pnlPct: pos.pnlPct,
+          portfolioSharePct: pos.portfolioSharePct,
+        }
+      : null;
+
+    const isHolder = Boolean(holding);
+    const documents = publicDto.documents.map((doc) => {
+      const visibility = doc.visibility.toUpperCase() as ReleaseDocumentVisibility;
+      const downloadable = this.canAccessDocument(visibility, true, isHolder);
+      return {
+        ...doc,
+        downloadable,
+        downloadUrl: downloadable
+          ? (doc.downloadUrl ??
+            // restore URL when public cache stripped it for guests
+            null)
+          : null,
+      };
+    });
+
+    // Re-fetch published docs URLs when holder gains access that guests lacked.
+    if (isHolder) {
+      const docs = await this.prisma.releaseDocument.findMany({
+        where: {
+          releaseId,
+          status: ReleaseDocumentStatus.PUBLISHED,
+          visibility: { not: ReleaseDocumentVisibility.ADMIN_ONLY },
+        },
+        orderBy: [{ docType: 'asc' }, { version: 'desc' }],
+      });
+      for (let i = 0; i < documents.length; i += 1) {
+        const src = docs[i];
+        if (!src) continue;
+        const downloadable = this.canAccessDocument(src.visibility, true, true);
+        documents[i] = {
+          ...documents[i],
+          downloadable,
+          downloadUrl: downloadable ? src.url : null,
+        };
+      }
+    }
+
+    const paidNet = userPayoutRows
+      .filter((p) => p.status === PayoutStatus.PAID)
+      .reduce((acc, p) => acc.plus(p.amountNet), new Prisma.Decimal(0));
+
+    const canBuyPrimary = publicDto.primaryRound.canBuyPrimary;
+    const userBlock = {
+      userUnits: holding?.unitsTotal ?? null,
+      userAvailableUnits: holding?.unitsAvailable ?? null,
+      userLockedUnits: holding?.unitsLocked ?? null,
+      userAvgEntryPrice: holding?.avgEntryPrice ?? null,
+      userCurrentValue: holding?.marketValueUsdt ?? null,
+      userPnl: holding?.pnlUnrealizedUsdt ?? null,
+      userPayoutsReceived: userPayoutRows.length ? formatUsdt(paidNet) : null,
+      canSell: Boolean(
+        holding &&
+          Number.parseFloat(holding.unitsAvailable.replace(',', '.')) > 0 &&
+          release.secondaryEnabled,
+      ),
+      canBuyMore: canBuyPrimary || release.secondaryEnabled,
+      complianceRestrictions: [] as string[],
+    };
+
+    return {
+      ...publicDto,
+      pulse: {
+        ...publicDto.pulse,
+        walletCtaAvailable: true,
+        walletCtaHref: '/assets/payouts/deposit',
+      },
+      user: userBlock,
+      documents,
+      riskLabel: this.riskLabel(release.status, isHolder),
+      holding,
     };
   }
 
@@ -965,20 +1145,10 @@ export class UserAnalyticsService {
   }
 
   async getMarket(releaseKey: string): Promise<UserAnalyticsMarketDto> {
-    const releaseId = await this.resolve.resolveReleaseId(releaseKey);
-    await this.resolve.assertPublicRelease(releaseId);
-    const release = await this.resolve.loadRelease(releaseId);
-    const ctxMap = await this.enrichment.loadByReleaseIds([releaseId]);
-    const ctx = ctxMap.get(releaseId) ?? {
-      bestBid: null,
-      bestAsk: null,
-      volume24hUsdt: '0',
-      change7dPct: '0,0',
-      deals7d: 0,
-      liquidity: 'thin',
-    };
-
-    const [activeListings, trades7d] = await Promise.all([
+    const release = await this.resolve.loadPublicReleaseByKey(releaseKey);
+    const releaseId = release.id;
+    const [ctxMap, activeListings, trades7d] = await Promise.all([
+      this.enrichment.loadByReleaseIds([releaseId]),
       this.prisma.marketListing.count({
         where: {
           releaseId,
@@ -995,6 +1165,14 @@ export class UserAnalyticsService {
         },
       }),
     ]);
+    const ctx = ctxMap.get(releaseId) ?? {
+      bestBid: null,
+      bestAsk: null,
+      volume24hUsdt: '0',
+      change7dPct: '0,0',
+      deals7d: 0,
+      liquidity: 'thin',
+    };
 
     return {
       bestBid: ctx.bestBid,

@@ -8,10 +8,12 @@ import { AuthActionPanel } from "@/components/shared/auth-action-panel";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { EligibilityNotice } from "@/components/compliance/eligibility-notice";
+import { useLegalConsentGate } from "@/hooks/use-legal-consent-gate";
 import { PayoutFlowFaqList } from "@/components/dashboard/assets/payout-flow-faq";
 import { depositFaq } from "@/components/dashboard/assets/payout-flow-mock-data";
 import { formatUsdtRu, formatWalletDate } from "@/lib/wallet/format-money";
-import { depositStatusLabel } from "@/lib/wallet/status-labels";
+import { depositStatusLabel, depositStatusToneClass } from "@/lib/wallet/status-labels";
 import { formatUsdtAmount } from "@/lib/i18n/formatters";
 import { tf } from "@/lib/i18n/financial-messages";
 import { depositHistory } from "@/components/dashboard/assets/payout-flow-mock-data";
@@ -50,6 +52,7 @@ export function PayoutDepositCard() {
   const useMockData = !dataSourceLive;
   const needsAuth = dataSourceLive && !isAuthenticated;
   const live = dataSourceLive && isAuthenticated;
+  const consentGate = useLegalConsentGate("LOGIN", live);
 
   const [depositInfo, setDepositInfo] = useState<DepositInfoResponse | null>(null);
   const [deposits, setDeposits] = useState<UserDepositItem[]>([]);
@@ -60,9 +63,9 @@ export function PayoutDepositCard() {
   const [copyFailed, setCopyFailed] = useState(false);
   const [addressExpanded, setAddressExpanded] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!live) return;
-    setLoading(true);
+    if (!opts?.silent) setLoading(true);
     setError(null);
     setErrorCode(undefined);
     try {
@@ -92,6 +95,14 @@ export function PayoutDepositCard() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!live) return;
+    const timer = window.setInterval(() => {
+      void load({ silent: true });
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [live, load]);
 
   const displayAddress = live ? depositInfo?.address : useMockData ? MOCK_ADDRESS : undefined;
   const providerBlocked =
@@ -147,15 +158,7 @@ export function PayoutDepositCard() {
 
   return (
     <section className="space-y-12 sm:space-y-14">
-      <header className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
-          {live && depositInfo
-            ? tf(t("deposit.eyebrow"), {
-                asset: depositInfo.asset,
-                network: depositInfo.network,
-              })
-            : tf(t("deposit.eyebrow"), { asset: "USDT", network: "TRC20" })}
-        </p>
+      <header>
         <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[1.75rem]">
           {t("deposit.heading")}
         </h1>
@@ -179,6 +182,7 @@ export function PayoutDepositCard() {
 
       {!needsAuth ? (
       <>
+      {live ? <EligibilityNotice result={consentGate.eligibility} className="max-w-2xl" /> : null}
       <div className="grid gap-10 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)] xl:gap-12">
         <div className="space-y-4">
           {loading ? (
@@ -236,8 +240,8 @@ export function PayoutDepositCard() {
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">
                   {live && depositInfo
-                    ? depositInfo.networkDisplayName ?? `${depositInfo.asset} · ${depositInfo.network}`
-                    : "USDT · TRC20"}
+                    ? depositInfo.networkDisplayName ?? `${depositInfo.asset} / TRON TRC-20`
+                    : "USDT / TRON TRC-20"}
                 </span>
                 {live && depositInfo?.explorerAddressUrl ? (
                   <a
@@ -347,6 +351,15 @@ export function PayoutDepositCard() {
   );
 }
 
+function depositStatusTone(status: string): string {
+  const tone = depositStatusToneClass(status);
+  if (tone === "completed") return "bg-neutral-900 text-white";
+  if (tone === "pending") return "bg-amber-50 text-amber-950";
+  if (tone === "review") return "bg-amber-50 text-amber-950";
+  if (tone === "failed") return "bg-red-50 text-red-800";
+  return "bg-neutral-100 text-neutral-700";
+}
+
 function DepositHistoryTable({
   live,
   loading,
@@ -372,60 +385,72 @@ function DepositHistoryTable({
         receivedAt: r.time,
       }));
 
+  if (loading && live) {
+    return <p className="text-sm text-neutral-500">{t("common.loading")}</p>;
+  }
+
+  if (live && rows.length === 0) {
+    return <p className="text-sm text-neutral-500">{t("deposit.historyEmpty")}</p>;
+  }
+
+  if (rows.length === 0) return null;
+
   return (
-    <div className="space-y-6 pt-2">
-      <h2 className="text-lg font-semibold text-neutral-900">{t("deposit.historyTitle")}</h2>
-      {loading && live ? <p className="text-sm text-neutral-500">{t("common.loading")}</p> : null}
-      {!loading && live && rows.length === 0 ? (
-        <p className="text-sm text-neutral-500">{t("deposit.historyEmpty")}</p>
-      ) : null}
-      <div className="overflow-x-auto rounded-3xl bg-neutral-50/90">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead>
-            <tr className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
-              <th className="px-4 py-3.5 pl-5">{t("deposit.table.time")}</th>
-              <th className="px-4 py-3.5">{t("deposit.table.txId")}</th>
-              <th className="px-4 py-3.5">{t("deposit.table.amount")}</th>
-              <th className="px-4 py-3.5">{t("deposit.table.confirmations")}</th>
-              <th className="px-4 py-3.5">{t("deposit.table.id")}</th>
-              <th className="px-4 py-3.5 pr-5">{t("deposit.table.status")}</th>
+    <div className="overflow-x-auto rounded-3xl bg-neutral-50/90">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead>
+          <tr className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+            <th className="px-4 py-3.5 pl-5">{t("deposit.table.time")}</th>
+            <th className="px-4 py-3.5">{t("deposit.table.txId")}</th>
+            <th className="px-4 py-3.5">{t("deposit.table.amount")}</th>
+            <th className="px-4 py-3.5">{t("deposit.table.confirmations")}</th>
+            <th className="px-4 py-3.5">{t("deposit.table.id")}</th>
+            <th className="px-4 py-3.5 pr-5">{t("deposit.table.status")}</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white">
+          {rows.map((row, i) => (
+            <tr key={row.id} className={cn(i !== rows.length - 1 && "border-b border-neutral-100")}>
+              <td className="px-4 py-3.5 pl-5 text-neutral-700">
+                {formatWalletDate(row.createdAt, locale)}
+              </td>
+              <td className="px-4 py-3.5 font-mono text-xs text-neutral-600">
+                <span className="break-all">{row.txHash ?? "—"}</span>
+                {row.txHash ? (
+                  <div className="mt-1">
+                    <CopyValueButton value={row.txHash} label="TxID" />
+                  </div>
+                ) : null}
+              </td>
+              <td className="px-4 py-3.5 font-mono font-semibold tabular-nums text-neutral-900">
+                {formatUsdtRu(row.amount, "USDT", locale)}
+              </td>
+              <td className="px-4 py-3.5 text-neutral-600">
+                {row.confirmations}/{row.requiredConfirmations}
+              </td>
+              <td className="px-4 py-3.5">
+                <CopyValueButton value={row.id} label={t("deposit.table.id")} />
+              </td>
+              <td className="px-4 py-3.5 pr-5">
+                <span
+                  className={cn(
+                    "inline-flex rounded-lg px-2 py-1 text-[11px] font-semibold",
+                    depositStatusTone(row.status),
+                  )}
+                >
+                  {depositStatusLabel(row.status, t)}
+                </span>
+              </td>
             </tr>
-          </thead>
-          <tbody className="bg-white">
-            {rows.map((row, i) => (
-              <tr key={row.id} className={cn(i !== rows.length - 1 && "border-b border-neutral-100")}>
-                <td className="px-4 py-3.5 pl-5">{formatWalletDate(row.createdAt, locale)}</td>
-                <td className="px-4 py-3.5 font-mono text-xs">
-                  <span className="break-all">{row.txHash ?? "—"}</span>
-                  {row.txHash ? (
-                    <div className="mt-1">
-                      <CopyValueButton value={row.txHash} label="TxID" />
-                    </div>
-                  ) : null}
-                </td>
-                <td className="px-4 py-3.5 font-mono font-semibold tabular-nums">
-                  {formatUsdtRu(row.amount, "USDT", locale)}
-                </td>
-                <td className="px-4 py-3.5 text-neutral-600">
-                  {row.confirmations}/{row.requiredConfirmations}
-                </td>
-                <td className="px-4 py-3.5">
-                  <CopyValueButton value={row.id} label="ID" />
-                </td>
-                <td className="px-4 py-3.5 pr-5">
-                  <span className="inline-flex rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-900">
-                    {depositStatusLabel(row.status, t)}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
       {live ? (
-        <button type="button" className="text-xs text-neutral-500 underline" onClick={onRetry}>
-          {t("deposit.refresh")}
-        </button>
+        <div className="border-t border-neutral-100 px-5 py-3">
+          <button type="button" className="text-xs text-neutral-500 underline" onClick={onRetry}>
+            {t("deposit.refresh")}
+          </button>
+        </div>
       ) : null}
     </div>
   );

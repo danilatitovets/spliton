@@ -17,16 +17,12 @@ import {
   fetchMarketOverviewCharts,
   fetchMarketOverviewDepth,
   fetchMarketOverviewList,
-  fetchMarketOverviewListings,
   fetchMarketOverviewStats,
-  fetchMarketOverviewTrades,
   isLiveMarketOverviewEnabled,
   type MarketOverviewChartsApi,
   type MarketOverviewDepthApi,
-  type MarketOverviewListingApi,
   type MarketOverviewPagination,
   type MarketOverviewStatsApi,
-  type MarketOverviewTradeApi,
 } from "@/services/market-overview.service";
 import type {
   MarketOverviewCategory,
@@ -51,7 +47,6 @@ const defaultFilters: MarketOverviewFilters = {
 
 const LIVE_DEBOUNCE_MS = 300;
 const DEFAULT_PAGE_SIZE = 24;
-const FEED_PAGE_SIZE = 12;
 
 function segmentSlug(segment: string): string {
   const s = segment.toLowerCase();
@@ -145,13 +140,9 @@ export function useMarketOverviewState() {
   const [stats, setStats] = React.useState<MarketOverviewStatsApi | null>(null);
   const [charts, setCharts] = React.useState<MarketOverviewChartsApi | null>(null);
   const [depth, setDepth] = React.useState<MarketOverviewDepthApi | null>(null);
-  const [listings, setListings] = React.useState<MarketOverviewListingApi[]>([]);
-  const [trades, setTrades] = React.useState<MarketOverviewTradeApi[]>([]);
   const [liveUpdatedAt, setLiveUpdatedAt] = React.useState<string | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  const [feedError, setFeedError] = React.useState(false);
   const [loading, setLoading] = React.useState(live);
-  const [feedLoading, setFeedLoading] = React.useState(live);
 
   const listQuery = React.useMemo((): MarketOverviewListQueryParams => {
     return {
@@ -228,23 +219,10 @@ export function useMarketOverviewState() {
     setPageState(1);
   }, []);
 
-  const feedParams = React.useMemo(
-    () => ({
-      period,
-      page: "1",
-      limit: String(FEED_PAGE_SIZE),
-      ...(search.trim() ? { search: search.trim() } : {}),
-      ...(filters.genre !== "all" ? { genre: filters.genre } : {}),
-    }),
-    [period, search, filters.genre],
-  );
-
   const loadLive = React.useCallback(async () => {
     if (!live) return;
     setLoading(true);
-    setFeedLoading(true);
     setLoadError(null);
-    setFeedError(false);
     const query = marketOverviewQueryFromState({
       period: listQuery.period,
       search: listQuery.search,
@@ -257,22 +235,36 @@ export function useMarketOverviewState() {
     });
 
     try {
-      const [listRes, statsRes, chartsRes, depthRes, listingsRes, tradesRes] = await Promise.all([
+      const settled = await Promise.allSettled([
         fetchMarketOverviewList(query),
         fetchMarketOverviewStats(listQuery.period ?? "7d"),
         fetchMarketOverviewCharts(listQuery.period ?? "7d"),
         fetchMarketOverviewDepth(listQuery.period ?? "7d"),
-        fetchMarketOverviewListings(feedParams),
-        fetchMarketOverviewTrades(feedParams),
       ]);
-      setLiveRows(listRes.items.map(adaptMarketOverviewRow));
-      setPagination(listRes.pagination);
-      setStats(statsRes ?? listRes.stats ?? null);
+
+      const listRes = settled[0].status === "fulfilled" ? settled[0].value : null;
+      const statsRes = settled[1].status === "fulfilled" ? settled[1].value : null;
+      const chartsRes = settled[2].status === "fulfilled" ? settled[2].value : null;
+      const depthRes = settled[3].status === "fulfilled" ? settled[3].value : null;
+
+      if (!listRes) {
+        const reason = settled[0].status === "rejected" ? settled[0].reason : null;
+        setLoadError(
+          reason instanceof Error ? reason.message : "Не удалось загрузить обзор рынка",
+        );
+        setLiveRows([]);
+        setPagination(null);
+      } else {
+        setLoadError(null);
+        setLiveRows(listRes.items.map((item) => adaptMarketOverviewRow(item, period)));
+        setPagination(listRes.pagination);
+      }
+
+      setStats(statsRes ?? listRes?.stats ?? null);
       setCharts(chartsRes);
       setDepth(depthRes);
-      setListings(listingsRes.items);
-      setTrades(tradesRes.items);
-      const updated = listRes.updatedAt ?? statsRes?.updatedAt;
+
+      const updated = listRes?.updatedAt ?? statsRes?.updatedAt;
       setLiveUpdatedAt(
         updated
           ? new Date(updated).toLocaleString("ru-RU", {
@@ -290,14 +282,10 @@ export function useMarketOverviewState() {
       setStats(null);
       setCharts(null);
       setDepth(null);
-      setListings([]);
-      setTrades([]);
-      setFeedError(true);
     } finally {
       setLoading(false);
-      setFeedLoading(false);
     }
-  }, [live, listQuery, filters, feedParams]);
+  }, [live, listQuery, filters, period]);
 
   React.useEffect(() => {
     if (!live) {
@@ -306,10 +294,7 @@ export function useMarketOverviewState() {
       setStats(null);
       setCharts(null);
       setDepth(null);
-      setListings([]);
-      setTrades([]);
       setLoading(false);
-      setFeedLoading(false);
       return;
     }
     const timer = window.setTimeout(() => {
@@ -367,14 +352,10 @@ export function useMarketOverviewState() {
     resetFilters,
     live,
     loading,
-    feedLoading,
     loadError,
-    feedError,
     stats,
     charts,
     depth,
-    listings,
-    trades,
     pagination,
     page,
     setPage,

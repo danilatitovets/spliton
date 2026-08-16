@@ -48,10 +48,15 @@ import { ROUTES } from "@/constants/routes";
 import {
   getAdminDeposit,
   getAdminDepositsSummary,
+  getAdminCryptoHealth,
   listAdminDepositsPaginated,
+  listUnattributedOnchainTransfers,
   patchAdminDepositStatus,
   reconcileAdminDeposit,
+  recoverAdminDepositByTxHash,
+  recheckAdminDeposit,
   reviewAdminDeposit,
+  type AdminCryptoHealth,
   type AdminDepositsQuery,
 } from "@/services/admin/adminDeposits.service";
 import { cn } from "@/lib/utils";
@@ -155,6 +160,11 @@ export function DepositsSection() {
   const [detail, setDetail] = React.useState<AdminDepositDetail | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [recoverHash, setRecoverHash] = React.useState("");
+  const [recoverBusy, setRecoverBusy] = React.useState(false);
+  const [recoverResult, setRecoverResult] = React.useState<string | null>(null);
+  const [cryptoHealth, setCryptoHealth] = React.useState<AdminCryptoHealth | null>(null);
+  const [unknownCount, setUnknownCount] = React.useState(0);
 
   const summaryQuery = React.useMemo(
     () => ({ dateFrom: dateFrom || undefined, dateTo: dateTo || undefined }),
@@ -172,9 +182,23 @@ export function DepositsSection() {
     }
   }, [client, summaryQuery]);
 
+  const loadCryptoOps = React.useCallback(async () => {
+    try {
+      const [health, unknown] = await Promise.all([
+        getAdminCryptoHealth(client),
+        listUnattributedOnchainTransfers(client),
+      ]);
+      setCryptoHealth(health);
+      setUnknownCount(unknown.length);
+    } catch {
+      setCryptoHealth(null);
+    }
+  }, [client]);
+
   React.useEffect(() => {
     void loadSummary();
-  }, [loadSummary]);
+    void loadCryptoOps();
+  }, [loadSummary, loadCryptoOps]);
 
   React.useEffect(() => {
     setQuery((q) => ({
@@ -227,9 +251,43 @@ export function DepositsSection() {
       if (refreshed) setDetail(refreshed);
       await reload();
       void loadSummary();
+      void loadCryptoOps();
     } catch (e) {
       setActionError(localizedAdminError(e));
       throw e;
+    }
+  }
+
+  async function handleRecheck() {
+    if (!detail) return;
+    setActionError(null);
+    try {
+      await recheckAdminDeposit(detail.id, client);
+      const refreshed = await getAdminDeposit(detail.id, client);
+      if (refreshed) setDetail(refreshed);
+      await reload();
+      void loadSummary();
+    } catch (e) {
+      setActionError(localizedAdminError(e));
+    }
+  }
+
+  async function handleRecover() {
+    const hash = recoverHash.trim();
+    if (!hash || recoverBusy) return;
+    setRecoverBusy(true);
+    setRecoverResult(null);
+    setActionError(null);
+    try {
+      const out = await recoverAdminDepositByTxHash(hash, client);
+      setRecoverResult(`${out.status}${out.depositId ? ` / ${out.depositId}` : ""}${out.reason ? ` / ${out.reason}` : ""}`);
+      await reload();
+      void loadSummary();
+      void loadCryptoOps();
+    } catch (e) {
+      setActionError(localizedAdminError(e));
+    } finally {
+      setRecoverBusy(false);
     }
   }
 
@@ -285,7 +343,7 @@ export function DepositsSection() {
     {
       key: "asset",
       header: a.table.asset,
-      render: (r) => `${r.asset} · ${r.network}`,
+      render: (r) => `${r.asset} / ${r.network}`,
     },
     {
       key: "addr",
@@ -387,6 +445,7 @@ export function DepositsSection() {
           onClick={() => {
             reload();
             void loadSummary();
+            void loadCryptoOps();
           }}
         />
       }
@@ -421,6 +480,50 @@ export function DepositsSection() {
         />
         <StatTile label={a.t("admin.filter.highValue")} value={summaryLoading ? "…" : String(summary?.highValueCount ?? 0)} tone="warning" />
         <StatTile label={a.t("admin.filter.riskFlags")} value={summaryLoading ? "…" : String(summary?.depositsWithRiskFlags ?? 0)} tone="warning" />
+        <StatTile
+          label="Unknown addresses"
+          value={String(unknownCount)}
+          tone={unknownCount > 0 ? "danger" : "neutral"}
+        />
+      </div>
+
+      <div className={cn(ADMIN_SECTION_TILE, "space-y-3")}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USDT TRC-20 engine</p>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 text-sm text-zinc-300">
+          <p>Provider: {cryptoHealth?.provider.ok ? "healthy" : cryptoHealth ? "unhealthy" : "n/a"} ({cryptoHealth?.provider.mode ?? "—"})</p>
+          <p>Worker: {cryptoHealth?.workerEnabled ? "enabled" : "stopped"}</p>
+          <p>Last scan: {cryptoHealth?.lastRunAt ?? "—"}</p>
+          <p>Last block: {cryptoHealth?.lastScannedBlock ?? "—"}</p>
+          <p>Watched: {cryptoHealth?.addressesWatched ?? 0}</p>
+          <p>Pending: {cryptoHealth?.pendingDeposits ?? 0}</p>
+          <p>Failed: {cryptoHealth?.failedDeposits ?? 0}</p>
+          <p>Lag ms: {cryptoHealth?.ingestionLagMs ?? "—"}</p>
+        </div>
+        {cryptoHealth?.lastError ? (
+          <p className="text-xs text-red-400">{cryptoHealth.lastError}</p>
+        ) : null}
+        {canMutate && !readOnly ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex min-w-[280px] flex-1 flex-col gap-1 text-xs text-zinc-400">
+              Recover by txHash
+              <input
+                value={recoverHash}
+                onChange={(e) => setRecoverHash(e.target.value)}
+                className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100"
+                placeholder="transaction id"
+              />
+            </label>
+            <button
+              type="button"
+              className="h-10 rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50"
+              disabled={recoverBusy || !recoverHash.trim()}
+              onClick={() => void handleRecover()}
+            >
+              {recoverBusy ? "…" : "Recover"}
+            </button>
+            {recoverResult ? <p className="text-xs text-zinc-400">{recoverResult}</p> : null}
+          </div>
+        ) : null}
       </div>
 
       <div className={cn(ADMIN_SECTION_TILE, "space-y-2")}>
@@ -526,6 +629,7 @@ export function DepositsSection() {
         loading={detailLoading}
         canMutate={canMutate && !readOnly}
         onAction={handleAction}
+        onRecheck={canMutate && !readOnly ? handleRecheck : undefined}
       />
     </AdminSectionShell>
   );

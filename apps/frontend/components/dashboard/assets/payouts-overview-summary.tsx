@@ -18,15 +18,28 @@ function formatUsdt(value: string, locale: Parameters<typeof formatUsdtAmount>[1
 
 function PayoutKpiGrid({
   cards,
+  compact = false,
 }: {
   cards: Array<{ label: string; value: string }>;
+  compact?: boolean;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className={cn("grid gap-2 sm:grid-cols-2 lg:grid-cols-5", compact ? "gap-2" : "gap-3")}>
       {cards.map((card) => (
-        <div key={card.label} className="rounded-2xl bg-neutral-50 px-4 py-4 shadow-none ring-0 sm:px-5">
-          <p className="text-xs text-neutral-500">{card.label}</p>
-          <p className="mt-1.5 font-mono text-base font-semibold tracking-tight text-neutral-900 sm:text-lg">
+        <div
+          key={card.label}
+          className={cn(
+            "rounded-2xl bg-neutral-50 shadow-none ring-0",
+            compact ? "px-3.5 py-3" : "px-4 py-4 sm:px-5",
+          )}
+        >
+          <p className="truncate text-xs text-neutral-500">{card.label}</p>
+          <p
+            className={cn(
+              "mt-1 font-mono font-semibold tracking-tight text-neutral-900",
+              compact ? "text-sm sm:text-base" : "mt-1.5 text-base sm:text-lg",
+            )}
+          >
             {card.value}
           </p>
         </div>
@@ -42,20 +55,28 @@ export function PayoutsOverviewSummary({
   embedded?: boolean;
 } = {}) {
   const { t, locale } = useI18n();
-  const { live, data, loading, error, reload } = usePayoutsOverview();
+  const { live, demoPreview, data, loading, error, reload } = usePayoutsOverview();
 
   if (!live) {
-    if (!embedded) return null;
+    if (!demoPreview && !embedded) return null;
     return (
-      <PayoutKpiGrid
-        cards={[
-          { label: t("payouts.kpi.totalAccrued"), value: formatUsdt("1482.60", locale) },
-          { label: t("payouts.kpi.totalPaid"), value: formatUsdt("1196.20", locale) },
-          { label: t("payouts.kpi.pending"), value: formatUsdt("120.00", locale) },
-          { label: t("payouts.kpi.available"), value: formatUsdt("286.40", locale) },
-          { label: t("payouts.kpi.locked"), value: formatUsdt("48.00", locale) },
-        ]}
-      />
+      <div className="space-y-3">
+        {demoPreview ? (
+          <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+            {t("payouts.chart.demoBanner")}
+          </p>
+        ) : null}
+        <PayoutKpiGrid
+          compact={embedded}
+          cards={[
+            { label: t("payouts.kpi.totalAccrued"), value: formatUsdt("1482.60", locale) },
+            { label: t("payouts.kpi.totalPaid"), value: formatUsdt("1196.20", locale) },
+            { label: t("payouts.kpi.pending"), value: formatUsdt("120.00", locale) },
+            { label: t("payouts.kpi.available"), value: formatUsdt("286.40", locale) },
+            { label: t("payouts.kpi.locked"), value: formatUsdt("48.00", locale) },
+          ]}
+        />
+      </div>
     );
   }
 
@@ -129,7 +150,7 @@ export function PayoutsOverviewSummary({
 
   return (
     <div className="space-y-4">
-      <PayoutKpiGrid cards={cards} />
+      <PayoutKpiGrid cards={cards} compact={embedded} />
 
       {data.latestPayout ? (
         <p className="text-xs text-neutral-500">

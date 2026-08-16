@@ -33,9 +33,13 @@ describe('configureE2eDatabase', () => {
 
   it('uses TEST_DATABASE_URL when set', () => {
     delete process.env.CI;
-    process.env.TEST_DATABASE_URL = 'postgresql://test@localhost/isolated';
-    process.env.ALLOW_E2E_CLEANUP = '1';
+    delete process.env.ALLOW_E2E_CLEANUP;
+    process.env.TEST_DATABASE_URL = 'postgresql://test@127.0.0.1:5433/spliton_e2e';
+    process.env.DATABASE_URL = 'postgresql://prod@aws-0.pooler.supabase.com:5432/postgres';
     configureE2eDatabase();
-    expect(process.env.DATABASE_URL).toBe('postgresql://test@localhost/isolated');
+    expect(process.env.DATABASE_URL).toBe(
+      'postgresql://test@127.0.0.1:5433/spliton_e2e',
+    );
+    expect(process.env.E2E_ISOLATED_DATABASE).toBe('1');
   });
 });

@@ -20,7 +20,13 @@ import { requestMeta } from '../common/admin-http.util';
 import { AdminNoteDto } from './dto/admin-user.dto';
 import { AdminDepositsQueryDto } from './dto/admin-deposits-query.dto';
 import { AdminDepositsService } from './admin-deposits.service';
+import { Throttle } from '@nestjs/throttler';
 import { IsOptional, IsString } from 'class-validator';
+
+class RecoverDepositDto {
+  @IsString()
+  txHash!: string;
+}
 
 class PatchDepositStatusDto {
   @IsString()
@@ -48,6 +54,41 @@ export class AdminDepositsController {
   @Get()
   list(@CurrentUser() user: AuthUser, @Query() query: AdminDepositsQueryDto) {
     return this.deposits.list(user.roles, query);
+  }
+
+  @Get('unattributed')
+  unattributed(@CurrentUser() user: AuthUser) {
+    return this.deposits.unattributed(user.roles);
+  }
+
+  @Get('reconciliation')
+  reconciliation(@CurrentUser() user: AuthUser) {
+    return this.deposits.reconciliation(user.roles);
+  }
+
+  @Post('recover')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  recover(
+    @CurrentUser() user: AuthUser,
+    @Body() body: RecoverDepositDto,
+    @Req() req: Request,
+  ) {
+    return this.deposits.recoverByTxHash(
+      user.id,
+      user.roles,
+      body.txHash,
+      requestMeta(req),
+    );
+  }
+
+  @Post(':id/recheck')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  recheck(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    return this.deposits.recheck(user.id, user.roles, id, requestMeta(req));
   }
 
   @Get(':id')

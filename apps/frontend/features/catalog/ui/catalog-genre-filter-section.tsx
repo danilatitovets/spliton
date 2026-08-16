@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search } from "@/lib/lucide";
 
 import { useI18n } from "@/components/providers/i18n-provider";
+import { catalogGenreLabelKey, genresMatch } from "@/lib/catalog/catalog-genre";
 import { tf } from "@/lib/i18n/financial-messages";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +75,7 @@ export function CatalogGenreFilterSection({
 
   return (
     <section className="px-1 py-1">
-      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+      <p className="mb-3 text-[11px] font-medium tracking-wide text-zinc-500">
         {t("catalog.filters.section.genre")}
       </p>
 
@@ -114,19 +115,24 @@ export function CatalogGenreFilterSection({
         {visibleGenres.length === 0 ? (
           <p className="px-1 py-2 text-[12px] text-zinc-500">{t("catalog.filters.genreEmpty")}</p>
         ) : (
-          visibleGenres.map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => onGenre(g)}
-              className={cn(baseChip, genre === g ? activeChip : idleChip)}
-            >
-              <span className="max-w-[160px] truncate">{g}</span>
-              {genreCounts.has(g) ? (
-                <span className="ml-1.5 text-[10px] opacity-70">{genreCounts.get(g)}</span>
-              ) : null}
-            </button>
-          ))
+          visibleGenres.map((g) => {
+            const labelKey = catalogGenreLabelKey(g);
+            const label = labelKey ? t(labelKey) : g;
+            const active = genresMatch(genre, g) || genre === g;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => onGenre(g)}
+                className={cn(baseChip, active ? activeChip : idleChip)}
+              >
+                <span className="max-w-[160px] truncate">{label}</span>
+                {genreCounts.has(g) ? (
+                  <span className="ml-1.5 text-[10px] opacity-70">{genreCounts.get(g)}</span>
+                ) : null}
+              </button>
+            );
+          })
         )}
       </div>
 

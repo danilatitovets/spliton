@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { Search } from "@/lib/lucide";
@@ -62,16 +62,14 @@ export function NewsPageContent() {
   };
 
   return (
-    <div className="space-y-8 pb-4 sm:space-y-10">
-      <section className="border-b border-white/[0.06] pb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs font-medium text-zinc-500">
-            {t("news.breadcrumb")} <span className="mx-1 text-zinc-700">›</span>{" "}
-            <span className="text-zinc-300">{t("news.breadcrumbBlog")}</span>
-          </p>
-          <label className="relative block w-full sm:max-w-xs">
+    <div className="space-y-7 pb-4 sm:space-y-9">
+      <section className="rounded-2xl bg-black px-5 py-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] sm:rounded-[1.35rem] sm:px-8 sm:py-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <NewsCategoryFilters active={category} onChange={handleCategoryChange} className="min-w-0" />
+          <label className="relative block w-full lg:max-w-xs">
+            <span className="sr-only">{t("news.searchPlaceholder")}</span>
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
               aria-hidden
             />
             <input
@@ -79,17 +77,18 @@ export function NewsPageContent() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("news.searchPlaceholder")}
-              className="h-10 w-full rounded-full border border-white/10 bg-zinc-950 pl-9 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-white/20"
+              className={cn(
+                "h-10 w-full appearance-none rounded-full border-0 bg-white/[0.06] py-2 pl-10 pr-4 text-sm text-white shadow-none outline-none ring-0",
+                "placeholder:text-zinc-600 transition-[background-color] duration-200",
+                "hover:bg-white/[0.08] focus:bg-white/[0.1] focus:ring-0",
+                "[-webkit-appearance:none]",
+              )}
             />
           </label>
         </div>
 
-        <div className="mt-5 overflow-x-auto pb-1">
-          <NewsCategoryFilters active={category} onChange={handleCategoryChange} className="min-w-max sm:min-w-0" />
-        </div>
-
-        <div className="mt-8">
-          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <div className="mt-7">
+          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {t("news.blogTitle")}
             {!loading && !error ? ` (${total})` : ""}
           </h2>
@@ -101,24 +100,28 @@ export function NewsPageContent() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: NEWS_PAGE_SIZE }).map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="aspect-[16/10] rounded-xl bg-zinc-900" />
-              <div className="mt-4 h-3 w-16 rounded bg-zinc-900" />
-              <div className="mt-3 h-5 w-full rounded bg-zinc-900" />
-              <div className="mt-2 h-4 w-4/5 rounded bg-zinc-900" />
+              <div className="aspect-[16/10] rounded-xl bg-white/[0.05]" />
+              <div className="mt-4 h-3 w-16 rounded bg-white/[0.05]" />
+              <div className="mt-3 h-5 w-full rounded bg-white/[0.05]" />
+              <div className="mt-2 h-4 w-4/5 rounded bg-white/[0.04]" />
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-12 text-center">
-          <p className="text-sm text-red-200">
+        <div className="rounded-2xl bg-rose-500/10 px-6 py-12 text-center shadow-[inset_0_0_0_1px_rgba(251,113,133,0.25)]">
+          <p className="text-sm text-rose-100">
             {isLiveNewsEnabled() ? t("news.error.live") : t("news.error.demo")}
           </p>
-          <Button type="button" variant="outline" className="mt-4 border-white/15 bg-transparent text-white hover:bg-zinc-900" onClick={load}>
+          <Button
+            type="button"
+            className="mt-4 rounded-full bg-white px-4 text-sm font-medium text-black hover:bg-[#e8e8e8]"
+            onClick={load}
+          >
             {t("news.retry")}
           </Button>
         </div>
       ) : articles.length === 0 ? (
-        <div className="rounded-2xl bg-zinc-950 px-6 py-16 text-center ring-1 ring-white/[0.06]">
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-16 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
           <p className="text-sm font-medium text-white">{t("news.empty.title")}</p>
           <p className="mt-2 text-sm text-zinc-500">
             {debouncedSearch ? t("news.empty.searchHint") : t("news.empty.categoryHint")}
@@ -126,8 +129,7 @@ export function NewsPageContent() {
           {(debouncedSearch || category !== "all") && (
             <Button
               type="button"
-              variant="outline"
-              className="mt-4 border-white/15 bg-transparent text-white hover:bg-zinc-900"
+              className="mt-4 rounded-full bg-white/[0.08] px-4 text-sm font-medium text-white hover:bg-white/[0.12]"
               onClick={() => {
                 setSearch("");
                 setCategory("all");
@@ -147,12 +149,7 @@ export function NewsPageContent() {
             </div>
           </section>
 
-          <NewsPagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            className={cn("pt-4")}
-          />
+          <NewsPagination page={page} totalPages={totalPages} onPageChange={setPage} className="pt-2" />
         </>
       )}
     </div>

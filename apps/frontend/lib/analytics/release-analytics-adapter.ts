@@ -121,10 +121,10 @@ function secondaryRowsFromSummary(
   return rows;
 }
 
-/** Preferred live adapter: GET /api/v1/releases/:id/detail + price chart. */
+/** Preferred live adapter: GET /api/v1/releases/:id/detail + optional price chart. */
 export function buildReleaseDetailPageDataFromFullApi(
   detail: ReleaseDetailFullApi,
-  chart: ReleasePriceChartApi,
+  chart: ReleasePriceChartApi | null,
   charts?: ReleaseDetailSparklineCharts,
   locale: AppLocale = "ru",
 ): ReleaseDetailPageData {
@@ -134,6 +134,13 @@ export function buildReleaseDetailPageDataFromFullApi(
   const liquidityUi = statusLabel("liquidity", secondarySummary.liquidityLabel, locale);
   const soldUnitsFormatted = Number.parseFloat(primaryRound.soldUnits || "0").toLocaleString("ru-RU");
   const yieldVal = detail.expectedYieldPct ?? pulse.grossYieldReference;
+  const emptySeries = {
+    "7d": [],
+    "30d": [],
+    "90d": [],
+    ytd: [],
+    all: [],
+  } as Record<ReleaseDetailChartPeriod, number[]>;
   const row: ReleaseAnalyticsRow = {
     id: id.id,
     symbol: id.symbol,
@@ -141,16 +148,19 @@ export function buildReleaseDetailPageDataFromFullApi(
     artist: id.artistName,
     genre: normalizeGenre(id.genre ?? "electronic"),
     yieldPct: yieldVal && !isEmptyDisplayValue(yieldVal) ? yieldVal : "0%",
-    changePct: chart.miniStats[0]?.value ?? secondarySummary.priceChange7d ?? "0,0%",
+    changePct: chart?.miniStats[0]?.value ?? secondarySummary.priceChange7d ?? "0,0%",
     payouts: payoutSummary.payoutsAllTime || "0 USDT",
     units: soldUnitsFormatted,
     status: resolveDetailRowStatus(detail),
     trend: "flat",
-    sparkline: chart.seriesByPeriod["30d"]?.slice(-12) ?? [],
+    sparkline: chart?.seriesByPeriod["30d"]?.slice(-12) ?? [],
     payoutBand: { lo: "0", hi: "0", t: 0.5 },
   };
 
-  const seriesByPeriod = chart.seriesByPeriod as Record<ReleaseDetailChartPeriod, number[]>;
+  const seriesByPeriod = (chart?.seriesByPeriod ?? emptySeries) as Record<
+    ReleaseDetailChartPeriod,
+    number[]
+  >;
   const faq =
     detail.faq.length > 0 ? detail.faq.map((f) => ({ q: f.question, a: f.answer })) : [];
   const t = (key: Parameters<typeof detailPageText>[1]) => detailPageText(locale, key);
@@ -192,7 +202,7 @@ export function buildReleaseDetailPageDataFromFullApi(
         ? t("analytics.detail.chart.sourceNote")
         : t("analytics.detail.chart.emptyBody"),
       seriesByPeriod,
-      miniStats: chart.miniStats,
+      miniStats: chart?.miniStats ?? [],
     },
     quickStats: buildQuickStatsLocalized(detail, locale, soldUnitsFormatted),
     about: {

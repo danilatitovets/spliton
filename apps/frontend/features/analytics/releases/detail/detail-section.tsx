@@ -29,7 +29,7 @@ export function DetailSection({
   return (
     <section className={cn("mt-10 border-t border-white/8 pt-8 md:mt-12 md:pt-10", className)}>
       {eyebrow ? (
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">{eyebrow}</p>
+        <p className="text-[11px] font-medium tracking-normal text-zinc-500">{eyebrow}</p>
       ) : null}
       {titleAside ? (
         <div

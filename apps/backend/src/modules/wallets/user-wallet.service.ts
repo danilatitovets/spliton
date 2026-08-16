@@ -70,7 +70,7 @@ export class UserWalletService {
   }
 
   private async aggregateTotals(walletId: string) {
-    const [deposits, withdrawals, payouts] = await Promise.all([
+    const [deposits, withdrawals, payouts, pendingWithdrawals] = await Promise.all([
       this.prisma.walletTransaction.aggregate({
         where: {
           walletId,
@@ -95,14 +95,13 @@ export class UserWalletService {
         },
         _sum: { amount: true },
       }),
+      this.prisma.withdrawal.count({
+        where: {
+          walletTx: { walletId },
+          status: { in: ['REQUESTED', 'PROCESSING', 'ON_HOLD'] },
+        },
+      }),
     ]);
-
-    const pendingWithdrawals = await this.prisma.withdrawal.count({
-      where: {
-        walletTx: { walletId },
-        status: { in: ['REQUESTED', 'PROCESSING', 'ON_HOLD'] },
-      },
-    });
 
     return {
       totalDeposits: deposits._sum.amount ?? new Prisma.Decimal(0),

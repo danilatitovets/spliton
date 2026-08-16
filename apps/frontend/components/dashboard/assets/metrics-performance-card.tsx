@@ -1,6 +1,11 @@
 "use client";
 
-import { assetsCardClass, assetsPanelClass } from "@/components/dashboard/assets/assets-ui";
+import {
+  assetsChartSlotClass,
+  assetsMutedCardClass,
+  assetsPanelClass,
+} from "@/components/dashboard/assets/assets-ui";
+import { MetricsInfoTip } from "@/components/dashboard/assets/metrics-info-tip";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/data-states/empty-state";
@@ -24,6 +29,7 @@ export function MetricsPerformanceCard({
   loading?: boolean;
 }) {
   const { t, locale } = useI18n();
+  const infoLabel = t("assets.metrics.infoLabel");
 
   if (!live) return null;
 
@@ -35,47 +41,56 @@ export function MetricsPerformanceCard({
     (paid != null && paid > 0) ||
     (pending != null && pending > 0);
 
+  const tiles = [
+    {
+      label: t("assets.metrics.kpiTotalAccrued"),
+      value: accrued != null ? formatUsdtAmount(accrued, locale) : emptyAmountLabel(locale),
+      info: t("assets.metrics.kpiTotalAccruedInfo"),
+    },
+    {
+      label: t("assets.metrics.kpiTotalPaid"),
+      value: paid != null ? formatUsdtAmount(paid, locale) : emptyAmountLabel(locale),
+      info: t("assets.metrics.kpiTotalPaidInfo"),
+    },
+    {
+      label: t("assets.metrics.kpiPendingPayouts"),
+      value: pending != null ? formatUsdtAmount(pending, locale) : emptyAmountLabel(locale),
+      info: t("assets.metrics.kpiPendingPayoutsInfo"),
+    },
+  ];
+
   return (
-    <section className={assetsCardClass} aria-label={t("metrics.pnlAria")}>
+    <section className={cn(assetsMutedCardClass, "flex h-full flex-col gap-3")} aria-label={t("metrics.pnlAria")}>
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
-          Metrics · Accrued vs paid
-        </p>
-        <h3 className="text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">
-          {t("assets.metrics.accruedVsPaidTitle")}
-        </h3>
+        <div className="flex items-center gap-1.5">
+          <h3 className="text-base font-semibold tracking-tight text-neutral-900 sm:text-xl">
+            {t("assets.metrics.accruedVsPaidTitle")}
+          </h3>
+          <MetricsInfoTip label={infoLabel}>{t("assets.metrics.accruedVsPaidInfo")}</MetricsInfoTip>
+        </div>
         <p className="text-sm text-neutral-500">{t("assets.metrics.accruedVsPaidHint")}</p>
       </div>
       {loading && !performance ? (
-        <div className="h-40 animate-pulse rounded-2xl bg-neutral-50" />
+        <div className={cn(assetsChartSlotClass)}>
+          <div className="h-32 w-full animate-pulse rounded-2xl bg-neutral-100/80 sm:h-40" />
+        </div>
       ) : !hasData ? (
-        <EmptyState message={t("assets.metrics.payoutsAfterFirstPeriod")} />
+        <div className={assetsChartSlotClass}>
+          <EmptyState
+            situation="payoutsPending"
+            message={t("assets.metrics.payoutsAfterFirstPeriod")}
+            className="py-0 sm:py-0"
+          />
+        </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            {
-              label: t("assets.metrics.kpiTotalAccrued"),
-              value: accrued != null ? formatUsdtAmount(accrued, locale) : emptyAmountLabel(locale),
-            },
-            {
-              label: t("assets.metrics.kpiTotalPaid"),
-              value: paid != null ? formatUsdtAmount(paid, locale) : emptyAmountLabel(locale),
-            },
-            {
-              label: t("assets.metrics.kpiPendingPayouts"),
-              value: pending != null ? formatUsdtAmount(pending, locale) : emptyAmountLabel(locale),
-            },
-          ].map((item) => (
-            <article
-              key={item.label}
-              className={cn(assetsPanelClass, "px-4 py-4")}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
-                {item.label}
-              </p>
-              <p className="mt-2 font-mono text-xl font-semibold tabular-nums text-neutral-900">
-                {item.value}
-              </p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+          {tiles.map((item) => (
+            <article key={item.label} className={cn(assetsPanelClass, "px-3.5 py-3.5 sm:px-4 sm:py-4")}>
+              <div className="flex items-center gap-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{item.label}</p>
+                <MetricsInfoTip label={infoLabel}>{item.info}</MetricsInfoTip>
+              </div>
+              <p className="mt-2 font-mono text-lg font-semibold tabular-nums text-neutral-900 sm:text-xl">{item.value}</p>
             </article>
           ))}
         </div>

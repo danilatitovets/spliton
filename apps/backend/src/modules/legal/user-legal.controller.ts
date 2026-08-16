@@ -19,21 +19,22 @@ export class UserLegalController {
 
   @Get('center')
   async legalCenter(@CurrentUser() user: AuthUser) {
-    const [active, accepted, missingPrimary, missingSecondary, missingWithdrawal] =
-      await Promise.all([
-        this.policies.listActivePublic(),
-        this.consents.listUserConsents(user.id),
-        this.consents.getMissingConsents(user.id, ConsentSource.PRIMARY_PURCHASE),
-        this.consents.getMissingConsents(user.id, ConsentSource.SECONDARY_TRADE),
-        this.consents.getMissingConsents(user.id, ConsentSource.WITHDRAWAL),
-      ]);
+    const [active, accepted, missingMap] = await Promise.all([
+      this.policies.listActivePublic(),
+      this.consents.listUserConsents(user.id),
+      this.consents.getMissingConsentsForSources(user.id, [
+        ConsentSource.PRIMARY_PURCHASE,
+        ConsentSource.SECONDARY_TRADE,
+        ConsentSource.WITHDRAWAL,
+      ]),
+    ]);
     return {
       activePolicies: active,
       acceptedConsents: accepted,
       missingConsents: {
-        primaryPurchase: missingPrimary,
-        secondaryTrade: missingSecondary,
-        withdrawal: missingWithdrawal,
+        primaryPurchase: missingMap.get(ConsentSource.PRIMARY_PURCHASE) ?? [],
+        secondaryTrade: missingMap.get(ConsentSource.SECONDARY_TRADE) ?? [],
+        withdrawal: missingMap.get(ConsentSource.WITHDRAWAL) ?? [],
       },
       lawyerReviewRequired: true,
     };

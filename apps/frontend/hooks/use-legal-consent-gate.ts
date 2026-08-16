@@ -14,7 +14,8 @@ import {
 
 const ELIGIBILITY_PATH: Record<ConsentSource, string | null> = {
   REGISTER: null,
-  LOGIN: null,
+  // Backend canDeposit uses ConsentSource.LOGIN + deposits country scope.
+  LOGIN: LEGAL_API_PATHS.eligibilityDeposit,
   PRIMARY_PURCHASE: LEGAL_API_PATHS.eligibilityPrimary,
   SECONDARY_TRADE: LEGAL_API_PATHS.eligibilitySecondary,
   WITHDRAWAL: LEGAL_API_PATHS.eligibilityWithdrawal,

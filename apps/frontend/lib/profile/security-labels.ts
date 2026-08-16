@@ -1,7 +1,14 @@
 import { localeMessage } from "@/lib/i18n/normalize-locale";
 import { PROFILE_MESSAGES } from "@/lib/i18n/profile-messages";
 import type { AppLocale } from "@/lib/i18n/types";
-import { securityEventLabel } from "@/lib/profile/overview-labels";
+
+export {
+  formatSecurityEventIp,
+  formatSecurityEventWhen,
+  securityEventHint,
+  securityEventLabel,
+  securityEventTone,
+} from "@/lib/profile/security-event-display";
 
 function t(locale: AppLocale, key: string): string {
   return localeMessage(PROFILE_MESSAGES, locale, key, key);
@@ -28,8 +35,6 @@ export function securityRecommendationText(
   };
 }
 
-export { securityEventLabel };
-
 export function parseUserAgentShort(userAgent: string | null | undefined, locale: AppLocale): string {
   if (!userAgent?.trim()) return t(locale, "profile.security.events.deviceUnknown");
   const ua = userAgent;
@@ -44,5 +49,5 @@ export function parseUserAgentShort(userAgent: string | null | undefined, locale
   else if (/Android/i.test(ua)) os = "Android";
   else if (/iPhone|iPad/i.test(ua)) os = "iOS";
   else if (/Linux/i.test(ua)) os = "Linux";
-  return os ? `${browser} · ${os}` : browser;
+  return os ? `${browser} / ${os}` : browser;
 }

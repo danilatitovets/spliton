@@ -18,6 +18,8 @@ type LanguageSelectorProps = {
   layout?: "default" | "menu";
   /** Выравнивание выпадающего списка относительно кнопки. */
   menuAlign?: "start" | "end";
+  /** Hide the full locale name (keep flag + short code). Useful in dense headers. */
+  hideLocaleName?: boolean;
 };
 
 export function LanguageSelector({
@@ -26,6 +28,7 @@ export function LanguageSelector({
   variant = "light",
   layout = "default",
   menuAlign = "end",
+  hideLocaleName = false,
 }: LanguageSelectorProps) {
   const { locale, setLocale, t } = useI18n();
   const [open, setOpen] = React.useState(false);
@@ -72,7 +75,13 @@ export function LanguageSelector({
         onClick={() => setOpen((v) => !v)}
       >
         <LocaleFlag locale={current.code} size={isMenu ? "md" : "md"} />
-        <span className={cn(isMenu ? "min-w-0 flex-1 truncate" : "hidden sm:inline")}>{current.label}</span>
+        <span
+          className={cn(
+            isMenu ? "min-w-0 flex-1 truncate" : hideLocaleName ? "hidden" : "hidden sm:inline",
+          )}
+        >
+          {current.label}
+        </span>
         {!isMenu ? (
           <span className="shrink-0 text-[11px] font-bold tracking-wide opacity-70">{current.shortCode}</span>
         ) : null}

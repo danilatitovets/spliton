@@ -56,6 +56,8 @@ function sellFailedTitleKey(kind: ReturnType<typeof classifySellListingError>): 
       return "sell.failedInvalidPriceTitle";
     case "network":
       return "sell.failedNetworkTitle";
+    case "compliance":
+      return "sell.failedComplianceTitle";
     default:
       return "sell.failedGenericTitle";
   }
@@ -69,6 +71,8 @@ function sellFailedBodyKey(kind: ReturnType<typeof classifySellListingError>): s
       return "sell.failedInvalidPriceBody";
     case "network":
       return "sell.failedNetworkBody";
+    case "compliance":
+      return "sell.failedComplianceBody";
     default:
       return "sell.failedGenericBody";
   }

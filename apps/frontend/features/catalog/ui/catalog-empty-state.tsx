@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-const CATALOG_EMPTY_IMAGE_SRC = "/images/catalog/catalog-nothing-found.png";
+const CATALOG_EMPTY_IMAGE_SRC = "/images/catalog/catalog-filters-empty-glass.png";
 
 export function CatalogEmptyState({
   title,
@@ -20,7 +20,7 @@ export function CatalogEmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center px-4 py-14 text-center sm:py-16", className)}>
-      <div className="relative mx-auto w-full max-w-[280px] sm:max-w-[320px]">
+      <div className="relative mx-auto w-full max-w-[240px] sm:max-w-[280px]">
         <Image
           src={CATALOG_EMPTY_IMAGE_SRC}
           alt=""
@@ -30,9 +30,9 @@ export function CatalogEmptyState({
           priority={false}
         />
       </div>
-      <p className="mt-6 max-w-md text-base font-medium text-zinc-200">{title}</p>
-      {hint ? <p className="mt-2 max-w-md text-sm text-zinc-500">{hint}</p> : null}
-      {action ? <div className="mt-5">{action}</div> : null}
+      <p className="mt-7 max-w-md text-[1.05rem] font-semibold tracking-tight text-white sm:text-lg">{title}</p>
+      {hint ? <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-500">{hint}</p> : null}
+      {action ? <div className="mt-6">{action}</div> : null}
     </div>
   );
 }

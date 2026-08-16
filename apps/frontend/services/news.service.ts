@@ -197,7 +197,7 @@ export async function fetchPublicNewsBySlug(slug: string): Promise<PublicNewsDet
   }
 
   const url = resolveApiUrl(`/api/v1/news/${encodeURIComponent(slug)}`);
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { next: { revalidate: 60 } });
   if (res.status === 404) return null;
   if (!res.ok) {
     throw await parseApiClientError(res);

@@ -12,9 +12,14 @@ export function BreakdownRow({
   highlight?: boolean;
 }) {
   return (
-    <div className="flex justify-between gap-3 py-1.5 font-mono text-[12px]">
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className={cn("tabular-nums text-right", highlight ? "font-semibold text-[#B7F500]" : "text-zinc-100")}>
+    <div className="flex items-baseline justify-between gap-4 py-2.5">
+      <dt className="text-[12px] leading-none text-zinc-500">{label}</dt>
+      <dd
+        className={cn(
+          "font-mono text-[13px] tabular-nums leading-none tracking-tight text-right",
+          highlight ? "font-semibold text-white" : "font-medium text-zinc-100",
+        )}
+      >
         {value}
       </dd>
     </div>

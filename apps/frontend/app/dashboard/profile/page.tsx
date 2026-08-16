@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function DashboardProfilePage() {
   return (
     <DashboardAppShell
+      tone="dark"
       subheader={
         <Suspense fallback={null}>
           <ProfileSectionNav />

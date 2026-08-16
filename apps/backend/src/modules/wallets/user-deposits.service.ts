@@ -1,13 +1,16 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DepositStatus } from '@prisma/client';
+import { ConsentSource, DepositStatus } from '@prisma/client';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { throwAdminError } from '../admin/common/admin-http.util';
+import { EligibilityService } from '../compliance/eligibility.service';
+import { FeatureFlagsService } from '../../common/platform/feature-flags/feature-flags.service';
 import { DepositAddressProvider } from './deposit-address.provider';
 import { DepositNetworkSettingsService } from '../treasury/deposit-network-settings.service';
 import { formatMinutesLabel } from '../treasury/deposit-localized-text.util';
 import { UserWalletService } from './user-wallet.service';
+import { deriveDevTronAddress } from './validators/trc20-address.validator';
 
 @Injectable()
 export class UserDepositsService {
@@ -17,6 +20,8 @@ export class UserDepositsService {
     private readonly wallets: UserWalletService,
     private readonly depositAddress: DepositAddressProvider,
     private readonly networkSettings: DepositNetworkSettingsService,
+    private readonly eligibility: EligibilityService,
+    private readonly flags: FeatureFlagsService,
   ) {}
 
   private walletConfig() {
@@ -30,6 +35,8 @@ export class UserDepositsService {
     userId: string,
     opts?: { asset?: string; network?: string; lang?: string },
   ) {
+    await this.eligibility.assertAllowed(userId, ConsentSource.LOGIN);
+    this.flags.assertEnabled('enableDeposits');
     const { defaultAssetCode, defaultNetwork } = this.walletConfig();
     const asset = opts?.asset ?? defaultAssetCode;
     const network = opts?.network ?? defaultNetwork;
@@ -73,7 +80,8 @@ export class UserDepositsService {
     }
 
     const address = resolved.address;
-    if (address.startsWith('T_DEV_')) {
+    const isDevPlaceholder = address === deriveDevTronAddress(userId);
+    if (isDevPlaceholder) {
       const nodeEnv =
         this.config.get<string>('app.nodeEnv') ?? process.env.NODE_ENV ?? 'development';
       if (nodeEnv === 'production') {
@@ -111,7 +119,7 @@ export class UserDepositsService {
       asset: settings.asset,
       network: settings.network,
       networkDisplayName:
-        settings.networkDisplayName ?? `${settings.asset} · ${settings.network}`,
+        settings.networkDisplayName ?? `${settings.asset} / ${settings.network}`,
       chain: settings.chain,
       address,
       qrPayload,
@@ -135,7 +143,7 @@ export class UserDepositsService {
       providerStatus,
       addressStatus: 'ACTIVE',
       walletId: wallet.id,
-      isDevPlaceholder: address.startsWith('T_DEV_'),
+      isDevPlaceholder,
       updatedAt: settings.updatedAt,
     };
   }
@@ -166,12 +174,13 @@ export class UserDepositsService {
       PENDING: 'pending',
       CONFIRMING: 'confirming',
       MANUAL_REVIEW: 'manual_review',
-      CONFIRMED: 'completed',
+      CONFIRMED: 'confirmed_waiting_credit',
       FAILED: 'failed',
       DETECTED: 'detected',
       PENDING_CONFIRMATIONS: 'pending_confirmations',
       CREDITED: 'completed',
       IGNORED: 'ignored',
+      REJECTED: 'rejected',
     };
     return {
       id: row.id,

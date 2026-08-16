@@ -45,6 +45,9 @@ import {
 import { LegalConsentsService } from '../legal/legal-consents.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { ReferralEventsService } from '../referrals/referral-events.service';
+import { NotificationEventsService } from '../notifications/notification-events.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolveSessionDeviceLabel } from '../../common/http/user-agent-label';
 
 type RequestMeta = {
   ip?: string | null;
@@ -65,6 +68,8 @@ export class AuthService {
     private readonly legalConsents: LegalConsentsService,
     private readonly referrals: ReferralsService,
     private readonly referralEvents: ReferralEventsService,
+    private readonly notificationEvents: NotificationEventsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async register(
@@ -178,7 +183,7 @@ export class AuthService {
     }
     assertUserCanLogin(user.status);
 
-    const has2fa = await this.twoFactorService.isTotpEnabledForUser(user.id);
+    const has2fa = (user.twoFactorMethods?.length ?? 0) > 0;
     if (has2fa) {
       const challengeId = await this.twoFactorService.createLoginChallenge(
         user.id,
@@ -197,7 +202,7 @@ export class AuthService {
       meta,
     });
 
-    await this.authAuditService.logEvent({
+    this.authAuditService.logEventBackground({
       event: 'LOGIN_SUCCESS',
       actorUserId: safeUser.id,
       entityId: safeUser.id,
@@ -205,6 +210,8 @@ export class AuthService {
       userAgent: meta?.userAgent,
       safeMeta: { userId: safeUser.id, email: safeUser.email },
     });
+
+    void this.maybeAlertNewDeviceLogin(safeUser.id, meta).catch(() => undefined);
 
     return {
       user: safeUser,
@@ -307,7 +314,8 @@ export class AuthService {
     const payload = await this.tokenService.verifyRefreshToken(
       dto.refreshToken,
     );
-    const session = await this.sessionService.findSessionById(
+    // One RTT: session + user (profile/roles) — previously 2 sequential queries.
+    const session = await this.sessionService.findSessionWithUserById(
       payload.sessionId,
     );
 
@@ -375,7 +383,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const user = await this.authRepository.findUserById(payload.sub);
+    const user = session.user;
     if (!user) {
       await this.authAuditService.logEvent({
         event: 'REFRESH_FAILED',
@@ -407,9 +415,25 @@ export class AuthService {
       refreshToken: finalTokens.refreshToken,
       expiresAt: this.tokenService.getRefreshExpiryDate(),
       meta,
+    }).catch(async (err) => {
+      if (err instanceof Error && err.message === 'SESSION_ALREADY_ROTATED') {
+        await this.authAuditService.logEvent({
+          event: 'REFRESH_REUSE_DETECTED',
+          actorUserId: payload.sub,
+          ip: meta?.ip,
+          userAgent: meta?.userAgent,
+          safeMeta: {
+            userId: payload.sub,
+            sessionId: payload.sessionId,
+            reason: 'CONCURRENT_ROTATE',
+          },
+        });
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+      throw err;
     });
 
-    await this.authAuditService.logEvent({
+    this.authAuditService.logEventBackground({
       event: 'REFRESH_SUCCESS',
       actorUserId: safeUser.id,
       ip: meta?.ip,
@@ -476,21 +500,61 @@ export class AuthService {
     user: SafeUserResponse;
     meta?: RequestMeta;
   }) {
-    const session = await this.sessionService.createSession({
-      userId: params.user.id,
-      meta: params.meta,
-    });
+    const sessionId = randomUUID();
     const tokens = await this.tokenService.generateTokenPair({
       userId: params.user.id,
       email: params.user.email,
       roles: params.user.roles,
-      sessionId: session.id,
+      sessionId,
     });
-    await this.sessionService.setRefreshToken(
-      session.id,
-      tokens.refreshToken,
-      this.tokenService.getRefreshExpiryDate(),
-    );
+    // One write — previously createSession + setRefreshToken (2 RTTs).
+    await this.sessionService.createSessionWithRefresh({
+      sessionId,
+      userId: params.user.id,
+      refreshToken: tokens.refreshToken,
+      expiresAt: this.tokenService.getRefreshExpiryDate(),
+      meta: params.meta,
+    });
     return tokens;
+  }
+
+  private async maybeAlertNewDeviceLogin(userId: string, meta?: RequestMeta) {
+    const prefs = await this.prisma.userSecurityPreference.findUnique({
+      where: { userId },
+      select: { suspiciousLoginAlertsEnabled: true },
+    });
+    if (prefs && prefs.suspiciousLoginAlertsEnabled === false) return;
+
+    const ua = meta?.userAgent?.trim() ?? '';
+    const ip = meta?.ip?.trim() ?? '';
+    if (!ua && !ip) return;
+
+    const prior = await this.prisma.userSession.findFirst({
+      where: {
+        userId,
+        revokedAt: null,
+        OR: [
+          ...(ua ? [{ userAgent: ua }] : []),
+          ...(ip ? [{ ip }] : []),
+        ],
+      },
+      orderBy: { lastActiveAt: 'desc' },
+      skip: 1,
+      select: { id: true },
+    });
+    // skip:1 ignores the session just created; if another match exists, device/IP known
+    if (prior) return;
+
+    const knownCount = await this.prisma.userSession.count({
+      where: { userId },
+    });
+    // First-ever session (register/login) — don't alarm
+    if (knownCount <= 1) return;
+
+    await this.notificationEvents.newDeviceLogin({
+      userId,
+      device: resolveSessionDeviceLabel(meta?.device, meta?.userAgent),
+      ip: meta?.ip ?? null,
+    });
   }
 }

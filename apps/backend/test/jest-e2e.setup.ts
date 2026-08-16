@@ -18,6 +18,7 @@ process.env.NODE_ENV = 'test';
 /** Stable e2e: bypass IP throttle (production never sets this). */
 process.env.E2E_BYPASS_THROTTLE = 'true';
 process.env.LOAD_TEST_MODE = 'true';
+process.env.E2E_BYPASS_COMPLIANCE = 'true';
 
 import { configureE2eDatabase } from './helpers/e2e-database-config';
 

@@ -43,6 +43,22 @@ export class TtlCacheService {
     return this.fetchSingleFlight(key, ttlMs, staleTtlMs, factory, hit);
   }
 
+  /** Write-through / multi-alias populate (e.g. catalog detail under id+slug+symbol). */
+  set<T>(
+    key: string,
+    value: T,
+    ttlMs: number,
+    options?: TtlCacheGetOrSetOptions,
+  ): void {
+    const now = Date.now();
+    const staleTtlMs = options?.staleTtlMs ?? ttlMs;
+    this.store.set(key, {
+      value,
+      expiresAt: now + ttlMs,
+      staleUntil: now + ttlMs + staleTtlMs,
+    });
+  }
+
   invalidate(key: string): void {
     this.store.delete(key);
     this.inFlight.delete(key);

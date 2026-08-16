@@ -19,6 +19,12 @@ import { AdminWithdrawalSettlementService } from './admin-withdrawal-settlement.
 import { ComplianceEnforcementService } from '../../compliance/compliance-enforcement.service';
 import { WithdrawalApprovalService } from '../../treasury/withdrawal-approval.service';
 import { ProviderWithdrawalLifecycleService } from '../../treasury/provider-withdrawal-lifecycle.service';
+import { WithdrawalOnchainVerifier } from '../../deposit-ingestion/withdrawal-onchain.verifier';
+import {
+  InvalidTronTxHashError,
+  normalizeTronTxHash,
+  tryNormalizeTronTxHash,
+} from '../../deposit-ingestion/tron/tron-tx-hash';
 import {
   WithdrawalProviderStatus,
   WithdrawalStatus,
@@ -33,6 +39,7 @@ export class AdminWithdrawalsService {
     private readonly enforcement: ComplianceEnforcementService,
     private readonly withdrawalApprovals: WithdrawalApprovalService,
     private readonly providerLifecycle: ProviderWithdrawalLifecycleService,
+    private readonly onchain: WithdrawalOnchainVerifier,
   ) {}
 
   private include() {
@@ -527,7 +534,9 @@ export class AdminWithdrawalsService {
       );
     }
 
-    const updated = await this.prisma.$transaction(
+    let updated;
+    try {
+      updated = await this.prisma.$transaction(
       async (tx) => {
       const row = await tx.withdrawal.findUnique({
         where: { id },
@@ -578,6 +587,32 @@ export class AdminWithdrawalsService {
             manualOverride,
             manualReason: manualCompleteReason,
           });
+          if (!manualOverride) {
+            const rawTxid =
+              blockchainTxid?.trim() ||
+              row.blockchainTxid?.trim() ||
+              row.providerTxHash?.trim() ||
+              '';
+            let txid: string;
+            try {
+              txid = normalizeTronTxHash(rawTxid);
+            } catch (err) {
+              if (err instanceof InvalidTronTxHashError) {
+                throwAdminError(
+                  'WITHDRAWAL_TX_INVALID',
+                  'Transaction hash is not a valid TRON txid',
+                  HttpStatus.BAD_REQUEST,
+                );
+              }
+              throw err;
+            }
+            await this.onchain.assertMatchesWithdrawal({
+              txHash: txid,
+              toAddress: row.toAddress,
+              netAmount: row.walletTx.netAmount,
+            });
+            blockchainTxid = txid;
+          }
           nextStatus = await this.settlement.complete(
             tx,
             row,
@@ -598,7 +633,9 @@ export class AdminWithdrawalsService {
         data.completedAt = new Date();
         data.processedAt = new Date();
         if (blockchainTxid?.trim()) {
-          data.blockchainTxid = blockchainTxid.trim();
+          const canonical = tryNormalizeTronTxHash(blockchainTxid);
+          data.blockchainTxid = canonical ?? blockchainTxid.trim();
+          data.providerTxHash = canonical ?? blockchainTxid.trim();
         }
         if (manualOverride) {
           data.manualCompleteOverride = true;
@@ -626,6 +663,25 @@ export class AdminWithdrawalsService {
     },
       { timeout: 15_000 },
     );
+    } catch (err) {
+      const code =
+        typeof err === 'object' && err && 'code' in err
+          ? String((err as { code: unknown }).code)
+          : '';
+      const message = err instanceof Error ? err.message : String(err);
+      if (
+        code === 'P2002' ||
+        code === '23505' ||
+        /duplicate key|canonical_txid|provider_tx_hash/i.test(message)
+      ) {
+        throwAdminError(
+          'WITHDRAWAL_TX_REUSED',
+          'This blockchain transaction is already attached to another withdrawal',
+          HttpStatus.CONFLICT,
+        );
+      }
+      throw err;
+    }
 
     await this.audit.logOperatorAction({
       actorUserId: actorId,

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { Suspense } from "react";
@@ -6,12 +6,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ReferralProgramPageContent } from "@/components/referral/referral-program-page-content-live";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { UnderlineTab } from "@/components/shared/exchange/underline-tab";
+import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
 import {
   parseReferralProgramTabParam,
   REFERRAL_PROGRAM_TABS,
   type ReferralProgramTabId,
 } from "@/constants/dashboard/referral-program";
+import { cn } from "@/lib/utils";
 
 function ReferralProgramScreenInner() {
   const { t } = useI18n();
@@ -46,33 +47,31 @@ function ReferralProgramScreenInner() {
 
   return (
     <div className="flex min-h-0 flex-col bg-black font-sans tabular-nums text-white antialiased">
-      <header className="sticky top-0 z-40 shrink-0 border-b border-white/6 bg-black/95 backdrop-blur-sm supports-backdrop-filter:bg-black/85">
-        <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between md:gap-4 md:py-3.5">
-            <p className="text-xl font-semibold tracking-tight text-white md:text-2xl">{t("referral.screen.title")}</p>
-          </div>
-
-          <nav
-            className="flex min-h-10 w-full flex-wrap items-center gap-x-1 gap-y-1 overflow-x-auto border-t border-white/6 pb-3 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-x-2 [&::-webkit-scrollbar]:hidden"
-            aria-label={t("referral.screen.navAria")}
-          >
-            {REFERRAL_PROGRAM_TABS.map((tabItem) => (
-              <UnderlineTab
-                key={tabItem.id}
-                active={tab === tabItem.id}
-                onClick={() => setTab(tabItem.id)}
-                tone="neutral"
-              >
-                {t(`referral.tab.${tabItem.id}`)}
-              </UnderlineTab>
-            ))}
-          </nav>
-        </div>
-      </header>
+      <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
+        <nav
+          className="flex gap-1.5 overflow-x-auto py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label={t("referral.screen.navAria")}
+        >
+          {REFERRAL_PROGRAM_TABS.map((tabItem) => (
+            <button
+              key={tabItem.id}
+              type="button"
+              onClick={() => setTab(tabItem.id)}
+              className={cn(
+                smExchange.chipBase,
+                "px-3.5 py-2 text-[13px]",
+                tab === tabItem.id ? smExchange.chipActive : smExchange.chipIdle,
+              )}
+            >
+              {t(`referral.tab.${tabItem.id}`)}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       <main className="min-h-0 flex-1">
         <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
-          <div key={`${tab}-body`} className="animate-secondary-market-surface-in pb-20 pt-6">
+          <div key={`${tab}-body`} className="animate-secondary-market-surface-in pb-20 pt-1">
             <ReferralProgramPageContent activeTab={tab} onRequestProgramTab={() => setTab("program")} />
           </div>
         </div>

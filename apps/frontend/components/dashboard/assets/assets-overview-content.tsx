@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 
-import { assetsSectionTitleClass } from "@/components/dashboard/assets/assets-ui";
-import { MetricsAssetDynamicsChart } from "@/components/dashboard/assets/metrics-charts";
 import { OverviewHero } from "@/components/dashboard/assets/overview-hero";
 import { PayoutsOverviewSummary } from "@/components/dashboard/assets/payouts-overview-summary";
 import { PortfolioOverviewEmptyState } from "@/components/dashboard/assets/portfolio-overview-empty-state";
@@ -17,8 +15,6 @@ import {
   usePortfolioActivityLive,
   usePortfolioOverviewLive,
 } from "@/hooks/use-portfolio-live";
-import { usePortfolioValueChartLive } from "@/hooks/use-portfolio-charts";
-import { useWalletCashflowTotals } from "@/hooks/use-wallet-cashflow-totals";
 import { parseOverviewTotalUsdt } from "@/lib/portfolio/portfolio-adapter";
 
 export function AssetsOverviewContent() {
@@ -34,8 +30,6 @@ export function AssetsOverviewContent() {
     reload,
   } = usePortfolioOverviewLive();
   const activity = usePortfolioActivityLive();
-  const portfolioChart = usePortfolioValueChartLive();
-  const cashflow = useWalletCashflowTotals();
 
   // Soft revalidate: never blank the whole page when we already have overview.
   if (live && loading && !overview) {
@@ -56,7 +50,7 @@ export function AssetsOverviewContent() {
   const isEmptyPortfolio = live && overview != null && overview.positionCount === 0;
   const recentActivityItems =
     live && activity.records
-      ? activity.records.slice(0, 6).map((row) => ({
+      ? activity.records.slice(0, 4).map((row) => ({
           id: row.id,
           type: row.typeKey ? t(`activity.widgets.type.${row.typeKey}`) : (row.type ?? t("common.empty")),
           detail: row.detailsKey ? t(`activity.widgets.details.${row.detailsKey}`) : (row.details ?? ""),
@@ -68,9 +62,9 @@ export function AssetsOverviewContent() {
       : undefined;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {!live ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+        <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900" role="status">
           {t("assets.overview.demoBanner")}
         </p>
       ) : null}
@@ -84,25 +78,22 @@ export function AssetsOverviewContent() {
         walletLoading={walletLoading}
       />
 
-      <section className="space-y-3" aria-labelledby="overview-payouts-heading">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <h2 id="overview-payouts-heading" className={assetsSectionTitleClass()}>
-              {t("meta.payouts.overviewTitle")}
-            </h2>
-            <p className="mt-1 text-sm text-neutral-500">{t("meta.payouts.overviewHint")}</p>
-          </div>
+      <section className="space-y-2.5" aria-labelledby="overview-payouts-heading">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="overview-payouts-heading" className="truncate text-base font-semibold tracking-tight text-neutral-900">
+            {t("meta.payouts.overviewTitle")}
+          </h2>
           <Link
             href={ROUTES.dashboardPayouts}
-            className="shrink-0 text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-900"
+            className="shrink-0 text-sm font-medium text-neutral-500 transition hover:text-neutral-900"
           >
-            {t("payouts.recent.viewAll")}
+            {t("payouts.recent.viewAllShort")}
           </Link>
         </div>
         <PayoutsOverviewSummary embedded />
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-stretch lg:gap-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,22rem)] lg:items-stretch lg:gap-4">
         {isEmptyPortfolio ? (
           <PortfolioOverviewEmptyState />
         ) : (
@@ -119,22 +110,6 @@ export function AssetsOverviewContent() {
           variant="statement"
         />
       </div>
-
-      {live ? (
-        <MetricsAssetDynamicsChart
-          compact
-          isLiveMode={portfolioChart.live}
-          liveSeries={portfolioChart.live ? portfolioChart.series : null}
-          liveLoading={portfolioChart.live && portfolioChart.loading}
-          liveEmpty={portfolioChart.live && portfolioChart.empty}
-          liveError={portfolioChart.live ? portfolioChart.error : null}
-          onRetry={portfolioChart.reload}
-          cashflowTotals={cashflow.live ? cashflow.totals : null}
-          cashflowLoading={cashflow.live && cashflow.loading}
-          cashflowError={cashflow.live ? cashflow.error : null}
-          dataSourceLabel="Spliton · live portfolio value"
-        />
-      ) : null}
     </div>
   );
 }

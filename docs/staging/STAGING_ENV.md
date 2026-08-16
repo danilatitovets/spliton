@@ -43,7 +43,7 @@
 
 | Env | Required | Example | Где используется | Риск если не задан |
 |-----|----------|---------|------------------|-------------------|
-| `DATABASE_URL` | **yes** | Supabase pooler `:6543?pgbouncer=true` | Prisma runtime | API не стартует |
+| `DATABASE_URL` | **yes** | Supabase **session** pooler `:5432` (**no** `pgbouncer=true`) | Nest/Prisma runtime | API не стартует / txn fail |
 | `DIRECT_URL` / `DIRECT_DATABASE_URL` | **yes** | `db.<ref>.supabase.co:5432` | Migrations | DDL fail |
 | `JWT_SECRET` | **yes** | long random | Auth tokens | Auth broken |
 | `JWT_REFRESH_SECRET` | **yes** | long random | Refresh tokens | Sessions broken |

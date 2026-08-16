@@ -10,8 +10,9 @@ export type SplitonCtaTone = "onDark" | "onLight";
 type SplitonCtaPillProps = {
   children: ReactNode;
   tone?: SplitonCtaTone;
-  variant?: "primary" | "ghost";
-  /** Arrow circle — default on for primary. */
+  /** `accent` = OKX lime pill + black arrow circle. */
+  variant?: "primary" | "ghost" | "accent";
+  /** Arrow circle — default on for primary/accent. */
   withArrow?: boolean;
   className?: string;
   href?: string;
@@ -27,12 +28,13 @@ const arrowFill: Record<SplitonCtaTone, string> = {
   onLight: "bg-white text-black",
 };
 
+const accentFill = "bg-[#B7F500] text-black hover:bg-[#c6ff33]";
+const accentArrow = "bg-black text-[#B7F500]";
+
 const ghostFill: Record<SplitonCtaTone, string> = {
-  onDark:
-    "text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] hover:bg-white/[0.04]",
-  onLight:
-    "text-neutral-900 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)] hover:bg-black/[0.04]",
-};
+  onDark: "bg-white/[0.06] text-white hover:bg-white/[0.1]",
+  onLight: "bg-black/[0.04] text-neutral-900 hover:bg-black/[0.07]",
+}
 
 const base =
   "inline-flex h-11 items-center rounded-full text-[14px] font-[510] tracking-[-0.011em] transition active:scale-[0.98]";
@@ -53,13 +55,20 @@ export function SplitonCtaPill({
   type = "button",
   ...buttonProps
 }: SplitonCtaPillProps) {
-  const showArrow = withArrow ?? variant === "primary";
+  const showArrow = withArrow ?? (variant === "primary" || variant === "accent");
   const padding = showArrow ? "pl-6 pr-1.5" : "px-6";
+  const fill =
+    variant === "accent"
+      ? accentFill
+      : variant === "primary"
+        ? primaryFill[tone]
+        : ghostFill[tone];
+  const arrow = variant === "accent" ? accentArrow : arrowFill[tone];
   const classes = cn(
     base,
     showArrow ? "justify-between gap-3" : "justify-center",
     padding,
-    variant === "primary" ? primaryFill[tone] : ghostFill[tone],
+    fill,
     className,
   );
 
@@ -70,7 +79,7 @@ export function SplitonCtaPill({
         <span
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-full",
-            arrowFill[tone],
+            arrow,
           )}
         >
           <ArrowRight className="size-4" strokeWidth={2} aria-hidden />

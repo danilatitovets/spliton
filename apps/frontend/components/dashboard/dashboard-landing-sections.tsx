@@ -154,22 +154,22 @@ export function DashboardMarketsRow({ className }: { className?: string }) {
         {
           key: "secondary",
           href: ROUTES.dashboardSecondaryMarket,
-          imageSrc: "/images/Сервисы площадки/1.png",
+          imageSrc: "/images/landing/platform-services/secondary.png",
         },
         {
           key: "analytics",
           href: ROUTES.analyticsReleases,
-          imageSrc: "/images/Сервисы площадки/2.png",
+          imageSrc: "/images/landing/platform-services/analytics.png",
         },
         {
           key: "news",
           href: ROUTES.news,
-          imageSrc: "/images/Сервисы площадки/3.png",
+          imageSrc: "/images/landing/platform-services/news.png",
         },
         {
           key: "fees",
           href: ROUTES.fees,
-          imageSrc: "/images/Сервисы площадки/4.png",
+          imageSrc: "/images/landing/platform-services/fees.png",
         },
       ] as const,
     [],
@@ -187,7 +187,7 @@ export function DashboardMarketsRow({ className }: { className?: string }) {
         <span className="sr-only">{t("dashboard.markets.title")}</span>
         <span aria-hidden className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-2">
           <span>{t("dashboard.markets.titleBefore")}</span>
-          <span className="inline-flex rounded-full border border-[#3fe280]/45 bg-[#3fe280]/12 px-3 py-0.5 text-[0.92em] font-[510] tracking-[-0.03em] text-[#3fe280] sm:px-4 sm:py-1">
+          <span className="inline-flex rounded-full bg-[#3fe280]/18 px-3 py-0.5 text-[0.92em] font-[510] tracking-[-0.03em] text-[#3fe280] sm:px-4 sm:py-1">
             {t("dashboard.markets.titleHighlight")}
           </span>
           {t("dashboard.markets.titleAfter") ? (

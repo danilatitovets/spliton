@@ -29,6 +29,7 @@ import {
 } from "@/services/wallet.service";
 import { fetchPayoutsOverview, type PortfolioPayoutsOverviewApi } from "@/services/portfolio.service";
 import { CopyValueButton } from "@/components/wallet/copy-value-button";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { ROUTES } from "@/constants/routes";
 import { tf } from "@/lib/i18n/financial-messages";
 import { formatWalletDate, formatUsdtRu } from "@/lib/wallet/format-money";
@@ -200,8 +201,7 @@ export function PayoutWithdrawCard() {
 
   return (
     <section className="space-y-12 sm:space-y-14">
-      <header className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">{t("withdraw.eyebrow")}</p>
+      <header>
         <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[1.75rem]">{t("withdraw.heading")}</h1>
       </header>
 
@@ -323,21 +323,22 @@ export function PayoutWithdrawCard() {
               ) : null}
 
               <div className="pt-2">
-                <button
+                <SplitonCtaPill
+                  tone="onLight"
                   type="button"
                   disabled={
                     submitting ||
                     insufficientFunds ||
                     flowPhase === "processing" ||
                     consentGate.isChecking ||
-                    consentGate.checkError ||
-                    consentGate.hasBlockingEligibility
+                    Boolean(consentGate.checkError) ||
+                    Boolean(consentGate.hasBlockingEligibility)
                   }
                   onClick={() => void handleSubmit()}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-blue-700 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
+                  className="w-full disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
                 >
                   {submitting ? t("withdraw.submitting") : t("withdraw.submitRequest")}
-                </button>
+                </SplitonCtaPill>
               </div>
               {!live ? <p className="text-xs text-neutral-500">{t("withdraw.mockHint")}</p> : null}
             </FlowPanel>

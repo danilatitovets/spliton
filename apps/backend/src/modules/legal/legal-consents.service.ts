@@ -102,13 +102,13 @@ export class LegalConsentsService {
 
   private async getAllMissingPolicyIds(userId: string): Promise<Set<string>> {
     const ids = new Set<string>();
-    for (const source of [
+    const bySource = await this.getMissingConsentsForSources(userId, [
       ConsentSource.REGISTER,
       ConsentSource.PRIMARY_PURCHASE,
       ConsentSource.SECONDARY_TRADE,
       ConsentSource.WITHDRAWAL,
-    ] as ConsentSource[]) {
-      const missing = await this.getMissingConsents(userId, source);
+    ]);
+    for (const missing of bySource.values()) {
       for (const item of missing) {
         if (item.policyId) ids.add(item.policyId);
       }
@@ -199,48 +199,105 @@ export class LegalConsentsService {
   }
 
   async getMissingConsents(userId: string, source: ConsentSource): Promise<MissingConsentItem[]> {
-    const required = CONSENT_REQUIREMENTS[source] ?? [];
-    const missing: MissingConsentItem[] = [];
+    const map = await this.getMissingConsentsForSources(userId, [source]);
+    return map.get(source) ?? [];
+  }
 
-    for (const type of required) {
-      const active = await this.prisma.legalPolicy.findFirst({
-        where: { type, status: LegalPolicyStatus.ACTIVE },
-        orderBy: { publishedAt: 'desc' },
-      });
-
-      if (!active) {
-        if (isFinancialConsentSource(source)) {
-          missing.push({
-            type,
-            title: defaultTitleForPolicyType(type),
-            reason: 'POLICY_NOT_PUBLISHED',
-          });
-        }
-        continue;
-      }
-
-      if (!active.requiresUserConsent) continue;
-
-      const accepted = await this.prisma.userLegalConsent.findUnique({
-        where: {
-          userId_policyType_policyVersion: {
-            userId,
-            policyType: type,
-            policyVersion: active.version,
-          },
-        },
-      });
-      if (!accepted) {
-        missing.push({
-          type,
-          activeVersion: active.version,
-          policyId: active.id,
-          title: active.title,
-          reason: 'CONSENT_REQUIRED',
-        });
+  /**
+   * Batch missing-consent checks for multiple sources in ~2 DB round-trips
+   * (active policies + user consents) instead of N sequential findFirst/findUnique.
+   */
+  async getMissingConsentsForSources(
+    userId: string,
+    sources: ConsentSource[],
+  ): Promise<Map<ConsentSource, MissingConsentItem[]>> {
+    const result = new Map<ConsentSource, MissingConsentItem[]>();
+    const uniqueSources = [...new Set(sources)];
+    const allRequired = new Set<LegalPolicyType>();
+    for (const source of uniqueSources) {
+      for (const type of CONSENT_REQUIREMENTS[source] ?? []) {
+        allRequired.add(type);
       }
     }
-    return missing;
+
+    if (allRequired.size === 0) {
+      for (const source of uniqueSources) result.set(source, []);
+      return result;
+    }
+
+    const requiredList = [...allRequired];
+    const policies = await this.prisma.legalPolicy.findMany({
+      where: {
+        type: { in: requiredList },
+        status: LegalPolicyStatus.ACTIVE,
+      },
+      orderBy: { publishedAt: 'desc' },
+      select: {
+        id: true,
+        type: true,
+        version: true,
+        title: true,
+        requiresUserConsent: true,
+        publishedAt: true,
+      },
+    });
+
+    // Latest ACTIVE policy per type (publishedAt desc from query order).
+    const activeByType = new Map<(typeof policies)[number]['type'], (typeof policies)[number]>();
+    for (const policy of policies) {
+      if (!activeByType.has(policy.type)) {
+        activeByType.set(policy.type, policy);
+      }
+    }
+
+    const consentTargets = [...activeByType.values()].filter((p) => p.requiresUserConsent);
+    const acceptedRows =
+      consentTargets.length === 0
+        ? []
+        : await this.prisma.userLegalConsent.findMany({
+            where: {
+              userId,
+              OR: consentTargets.map((p) => ({
+                policyType: p.type,
+                policyVersion: p.version,
+              })),
+            },
+            select: { policyType: true, policyVersion: true },
+          });
+    const acceptedKeys = new Set(
+      acceptedRows.map((r) => `${r.policyType}:${r.policyVersion}`),
+    );
+
+    for (const source of uniqueSources) {
+      const required = CONSENT_REQUIREMENTS[source] ?? [];
+      const missing: MissingConsentItem[] = [];
+      for (const type of required) {
+        const active = activeByType.get(type);
+        if (!active) {
+          if (isFinancialConsentSource(source)) {
+            missing.push({
+              type,
+              title: defaultTitleForPolicyType(type),
+              reason: 'POLICY_NOT_PUBLISHED',
+            });
+          }
+          continue;
+        }
+        if (!active.requiresUserConsent) continue;
+        if (!acceptedKeys.has(`${active.type}:${active.version}`)) {
+          missing.push({
+            type,
+            activeVersion: active.version,
+            policyId: active.id,
+            title: active.title,
+            reason: 'CONSENT_REQUIRED',
+          });
+        }
+      }
+      result.set(source, missing);
+    }
+
+    return result;
   }
 
   getUnpublishedPolicyTypes(missing: MissingConsentItem[]): LegalPolicyType[] {

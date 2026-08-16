@@ -1,15 +1,43 @@
 "use client";
 
-import { Filter, Search } from "@/lib/lucide";
+import type { ReactNode } from "react";
+import { Search } from "@/lib/lucide";
 
+import { MetricsGptToggle } from "@/components/dashboard/assets/metrics-gpt-toggle";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { FilterChip } from "@/components/shared/exchange/filter-chip";
-import { UnderlineTab } from "@/components/shared/exchange/underline-tab";
+import { cn } from "@/lib/utils";
 import type {
   ReleaseAnalyticsChipPreset,
   ReleaseRowGenre,
   ReleaseRowStatus,
 } from "@/types/analytics/releases";
+
+const FILTER_HEADER_VIDEO = "/videos/position-holding-bg.mp4";
+
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold tracking-tight transition",
+        active
+          ? "bg-white text-black"
+          : "bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-zinc-200",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function ReleaseAnalyticsFiltersToolbar({
   statusTab,
@@ -20,6 +48,8 @@ export function ReleaseAnalyticsFiltersToolbar({
   onQuery,
   genre,
   onGenre,
+  resultCount,
+  totalCount,
 }: {
   statusTab: "all" | ReleaseRowStatus;
   onStatusTab: (t: "all" | ReleaseRowStatus) => void;
@@ -29,77 +59,98 @@ export function ReleaseAnalyticsFiltersToolbar({
   onQuery: (q: string) => void;
   genre: "all" | ReleaseRowGenre;
   onGenre: (g: "all" | ReleaseRowGenre) => void;
+  resultCount?: number;
+  totalCount?: number;
 }) {
   const { t } = useI18n();
+  const showCount = typeof resultCount === "number" && typeof totalCount === "number";
 
   return (
-    <div className="sticky top-0 z-[60] shrink-0 bg-black/90 backdrop-blur-sm">
-      <div className="mx-auto w-full max-w-[1400px] space-y-2 px-4 py-2 md:px-6 lg:px-8">
-        <div className="flex min-h-9 flex-wrap items-end gap-x-5 gap-y-1">
-          <UnderlineTab tone="neutral" active={statusTab === "all"} onClick={() => onStatusTab("all")}>
-            Все релизы
-          </UnderlineTab>
-          <UnderlineTab tone="neutral" active={statusTab === "Active"} onClick={() => onStatusTab("Active")}>
-            Активные
-          </UnderlineTab>
-          <UnderlineTab tone="neutral" active={statusTab === "Paused"} onClick={() => onStatusTab("Paused")}>
-            Пауза
-          </UnderlineTab>
-          <UnderlineTab tone="neutral" active={statusTab === "Closed"} onClick={() => onStatusTab("Closed")}>
-            Закрыты
-          </UnderlineTab>
+    <section
+      className="sticky top-0 z-[60] isolate shrink-0 overflow-hidden border-b border-white/[0.06] bg-black"
+      aria-label="Фильтры релизов"
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <video
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 blur-[10px] motion-reduce:hidden"
+          src={FILTER_HEADER_VIDEO}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+        <div className="absolute inset-0 bg-black/88 motion-reduce:bg-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+      </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-3 px-4 py-3.5 md:px-6 lg:px-8">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+            <h2 className="text-[15px] font-semibold tracking-tight text-white">Релизы</h2>
+            {showCount ? (
+              <span className="rounded-full bg-white/[0.08] px-2.5 py-1 font-mono text-[11px] font-medium tabular-nums text-zinc-300">
+                {resultCount.toLocaleString("ru-RU")}
+                <span className="text-zinc-500"> / {totalCount.toLocaleString("ru-RU")}</span>
+              </span>
+            ) : null}
+            <MetricsGptToggle
+              size="sm"
+              ariaLabel="Статус"
+              value={statusTab}
+              onChange={onStatusTab}
+              options={[
+                { id: "all", label: "Все" },
+                { id: "Active", label: "Активные" },
+                { id: "Paused", label: "Пауза" },
+                { id: "Closed", label: "Закрыты" },
+              ]}
+            />
+          </div>
+
+          <div className="relative w-full max-w-md lg:w-[280px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-500" />
+            <input
+              value={query}
+              onChange={(e) => onQuery(e.target.value)}
+              placeholder={t("analytics.releases.searchPlaceholder")}
+              className="h-9 w-full rounded-full border-0 bg-white/[0.06] py-2 pl-9 pr-3 text-[12px] text-zinc-100 outline-none ring-1 ring-white/[0.08] placeholder:text-zinc-600 focus:bg-white/[0.09] focus:ring-white/20"
+            />
+          </div>
         </div>
 
-        <div className="flex min-h-10 flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-1.5">
-            <FilterChip tone="neutral" active={chipPreset === "all"} onClick={() => onChipPreset("all")}>
+            <Pill active={chipPreset === "all"} onClick={() => onChipPreset("all")}>
               Все
-            </FilterChip>
-            <FilterChip tone="neutral" active={chipPreset === "top"} onClick={() => onChipPreset("top")}>
+            </Pill>
+            <Pill active={chipPreset === "top"} onClick={() => onChipPreset("top")}>
               Топ доходность
-            </FilterChip>
-            <FilterChip tone="neutral" active={chipPreset === "stable"} onClick={() => onChipPreset("stable")}>
+            </Pill>
+            <Pill active={chipPreset === "stable"} onClick={() => onChipPreset("stable")}>
               Стабильные
-            </FilterChip>
-            <FilterChip tone="neutral" active={chipPreset === "growth"} onClick={() => onChipPreset("growth")}>
+            </Pill>
+            <Pill active={chipPreset === "growth"} onClick={() => onChipPreset("growth")}>
               С ростом
-            </FilterChip>
+            </Pill>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative min-w-[220px] sm:w-[260px]">
-              <Search className="pointer-events-none absolute left-0 top-1/2 size-3.5 -translate-y-1/2 text-zinc-600" />
-              <input
-                value={query}
-                onChange={(e) => onQuery(e.target.value)}
-                placeholder={t("analytics.releases.searchPlaceholder")}
-                className="h-8 w-full border-0 border-b border-white/10 bg-transparent py-1.5 pl-6 pr-1 font-mono text-[12px] text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-white/25"
-              />
-            </div>
-            <button
-              type="button"
-              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-2 font-mono text-[11px] font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200"
-            >
-              <Filter className="size-3.5 text-zinc-500" aria-hidden />
-              Фильтр
-            </button>
-          </div>
-        </div>
 
-        <div className="flex min-h-9 flex-wrap items-center gap-1.5 pb-1">
-          <FilterChip tone="neutral" active={genre === "all"} onClick={() => onGenre("all")}>
-            Все жанры
-          </FilterChip>
-          <FilterChip tone="neutral" active={genre === "electronic"} onClick={() => onGenre("electronic")}>
-            Electronic
-          </FilterChip>
-          <FilterChip tone="neutral" active={genre === "hiphop"} onClick={() => onGenre("hiphop")}>
-            Hip-hop
-          </FilterChip>
-          <FilterChip tone="neutral" active={genre === "pop"} onClick={() => onGenre("pop")}>
-            Pop
-          </FilterChip>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Pill active={genre === "all"} onClick={() => onGenre("all")}>
+              Все жанры
+            </Pill>
+            <Pill active={genre === "electronic"} onClick={() => onGenre("electronic")}>
+              Electronic
+            </Pill>
+            <Pill active={genre === "hiphop"} onClick={() => onGenre("hiphop")}>
+              Hip-hop
+            </Pill>
+            <Pill active={genre === "pop"} onClick={() => onGenre("pop")}>
+              Pop
+            </Pill>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

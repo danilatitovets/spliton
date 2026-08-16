@@ -1,4 +1,4 @@
-﻿import { DashboardCatalogSection } from "@/components/dashboard/dashboard-catalog";
+import { DashboardCatalogSection } from "@/components/dashboard/dashboard-catalog";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import {

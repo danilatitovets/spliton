@@ -28,6 +28,8 @@ export type PositionPreviewItem = {
   share: string;
   value: string;
   dateEntered: string;
+  /** Cover art for modal / cards; falls back to catalog slot by id. */
+  coverUrl?: string | null;
   /** Id строки каталога / обзора рынка — маршрут продажи `/assets/sell/{id}` и прайс из данных релиза. */
   catalogReleaseId?: string;
   /** Целое число units в позиции (лимит формы «продать»). */
@@ -61,6 +63,7 @@ export const positionPreviews: PositionPreviewItem[] = [
   {
     id: "p1",
     catalogReleaseId: "1",
+    coverUrl: "/images/catalog/1.png",
     heldUnits: 3420,
     release: "Neon Drift",
     artist: "Metro Lights",
@@ -74,6 +77,7 @@ export const positionPreviews: PositionPreviewItem[] = [
   {
     id: "p2",
     catalogReleaseId: "2",
+    coverUrl: "/images/catalog/2.png",
     heldUnits: 2860,
     release: "Static Bloom",
     artist: "Nika Vera",
@@ -87,6 +91,7 @@ export const positionPreviews: PositionPreviewItem[] = [
   {
     id: "p3",
     catalogReleaseId: "3",
+    coverUrl: "/images/catalog/3.png",
     heldUnits: 2100,
     release: "Low Tide FM",
     artist: "Coastline",
@@ -100,6 +105,7 @@ export const positionPreviews: PositionPreviewItem[] = [
   {
     id: "p4",
     catalogReleaseId: "4",
+    coverUrl: "/images/catalog/4.png",
     heldUnits: 1720,
     release: "Cipher Walk",
     artist: "YGT",
@@ -113,6 +119,7 @@ export const positionPreviews: PositionPreviewItem[] = [
   {
     id: "p5",
     catalogReleaseId: "5",
+    coverUrl: "/images/catalog/5.png",
     heldUnits: 1180,
     release: "Glass Hours",
     artist: "Anka Row",

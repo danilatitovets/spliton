@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, TradeSettlementStatus } from '@prisma/client';
+import { ListingStatus, Prisma, TradeSettlementStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SecondaryMarketEnrichmentService } from '../market/secondary-market-enrichment.service';
 import { d } from './portfolio-decimal.util';
 
 export type ReleaseMarkPrice = {
@@ -10,12 +9,13 @@ export type ReleaseMarkPrice = {
   lastTradePrice: Prisma.Decimal | null;
 };
 
+/**
+ * Lightweight mark prices for portfolio — not full secondary-market enrichment
+ * (sparklines/history). Two queries max, not an 8-query fanout.
+ */
 @Injectable()
 export class PortfolioPricingService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly enrichment: SecondaryMarketEnrichmentService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async resolveMarkPrices(
     releases: { id: string; primaryUnitPrice: Prisma.Decimal }[],
@@ -28,8 +28,18 @@ export class PortfolioPricingService {
       releases.map((r) => [r.id, r.primaryUnitPrice] as const),
     );
 
-    const [contextByRelease, lastTrades] = await Promise.all([
-      this.enrichment.loadByReleaseIds(ids),
+    const [bestAskListings, lastTrades] = await Promise.all([
+      this.prisma.marketListing.findMany({
+        where: {
+          releaseId: { in: ids },
+          deletedAt: null,
+          status: ListingStatus.ACTIVE,
+          unitsAvailable: { gt: 0 },
+        },
+        orderBy: { pricePerUnit: 'asc' },
+        distinct: ['releaseId'],
+        select: { releaseId: true, pricePerUnit: true },
+      }),
       this.prisma.trade.findMany({
         where: {
           releaseId: { in: ids },
@@ -44,14 +54,16 @@ export class PortfolioPricingService {
       }),
     ]);
 
+    const bestAskByRelease = new Map(
+      bestAskListings.map((l) => [l.releaseId, l.pricePerUnit]),
+    );
     const lastTradeByRelease = new Map(
       lastTrades.map((t) => [t.releaseId, t.price]),
     );
 
     for (const releaseId of ids) {
       const primary = primaryById.get(releaseId) ?? new Prisma.Decimal(0);
-      const ctx = contextByRelease.get(releaseId);
-      const bestAsk = ctx?.bestAsk ? d(ctx.bestAsk) : null;
+      const bestAsk = bestAskByRelease.get(releaseId) ?? null;
       const last = lastTradeByRelease.get(releaseId) ?? null;
       if (bestAsk && bestAsk.greaterThan(0)) {
         map.set(releaseId, {
@@ -59,21 +71,19 @@ export class PortfolioPricingService {
           priceSource: 'best_ask',
           lastTradePrice: last,
         });
-        continue;
-      }
-      if (last && last.greaterThan(0)) {
+      } else if (last && last.greaterThan(0)) {
         map.set(releaseId, {
           currentPrice: last,
           priceSource: 'last_trade',
           lastTradePrice: last,
         });
-        continue;
+      } else {
+        map.set(releaseId, {
+          currentPrice: primary,
+          priceSource: 'primary',
+          lastTradePrice: last,
+        });
       }
-      map.set(releaseId, {
-        currentPrice: primary,
-        priceSource: 'primary',
-        lastTradePrice: null,
-      });
     }
 
     return map;

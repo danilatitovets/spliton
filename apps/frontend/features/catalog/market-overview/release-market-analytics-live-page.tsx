@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 
 import { useI18n } from "@/components/providers/i18n-provider";
+import { ReleaseNotFoundGlassPanel } from "@/components/shared/release-not-found-glass-panel";
 import { ReleaseMarketAnalyticsScreen } from "@/features/catalog/market-overview/release-analytics/release-market-analytics-screen";
-import { buildReleaseMarketAnalyticsFromOverviewDetail } from "@/lib/market-overview/market-overview-adapter";
+import { ROUTES } from "@/constants/routes";
 import { getCatalogReleaseMarketAnalyticsPageData } from "@/lib/catalog/release-market-analytics";
-import { getWalletDataSource } from "@/services/wallet.service";
+import { buildReleaseMarketAnalyticsFromOverviewDetail } from "@/lib/market-overview/market-overview-adapter";
 import { fetchMarketOverviewDetail } from "@/services/market-overview.service";
+import { getWalletDataSource } from "@/services/wallet.service";
 import type { ReleaseMarketAnalyticsPageData } from "@/types/catalog/release-market-analytics";
 
 export function ReleaseMarketAnalyticsLivePage({ releaseId }: { releaseId: string }) {
@@ -34,19 +36,27 @@ export function ReleaseMarketAnalyticsLivePage({ releaseId }: { releaseId: strin
 
   if (!live && !data) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-white">
-        <p>{t("catalog.releaseAnalytics.notFound")}</p>
-      </div>
+      <ReleaseNotFoundGlassPanel
+        title={t("catalog.releaseAnalytics.notFound")}
+        description={t("notFound.catalogRelease.description")}
+        primaryHref={ROUTES.catalogMarketOverview}
+        primaryLabel={t("notFound.catalogRelease.cta")}
+        secondaryHref={ROUTES.dashboardCatalog}
+        secondaryLabel={t("notFound.goCatalog")}
+      />
     );
   }
 
   if (live && error) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center px-6">
-        <p className="text-sm text-red-300" role="alert">
-          {error}
-        </p>
-      </div>
+      <ReleaseNotFoundGlassPanel
+        title={t("catalog.releaseAnalytics.notFound")}
+        description={error}
+        primaryHref={ROUTES.catalogMarketOverview}
+        primaryLabel={t("notFound.catalogRelease.cta")}
+        secondaryHref={ROUTES.dashboardCatalog}
+        secondaryLabel={t("notFound.goCatalog")}
+      />
     );
   }
 

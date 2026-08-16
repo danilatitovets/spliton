@@ -9,22 +9,31 @@ const PUBLIC_STATUSES: ReleaseStatus[] = [
   ReleaseStatus.SOLD_OUT,
 ];
 
+const releasePublicInclude = {
+  releaseArtists: {
+    include: { artist: true },
+    orderBy: { createdAt: 'asc' as const },
+    take: 3,
+  },
+  primaryRaiseRounds: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+  },
+};
+
 @Injectable()
 export class UserAnalyticsResolveService {
   constructor(private readonly prisma: PrismaService) {}
 
   async resolveReleaseId(idOrSlug: string): Promise<string> {
-    const byId = await this.prisma.release.findFirst({
-      where: { id: idOrSlug, deletedAt: null },
+    const row = await this.prisma.release.findFirst({
+      where: {
+        deletedAt: null,
+        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+      },
       select: { id: true },
     });
-    if (byId) return byId.id;
-
-    const bySlug = await this.prisma.release.findFirst({
-      where: { slug: idOrSlug, deletedAt: null },
-      select: { id: true },
-    });
-    if (bySlug) return bySlug.id;
+    if (row) return row.id;
 
     throwAdminError(
       'RELEASE_NOT_FOUND',
@@ -47,20 +56,30 @@ export class UserAnalyticsResolveService {
     }
   }
 
+  /** One RTT: resolve by id/slug + public status check + full include. */
+  async loadPublicReleaseByKey(idOrSlug: string) {
+    const release = await this.prisma.release.findFirst({
+      where: {
+        deletedAt: null,
+        status: { in: PUBLIC_STATUSES },
+        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+      },
+      include: releasePublicInclude,
+    });
+    if (!release) {
+      throwAdminError(
+        'RELEASE_NOT_FOUND',
+        'Release not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return release;
+  }
+
   async loadRelease(releaseId: string) {
     const release = await this.prisma.release.findFirst({
       where: { id: releaseId, deletedAt: null },
-      include: {
-        releaseArtists: {
-          include: { artist: true },
-          orderBy: { createdAt: 'asc' },
-          take: 3,
-        },
-        primaryRaiseRounds: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        },
-      },
+      include: releasePublicInclude,
     });
     if (!release) {
       throwAdminError(

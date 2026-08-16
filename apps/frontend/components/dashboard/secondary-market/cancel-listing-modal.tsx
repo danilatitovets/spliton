@@ -150,7 +150,7 @@ export function CancelListingModal({ open, onOpenChange, listing, onConfirm }: C
               className={cn(
                 "h-9 shrink-0 rounded-lg px-3.5 font-mono text-[12px] font-medium text-zinc-200",
                 "bg-white/6 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B7F500]/35",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25",
                 "disabled:pointer-events-none disabled:opacity-40",
               )}
             >
@@ -163,9 +163,9 @@ export function CancelListingModal({ open, onOpenChange, listing, onConfirm }: C
               onClick={() => void handleConfirm()}
               className={cn(
                 "h-9 shrink-0 rounded-lg px-3.5 font-mono text-[12px] font-semibold",
-                "bg-fuchsia-500/18 text-fuchsia-100 ring-1 ring-fuchsia-400/25",
-                "transition hover:bg-fuchsia-500/26 hover:ring-fuchsia-400/35",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40",
+                "bg-zinc-700/18 text-zinc-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)]",
+                "transition hover:bg-zinc-700/26 hover:ring-white/25",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
                 "disabled:pointer-events-none disabled:opacity-50",
               )}
             >

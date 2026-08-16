@@ -8,8 +8,8 @@ Use this before every production release. Staging should pass the same checks fi
 ## Environment & secrets
 
 - [ ] `.env` never committed; rotate any secret that touched a dev machine or CI log
-- [ ] `DATABASE_URL` / `DIRECT_URL` → Supabase **production** pooler (`:6543?pgbouncer=true`) + direct (`db.*.supabase.co:5432`)
-- [ ] Optional isolated CI/e2e DB via `TEST_DATABASE_URL` — **never** production ([TESTING_OVERVIEW.md](../testing/TESTING_OVERVIEW.md))
+- [ ] `DATABASE_URL` / `DIRECT_URL` → Supabase **production** session pooler (`:5432`, **no** `pgbouncer=true`) + direct (`db.*.supabase.co:5432`). Do **not** use transaction pooler `:6543?pgbouncer=true` for Nest runtime.
+- [ ] Optional isolated CI/e2e DB via `TEST_DATABASE_URL` — prefer `docker-compose.test.yml` on `127.0.0.1:5433` or session `:5432`; **never** production ([TESTING_OVERVIEW.md](../testing/TESTING_OVERVIEW.md))
 - [ ] `JWT_SECRET`, `JWT_REFRESH_SECRET` — strong, unique, not reused from staging
 - [ ] `NODE_ENV=production` on API
 - [ ] `FRONTEND_ORIGIN` / `CORS_ORIGIN` list exact Vercel production host(s)
@@ -19,7 +19,7 @@ Use this before every production release. Staging should pass the same checks fi
 
 ## Frontend (Vercel)
 
-- [ ] `NEXT_PUBLIC_API_BASE_URL` → production API (Hetzner)
+- [ ] `NEXT_PUBLIC_API_BASE_URL` → production API (Hetzner or Railway)
 - [ ] `NEXT_PUBLIC_APP_ENV=production`
 - [ ] `NEXT_PUBLIC_ADMIN_DATA_SOURCE=live`
 - [ ] `NEXT_PUBLIC_WALLET_DATA_SOURCE=live`
@@ -29,7 +29,7 @@ Use this before every production release. Staging should pass the same checks fi
 - [ ] Security headers / CSP as required by your Vercel config
 - [ ] Smoke: `/forgot-password`, `/terms`, `/privacy` (no 404); reset link opens `/reset-password?token=…`
 
-## Backend (Hetzner)
+## Backend (Hetzner / Railway)
 
 - [ ] Report worker: `REPORT_WORKER_ENABLED=true`
 - [ ] Report storage: `REPORT_STORAGE_MODE=supabase` + buckets ([SUPABASE_STORAGE.md](./SUPABASE_STORAGE.md), [REPORT_WORKER_AND_STORAGE.md](./REPORT_WORKER_AND_STORAGE.md))

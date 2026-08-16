@@ -17,14 +17,8 @@ export function NewsCard({ article, className }: NewsCardProps) {
   const categoryLabel = NEWS_CATEGORY_META[article.category].label.toUpperCase();
 
   return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex flex-col overflow-hidden rounded-2xl bg-transparent transition-colors",
-        className,
-      )}
-    >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-white/[0.06]">
+    <Link href={href} className={cn("group flex flex-col overflow-hidden", className)}>
+      <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-white/[0.04]">
         <Image
           src={article.coverUrl}
           alt=""
@@ -37,7 +31,7 @@ export function NewsCard({ article, className }: NewsCardProps) {
           aria-hidden
         />
         {article.isNew ? (
-          <span className="absolute left-3 top-3 rounded-full bg-[#B7F500] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black">
+          <span className="absolute left-3 top-3 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black">
             New
           </span>
         ) : null}
@@ -45,7 +39,7 @@ export function NewsCard({ article, className }: NewsCardProps) {
 
       <div className="flex flex-1 flex-col pt-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{categoryLabel}</p>
-        <h3 className="mt-2 line-clamp-3 text-base font-semibold leading-snug text-white transition-colors group-hover:text-[#d4f570] sm:text-[17px]">
+        <h3 className="mt-2 line-clamp-3 text-base font-semibold leading-snug text-white transition-colors group-hover:text-zinc-200 sm:text-[17px]">
           {article.title}
         </h3>
         <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-zinc-500">{article.excerpt}</p>

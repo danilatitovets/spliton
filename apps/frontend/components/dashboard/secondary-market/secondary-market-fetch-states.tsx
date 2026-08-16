@@ -59,7 +59,7 @@ export function SecondaryMarketAuthGate() {
     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">
       <p className="font-medium text-white">{t("secondaryMarket.auth.title")}</p>
       <p className="mt-2 text-zinc-500">{t("secondaryMarket.auth.description")}</p>
-      <Link href={ROUTES.login} className="mt-4 inline-flex text-sm font-semibold text-[#B7F500] hover:underline">
+      <Link href={ROUTES.login} className="mt-4 inline-flex text-sm font-semibold text-white hover:underline">
         {t("secondaryMarket.auth.login")}
       </Link>
     </div>

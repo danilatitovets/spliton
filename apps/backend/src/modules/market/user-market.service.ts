@@ -101,14 +101,14 @@ export class UserMarketService {
     const where = await this.buildMarketListingWhere(query);
     const sort = query.sort ?? 'availability';
     const needsPostProcess =
-      query.liquidity != null ||
-      sort === 'change_desc' ||
-      sort === 'availability';
+      query.liquidity != null || sort === 'change_desc';
 
     if (needsPostProcess) {
+      const dbTotal = await this.prisma.marketListing.count({ where });
+      const fetchTake = Math.min(Math.max(dbTotal, ps), 2000);
       const rows = await this.prisma.marketListing.findMany({
         where,
-        take: MAX_PAGE_SIZE * 5,
+        take: fetchTake,
         orderBy: { createdAt: 'desc' },
         include: listingInclude,
       });
@@ -127,20 +127,6 @@ export class UserMarketService {
         items.sort(
           (a, b) => Number(b.change7dPct) - Number(a.change7dPct),
         );
-      } else if (sort === 'availability') {
-        items.sort((a, b) => {
-          const tier = (status: string) => {
-            if (status === 'active') return 0;
-            if (status === 'paused') return 1;
-            if (status === 'sold_out') return 2;
-            if (status === 'cancelled') return 3;
-            if (status === 'expired') return 4;
-            return 5;
-          };
-          const tDiff = tier(a.status) - tier(b.status);
-          if (tDiff !== 0) return tDiff;
-          return Number(b.deals7d) - Number(a.deals7d);
-        });
       }
 
       const total = items.length;
@@ -185,7 +171,9 @@ export class UserMarketService {
 
   private buildMarketListingOrderBy(
     sort: MarketListingsQueryDto['sort'],
-  ): Prisma.MarketListingOrderByWithRelationInput {
+  ):
+    | Prisma.MarketListingOrderByWithRelationInput
+    | Prisma.MarketListingOrderByWithRelationInput[] {
     switch (sort) {
       case 'price_asc':
         return { pricePerUnit: 'asc' };
@@ -193,6 +181,9 @@ export class UserMarketService {
         return { pricePerUnit: 'desc' };
       case 'units_desc':
         return { unitsAvailable: 'desc' };
+      case 'availability':
+        // ACTIVE → PAUSED → SOLD_OUT → CANCELLED → EXPIRED (enum declaration order)
+        return [{ status: 'asc' }, { createdAt: 'desc' }];
       case 'newest':
       default:
         return { createdAt: 'desc' };
@@ -351,15 +342,27 @@ export class UserMarketService {
     meta?: { ip: string | null; userAgent: string | null },
   ) {
     await this.eligibility.assertAllowed(userId, ConsentSource.SECONDARY_TRADE);
+    this.flags.assertEnabled('enableSecondaryMarket');
 
     const units = new Prisma.Decimal(dto.units);
     const pricePerUnit = new Prisma.Decimal(dto.pricePerUnit);
 
     const listing = await this.prisma.$transaction(async (tx) => {
-      const position = await tx.userPosition.findUnique({
-        where: { userId_releaseId: { userId, releaseId: dto.releaseId } },
-      });
-      if (!position || position.unitsAvailable.lessThan(units)) {
+      // Lock position row to prevent concurrent createListing oversell.
+      const locked = await tx.$queryRaw<
+        Array<{
+          id: string;
+          units_available: Prisma.Decimal;
+          units_locked: Prisma.Decimal;
+        }>
+      >`
+        SELECT id, units_available, units_locked
+        FROM user_positions
+        WHERE user_id = ${userId}::uuid AND release_id = ${dto.releaseId}::uuid
+        FOR UPDATE
+      `;
+      const position = locked[0];
+      if (!position || new Prisma.Decimal(position.units_available).lessThan(units)) {
         throwAdminError(
           'INSUFFICIENT_UNITS',
           'Not enough units to list',
@@ -367,13 +370,22 @@ export class UserMarketService {
         );
       }
 
-      await tx.userPosition.update({
-        where: { id: position.id },
-        data: {
-          unitsAvailable: position.unitsAvailable.minus(units),
-          unitsLocked: position.unitsLocked.plus(units),
-        },
-      });
+      const updated = await tx.$executeRaw`
+        UPDATE user_positions
+        SET
+          units_available = units_available - ${units},
+          units_locked = units_locked + ${units},
+          updated_at = NOW()
+        WHERE id = ${position.id}::uuid
+          AND units_available >= ${units}
+      `;
+      if (Number(updated) !== 1) {
+        throwAdminError(
+          'INSUFFICIENT_UNITS',
+          'Not enough units to list',
+          HttpStatus.CONFLICT,
+        );
+      }
 
       const created = await tx.marketListing.create({
         data: {
@@ -394,6 +406,8 @@ export class UserMarketService {
           eventType: OwnershipEventType.LOCK_FOR_SELL,
           unitsDelta: units.negated(),
           pricePerUnit,
+          sourceEntityType: 'listing',
+          sourceEntityId: created.id,
           happenedAt: new Date(),
         },
       });
@@ -425,6 +439,10 @@ export class UserMarketService {
     await this.enforcement.assertUserCanTransact(userId);
 
     await this.prisma.$transaction(async (tx) => {
+      // Lock listing first so cancel cannot race with buy settlement.
+      await tx.$executeRaw`
+        SELECT id FROM market_listings WHERE id = ${listingId}::uuid FOR UPDATE
+      `;
       const listing = await tx.marketListing.findFirst({
         where: { id: listingId, sellerUserId: userId, deletedAt: null },
       });
@@ -447,33 +465,52 @@ export class UserMarketService {
       }
 
       const unlock = listing.unitsAvailable;
-      const position = await tx.userPosition.findUnique({
-        where: { userId_releaseId: { userId, releaseId: listing.releaseId } },
-      });
-      if (position) {
-        await tx.userPosition.update({
-          where: { id: position.id },
+      const cas = await tx.$executeRaw`
+        UPDATE market_listings
+        SET status = 'CANCELLED', updated_at = NOW()
+        WHERE id = ${listingId}::uuid
+          AND status IN ('ACTIVE', 'PAUSED')
+          AND deleted_at IS NULL
+      `;
+      if (Number(cas) !== 1) {
+        throwAdminError(
+          'LISTING_NOT_CANCELLABLE',
+          'Listing cannot be cancelled',
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      if (unlock.gt(0)) {
+        const posUpdated = await tx.$executeRaw`
+          UPDATE user_positions
+          SET
+            units_available = units_available + ${unlock},
+            units_locked = units_locked - ${unlock},
+            updated_at = NOW()
+          WHERE user_id = ${userId}::uuid
+            AND release_id = ${listing.releaseId}::uuid
+            AND units_locked >= ${unlock}
+        `;
+        if (Number(posUpdated) !== 1) {
+          throwAdminError(
+            'POSITION_LOCK_MISMATCH',
+            'Locked units mismatch; cancel aborted',
+            HttpStatus.CONFLICT,
+          );
+        }
+
+        await tx.ownershipLedger.create({
           data: {
-            unitsAvailable: position.unitsAvailable.plus(unlock),
-            unitsLocked: position.unitsLocked.minus(unlock),
+            userId,
+            releaseId: listing.releaseId,
+            eventType: OwnershipEventType.UNLOCK_AFTER_CANCEL,
+            unitsDelta: unlock,
+            sourceEntityType: 'listing',
+            sourceEntityId: listingId,
+            happenedAt: new Date(),
           },
         });
       }
-
-      await tx.marketListing.update({
-        where: { id: listingId },
-        data: { status: ListingStatus.CANCELLED },
-      });
-
-      await tx.ownershipLedger.create({
-        data: {
-          userId,
-          releaseId: listing.releaseId,
-          eventType: OwnershipEventType.UNLOCK_AFTER_CANCEL,
-          unitsDelta: unlock,
-          happenedAt: new Date(),
-        },
-      });
     });
 
     await this.audit.logUserAction({
@@ -496,17 +533,79 @@ export class UserMarketService {
     buyerUserId: string,
     listingId: string,
     meta?: { ip: string | null; userAgent: string | null },
+    idempotencyKey?: string,
   ) {
     await this.eligibility.assertAllowed(buyerUserId, ConsentSource.SECONDARY_TRADE);
     await this.enforcement.assertListingCanBeBought(listingId);
     this.flags.assertEnabled('enableSecondaryMarket');
     const buyerWallet = await this.wallets.getOrCreateWallet(buyerUserId);
     const fees = await this.activeFeeSettings();
+    const clientKey = (idempotencyKey ?? '').trim();
+    if (clientKey) {
+      const existing = await this.prisma.order.findFirst({
+        where: { userId: buyerUserId, idempotencyKey: clientKey },
+        select: {
+          id: true,
+          listingId: true,
+          buyTrades: {
+            take: 1,
+            orderBy: { executedAt: 'desc' },
+            select: {
+              id: true,
+              units: true,
+              grossAmount: true,
+              feeTotal: true,
+            },
+          },
+        },
+      });
+      if (existing) {
+        if (existing.listingId !== listingId) {
+          throwAdminError(
+            'IDEMPOTENCY_KEY_REUSED',
+            'Idempotency key already used for another listing',
+            HttpStatus.CONFLICT,
+          );
+        }
+        const trade = existing.buyTrades[0];
+        if (trade) {
+          const fee = trade.feeTotal;
+          const sellerNet = trade.grossAmount.minus(fee);
+          return {
+            tradeId: trade.id,
+            listingId,
+            units: trade.units.toString(),
+            grossAmount: trade.grossAmount.toString(),
+            feeAmount: fee.toString(),
+            sellerNet: sellerNet.toString(),
+            status: 'settled' as const,
+            replayed: true as const,
+          };
+        }
+      }
+    }
 
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`
         SELECT id FROM market_listings WHERE id = ${listingId}::uuid FOR UPDATE
       `;
+
+      // Lightweight freeze recheck under listing lock (closes TOCTOU without bloating the tx).
+      const listingFreeze = await tx.complianceFreeze.findFirst({
+        where: {
+          operationType: 'listing',
+          operationId: listingId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+      if (listingFreeze) {
+        throwAdminError(
+          'LISTING_FROZEN',
+          'Listing is not available',
+          HttpStatus.CONFLICT,
+        );
+      }
 
       const listing = await tx.marketListing.findFirst({
         where: { id: listingId, deletedAt: null },
@@ -691,6 +790,7 @@ export class UserMarketService {
           unitsTotal: units,
           unitsFilled: units,
           status: OrderStatus.FILLED,
+          ...(clientKey ? { idempotencyKey: clientKey } : {}),
         },
       });
 
@@ -752,14 +852,29 @@ export class UserMarketService {
           },
         },
       });
-      if (sellerPos) {
-        await tx.userPosition.update({
-          where: { id: sellerPos.id },
-          data: {
-            unitsTotal: sellerPos.unitsTotal.minus(units),
-            unitsLocked: sellerPos.unitsLocked.minus(units),
-          },
-        });
+      if (!sellerPos || sellerPos.unitsLocked.lessThan(units)) {
+        throwAdminError(
+          'POSITION_LOCK_MISMATCH',
+          'Seller locked units insufficient for trade',
+          HttpStatus.CONFLICT,
+        );
+      }
+      const sellerUpdated = await tx.$executeRaw`
+        UPDATE user_positions
+        SET
+          units_total = units_total - ${units},
+          units_locked = units_locked - ${units},
+          updated_at = NOW()
+        WHERE id = ${sellerPos.id}::uuid
+          AND units_locked >= ${units}
+          AND units_total >= ${units}
+      `;
+      if (Number(sellerUpdated) !== 1) {
+        throwAdminError(
+          'POSITION_LOCK_MISMATCH',
+          'Seller locked units insufficient for trade',
+          HttpStatus.CONFLICT,
+        );
       }
 
       let buyerPos = await tx.userPosition.findUnique({
@@ -815,6 +930,8 @@ export class UserMarketService {
             pricePerUnit: listing.pricePerUnit,
             tradeId: trade.id,
             walletTransactionId: buyTx.id,
+            sourceEntityType: 'trade',
+            sourceEntityId: trade.id,
             happenedAt: new Date(),
           },
           {
@@ -824,6 +941,8 @@ export class UserMarketService {
             unitsDelta: units,
             pricePerUnit: listing.pricePerUnit,
             tradeId: trade.id,
+            sourceEntityType: 'trade',
+            sourceEntityId: trade.id,
             happenedAt: new Date(),
           },
         ],
@@ -838,7 +957,7 @@ export class UserMarketService {
         sellerNet: sellerNet.toString(),
         status: 'settled',
       };
-    });
+    }, { timeout: 20_000, maxWait: 10_000 });
 
     const listingMeta = await this.prisma.marketListing.findUnique({
       where: { id: listingId },

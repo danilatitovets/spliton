@@ -2,18 +2,32 @@ type TranslateFn = (key: string, fallback?: string) => string;
 
 const DEPOSIT_STATUS: Record<string, string> = {
   pending: "Ожидает",
+  detected: "Обнаружено",
   confirming: "Подтверждение",
+  pending_confirmations: "Ожидает подтверждений",
+  confirmed: "Подтверждено, ожидает зачисления",
+  confirmed_waiting_credit: "Подтверждено, ожидает зачисления",
   manual_review: "На проверке",
   completed: "Зачислено",
+  credited: "Зачислено",
   failed: "Ошибка",
+  ignored: "Игнорировано",
+  rejected: "Отклонено",
 };
 
 const DEPOSIT_STATUS_KEYS: Record<string, string> = {
   pending: "wallet.status.deposit.pending",
+  detected: "wallet.status.deposit.detected",
   confirming: "wallet.status.deposit.confirming",
+  pending_confirmations: "wallet.status.deposit.pending_confirmations",
+  confirmed: "wallet.status.deposit.confirmed_waiting_credit",
+  confirmed_waiting_credit: "wallet.status.deposit.confirmed_waiting_credit",
   manual_review: "wallet.status.deposit.manual_review",
   completed: "wallet.status.deposit.completed",
+  credited: "wallet.status.deposit.completed",
   failed: "wallet.status.deposit.failed",
+  ignored: "wallet.status.deposit.ignored",
+  rejected: "wallet.status.deposit.rejected",
 };
 
 const TX_TYPE: Record<string, string> = {
@@ -123,6 +137,30 @@ function labelFromMap(
 
 export function depositStatusLabel(status: string, t?: TranslateFn): string {
   return labelFromMap(status, DEPOSIT_STATUS, DEPOSIT_STATUS_KEYS, t);
+}
+
+/** Funds are spendable only after CREDITED / completed. CONFIRMED is not credited. */
+export function isDepositCreditedForUi(status: string): boolean {
+  const s = status.toLowerCase().replace(/-/g, "_");
+  return s === "completed" || s === "credited";
+}
+
+export function depositStatusToneClass(status: string): "completed" | "pending" | "review" | "failed" | "neutral" {
+  const s = status.toLowerCase().replace(/-/g, "_");
+  if (isDepositCreditedForUi(s)) return "completed";
+  if (s === "failed" || s === "rejected" || s === "ignored") return "failed";
+  if (s === "manual_review") return "review";
+  if (
+    s === "pending" ||
+    s === "confirming" ||
+    s === "pending_confirmations" ||
+    s === "detected" ||
+    s === "confirmed" ||
+    s === "confirmed_waiting_credit"
+  ) {
+    return "pending";
+  }
+  return "neutral";
 }
 
 export function withdrawalStatusLabel(status: string, t?: TranslateFn): string {

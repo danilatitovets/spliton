@@ -89,7 +89,7 @@ function statMeta(
           <div
             className={cn(
               "h-full rounded-full",
-              high ? "w-[88%] bg-[#B7F500]/85" : low ? "w-[28%] bg-zinc-500" : "w-[55%] bg-[#B7F500]/55",
+              high ? "w-[88%] bg-white/80" : low ? "w-[28%] bg-zinc-500" : "w-[55%] bg-white/45",
             )}
           />
         </div>

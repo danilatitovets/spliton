@@ -265,7 +265,11 @@ export async function fetchReleaseFullDetail(
   const path = `${RELEASE_ANALYTICS_API.fullDetail(id)}?locale=${locale}`;
   const res = authorizedFetch
     ? await authorizedFetch(url(path))
-    : await fetch(url(path), { credentials: "include" });
+    : await fetch(url(path), {
+        credentials: "include",
+        // Public release detail is TTL-cached on backend; allow Next data cache.
+        next: { revalidate: 45 },
+      });
   return parseJson(res);
 }
 

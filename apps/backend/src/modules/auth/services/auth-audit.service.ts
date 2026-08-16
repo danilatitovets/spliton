@@ -55,4 +55,18 @@ export class AuthAuditService {
       },
     });
   }
+
+  /** Hot-path success audits — do not block the HTTP response on pooler RTT. */
+  logEventBackground(params: {
+    event: AuthAuditEvent;
+    actorUserId?: string | null;
+    entityId?: string | null;
+    ip?: string | null;
+    userAgent?: string | null;
+    safeMeta?: Prisma.InputJsonObject;
+  }): void {
+    void this.logEvent(params).catch(() => {
+      // Best-effort; failures must not surface on auth success paths.
+    });
+  }
 }

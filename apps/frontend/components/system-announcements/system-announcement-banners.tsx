@@ -107,7 +107,7 @@ export function SystemAnnouncementBanners({
   className,
 }: SystemAnnouncementBannersProps) {
   const { locale } = useI18n();
-  const { accessToken, isAuthenticated } = useAuth();
+  const { accessToken } = useAuth();
   const [items, setItems] = React.useState<ActiveAnnouncement[]>([]);
   const guestDismissedRef = React.useRef<Set<string>>(readGuestDismissed());
 
@@ -126,7 +126,7 @@ export function SystemAnnouncementBanners({
     return () => {
       cancelled = true;
     };
-  }, [locale, surface, accessToken, isAuthenticated]);
+  }, [locale, surface, accessToken]);
 
   const dismiss = React.useCallback(
     (id: string) => {

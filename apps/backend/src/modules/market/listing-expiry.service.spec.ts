@@ -35,6 +35,14 @@ describe('ListingExpiryService', () => {
     prisma.marketListing.findMany.mockResolvedValue([{ id: listingId }]);
 
     const tx = {
+      $executeRaw: jest
+        .fn()
+        // lock listing
+        .mockResolvedValueOnce(1)
+        // CAS status -> EXPIRED
+        .mockResolvedValueOnce(1)
+        // unlock position
+        .mockResolvedValueOnce(1),
       marketListing: {
         findFirst: jest.fn().mockResolvedValue({
           id: listingId,
@@ -43,15 +51,6 @@ describe('ListingExpiryService', () => {
           unitsAvailable: new Prisma.Decimal(5),
           status: ListingStatus.ACTIVE,
         }),
-        update: jest.fn(),
-      },
-      userPosition: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'pos-1',
-          unitsAvailable: new Prisma.Decimal(10),
-          unitsLocked: new Prisma.Decimal(5),
-        }),
-        update: jest.fn(),
       },
       ownershipLedger: {
         create: jest.fn(),
@@ -65,10 +64,8 @@ describe('ListingExpiryService', () => {
     const result = await service.expireDueListings(new Date('2026-06-20T00:00:00Z'));
 
     expect(result.expired).toBe(1);
-    expect(tx.marketListing.update).toHaveBeenCalledWith({
-      where: { id: listingId },
-      data: { status: ListingStatus.EXPIRED },
-    });
+    expect(tx.$executeRaw).toHaveBeenCalled();
+    expect(tx.ownershipLedger.create).toHaveBeenCalled();
     expect(cacheInvalidation.onCatalogOrMarketChange).toHaveBeenCalled();
   });
 

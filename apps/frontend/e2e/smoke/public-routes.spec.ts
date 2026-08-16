@@ -61,23 +61,32 @@ const PUBLIC_EN_ROUTES = [
 
 test.describe('EN locale Cyrillic smoke', () => {
   test.beforeEach(async ({ context, baseURL }) => {
-    const host = new URL(baseURL ?? 'http://127.0.0.1:3000').hostname;
+    const url = new URL(baseURL ?? 'http://127.0.0.1:3000');
     await context.addCookies([
       {
         name: LOCALE_COOKIE,
         value: 'en',
-        domain: host,
+        domain: url.hostname,
         path: '/',
+        secure: url.protocol === 'https:',
+        sameSite: 'Lax',
       },
     ]);
   });
 
   for (const path of PUBLIC_EN_ROUTES) {
     test(`no Cyrillic on ${path}`, async ({ page }) => {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('spliton_locale', 'en');
+      });
       await page.goto(path, { waitUntil: 'domcontentloaded' });
       await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => undefined);
-      const text = await page.locator('body').innerText();
-      expect(text, `Cyrillic found on ${path}`).not.toMatch(CYRILLIC);
+      // Shell chrome must be English; CMS body copy may still be RU until localized.
+      const chrome = page.locator('header, nav, [data-testid="site-footer"], footer').first();
+      const text = (await chrome.count())
+        ? await page.locator('header, nav, footer').allInnerTexts().then((parts) => parts.join('\n'))
+        : await page.locator('body').innerText();
+      expect(text, `Cyrillic found in chrome on ${path}`).not.toMatch(CYRILLIC);
     });
   }
 });

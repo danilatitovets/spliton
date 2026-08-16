@@ -40,5 +40,13 @@ export const config = {
     "/dashboard/notifications/:path*",
     "/dashboard/secondary-market",
     "/dashboard/secondary-market/:path*",
+    "/dashboard/disputes",
+    "/dashboard/disputes/:path*",
+    "/dashboard/documents",
+    "/dashboard/documents/:path*",
+    "/dashboard/statements",
+    "/dashboard/statements/:path*",
+    "/dashboard/artist",
+    "/dashboard/artist/:path*",
   ],
 };

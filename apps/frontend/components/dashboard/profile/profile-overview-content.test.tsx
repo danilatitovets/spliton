@@ -30,6 +30,7 @@ vi.mock("@/components/providers/auth-provider", () => ({
 vi.mock("@/lib/public-env", () => ({
   isLiveAccountEnabled: () => true,
   isAccountCenterDemoMode: () => false,
+  isLiveReleaseAnalyticsEnabled: () => false,
 }));
 
 vi.mock("@/components/providers/i18n-provider", () => ({
@@ -130,9 +131,13 @@ describe("ProfileOverviewContent", () => {
     });
 
     expect(await screen.findByText("55")).toBeTruthy();
-    expect(screen.getByText("profile.overview.viewProfile")).toBeTruthy();
+    expect(screen.getByText("profile.overview.identity.accountType")).toBeTruthy();
+    expect(screen.getByText("tes***@example.com")).toBeTruthy();
+    expect(screen.getByText("user-1")).toBeTruthy();
+    expect(screen.queryByText(/UID/i)).toBeNull();
+    expect(screen.queryByText("profile.overview.displayNameFallback")).toBeNull();
     expect(screen.getByText("profile.overview.securityCard.title")).toBeTruthy();
-    expect(screen.getByText("KYC not started")).toBeTruthy();
+    expect(screen.getAllByText("KYC not started").length).toBeGreaterThan(0);
     expect(screen.getByText("profile.overview.sidebar.newsTitle")).toBeTruthy();
   });
 

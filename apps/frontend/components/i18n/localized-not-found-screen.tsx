@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { ReleaseNotFoundGlassPanel } from "@/components/shared/release-not-found-glass-panel";
 import { secondaryMarketHref } from "@/constants/dashboard/secondary-market";
 import { ROUTES } from "@/constants/routes";
 
@@ -24,46 +25,56 @@ export function LocalizedNotFoundScreen({
 }: LocalizedNotFoundScreenProps) {
   const { t } = useI18n();
 
+  if (variant === "analyticsRelease" || variant === "catalogRelease") {
+    const panel = (
+      <ReleaseNotFoundGlassPanel
+        title={variant === "catalogRelease" ? t("notFound.catalogRelease.title") : t("analytics.detail.notFound")}
+        description={
+          variant === "catalogRelease"
+            ? t("notFound.catalogRelease.description")
+            : t("notFound.analyticsRelease.description")
+        }
+        primaryHref={variant === "catalogRelease" ? ROUTES.catalogMarketOverview : ROUTES.analyticsReleases}
+        primaryLabel={
+          variant === "catalogRelease" ? t("notFound.catalogRelease.cta") : t("notFound.analyticsRelease.cta")
+        }
+        secondaryHref={ROUTES.dashboardCatalog}
+        secondaryLabel={t("notFound.goCatalog")}
+      />
+    );
+
+    if (!showHeader) return panel;
+
+    return (
+      <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-black text-white">
+        <div className="sticky top-0 z-120 shrink-0 bg-black">
+          <DashboardHeader sticky />
+        </div>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain" data-mobile-scroll-root>
+          {panel}
+        </div>
+      </div>
+    );
+  }
+
   const title =
-    variant === "catalogRelease"
-      ? t("notFound.catalogRelease.title")
-      : variant === "secondaryListing"
-        ? t("notFound.secondaryListing.title")
-        : t("notFound.title");
+    variant === "secondaryListing" ? t("notFound.secondaryListing.title") : t("notFound.title");
 
   const description =
-    variant === "analyticsRelease"
-      ? t("notFound.analyticsRelease.description")
-      : variant === "catalogRelease"
-        ? t("notFound.catalogRelease.description")
-        : variant === "secondaryListing"
-          ? t("notFound.secondaryListing.description")
-          : t("notFound.description");
+    variant === "secondaryListing"
+      ? t("notFound.secondaryListing.description")
+      : t("notFound.description");
 
   const primaryHref =
-    variant === "analyticsRelease"
-      ? ROUTES.analyticsReleases
-      : variant === "catalogRelease"
-        ? ROUTES.catalogMarketOverview
-        : variant === "secondaryListing"
-          ? secondaryMarketHref("market")
-          : ROUTES.dashboard;
+    variant === "secondaryListing" ? secondaryMarketHref("market") : ROUTES.dashboard;
 
   const primaryLabel =
-    variant === "analyticsRelease"
-      ? t("notFound.analyticsRelease.cta")
-      : variant === "catalogRelease"
-        ? t("notFound.catalogRelease.cta")
-        : variant === "secondaryListing"
-          ? t("notFound.secondaryListing.cta")
-          : t("notFound.goHome");
+    variant === "secondaryListing" ? t("notFound.secondaryListing.cta") : t("notFound.goHome");
 
   const shellClass =
     variant === "default"
       ? "flex min-h-[50vh] flex-col items-center justify-center gap-4 px-6 py-12 text-center"
-      : variant === "secondaryListing"
-        ? "mx-auto flex w-full max-w-lg flex-col items-center justify-center px-4 py-8 text-center"
-        : "flex flex-1 flex-col items-center justify-center gap-4 px-4 py-12 text-center";
+      : "mx-auto flex w-full max-w-lg flex-col items-center justify-center px-4 py-8 text-center";
 
   const content = (
     <div className={shellClass}>
@@ -72,43 +83,31 @@ export function LocalizedNotFoundScreen({
           {t("notFound.secondaryListing.eyebrow")}
         </p>
       ) : null}
-      {variant !== "analyticsRelease" ? (
-        <h1
-          className={
-            variant === "secondaryListing"
-              ? "mt-3 text-xl font-semibold tracking-tight text-white"
-              : variant === "catalogRelease"
-                ? "text-center text-2xl font-semibold tracking-tight text-white md:text-3xl"
-                : "text-xl font-semibold text-neutral-900"
-          }
-        >
-          {title}
-        </h1>
-      ) : (
-        <p className="text-sm text-zinc-500">{description}</p>
-      )}
-      {variant !== "analyticsRelease" ? (
-        <p
-          className={
-            variant === "default"
-              ? "max-w-md text-sm text-neutral-600"
-              : "max-w-md text-sm leading-relaxed text-zinc-500 md:text-[15px]"
-          }
-        >
-          {description}
-        </p>
-      ) : null}
+      <h1
+        className={
+          variant === "secondaryListing"
+            ? "mt-3 text-xl font-semibold tracking-tight text-white"
+            : "text-xl font-semibold text-neutral-900"
+        }
+      >
+        {title}
+      </h1>
+      <p
+        className={
+          variant === "default"
+            ? "max-w-md text-sm text-neutral-600"
+            : "max-w-md text-sm leading-relaxed text-zinc-500 md:text-[15px]"
+        }
+      >
+        {description}
+      </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Link
           href={primaryHref}
           className={
             variant === "secondaryListing"
               ? "mx-auto mt-8 inline-flex h-10 items-center justify-center rounded-full bg-white px-6 text-xs font-semibold text-black hover:opacity-90"
-              : variant === "analyticsRelease"
-                ? "text-sm font-medium text-lime-400/90 underline-offset-4 hover:underline"
-                : variant === "catalogRelease"
-                  ? "rounded-md bg-[#0a0a0a] px-4 py-2 text-sm font-medium text-zinc-200 ring-1 ring-white/8 transition-colors hover:bg-white/[0.04] hover:text-white"
-                  : "text-sm font-medium text-neutral-900 underline-offset-4 hover:underline"
+              : "text-sm font-medium text-neutral-900 underline-offset-4 hover:underline"
           }
         >
           {primaryLabel}
@@ -129,7 +128,7 @@ export function LocalizedNotFoundScreen({
     return content;
   }
 
-  const isDark = variant !== "default";
+  const isDark = variant === "secondaryListing";
 
   return (
     <div
@@ -144,11 +143,7 @@ export function LocalizedNotFoundScreen({
           <DashboardHeader sticky={isDark} />
         </div>
       ) : null}
-      {variant === "catalogRelease" ? (
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain" data-mobile-scroll-root>
-          {content}
-        </div>
-      ) : variant === "secondaryListing" ? (
+      {variant === "secondaryListing" ? (
         <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto overscroll-y-contain">
           {content}
         </main>

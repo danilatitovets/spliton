@@ -122,10 +122,9 @@ describe("ProfileSecurityContent", () => {
     expect(screen.getByText(/Enable 2FA/)).toBeTruthy();
   });
 
-  it("shows sessions tab content in live mode", async () => {
+  it("shows linked devices in live mode", async () => {
     render(<ProfileSecurityContent />);
     await waitFor(() => expect(mockFetchUserMe).toHaveBeenCalled());
-    screen.getByRole("button", { name: "profile.security.tab.sessions" }).click();
     expect(await screen.findByText("profile.security.access.descriptionShort")).toBeTruthy();
   });
 

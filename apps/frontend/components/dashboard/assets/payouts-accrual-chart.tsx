@@ -1,10 +1,12 @@
 "use client";
 
-import { Info } from "@/lib/lucide";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { PayoutAccrualChartPoint, PayoutChartRangeId } from "@/components/dashboard/assets/payouts-mock-data";
-import { getPayoutAccrualChartSeries, getPayoutChartKpiSnapshot } from "@/components/dashboard/assets/payouts-mock-data";
+import { getPayoutChartKpiSnapshot } from "@/components/dashboard/assets/payouts-mock-data";
+import { assetsCardClass } from "@/components/dashboard/assets/assets-ui";
+import { MetricsInfoTip } from "@/components/dashboard/assets/metrics-info-tip";
+import { MetricsRangeMenu } from "@/components/dashboard/assets/metrics-range-menu";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -13,17 +15,10 @@ const VIEW_H = 320;
 /** Запас слева/справа под подписи осей без обрезания и без «прыжков» при смене масштаба */
 const PAD = { top: 22, right: 72, bottom: 56, left: 78 };
 
-const strokeLine = "#1d4ed8";
-const strokeLineSoft = "#60a5fa";
-const fillBar = "rgba(96, 165, 250, 0.42)";
-const fillBarHover = "rgba(37, 99, 235, 0.55)";
-
-const RANGES: { id: PayoutChartRangeId; label: string }[] = [
-  { id: "24h", label: "24 ч" },
-  { id: "7d", label: "7 дн." },
-  { id: "30d", label: "30 дн." },
-  { id: "1y", label: "1 г." },
-];
+const strokeLine = "#111113";
+const strokeLineSoft = "rgba(17,17,19,0.45)";
+const fillBar = "rgba(220, 38, 38, 0.42)";
+const fillBarHover = "rgba(220, 38, 38, 0.72)";
 
 function niceStep(range: number, targetTicks: number) {
   const raw = range / Math.max(1, targetTicks);
@@ -138,11 +133,25 @@ export function PayoutsAccrualChart({
   const rangeInteractive = !seriesLocked || (liveSeries && Boolean(onRangeChange));
 
   const series = useMemo(
-    () => (seriesLocked ? staticData! : getPayoutAccrualChartSeries(activeRange)),
-    [seriesLocked, staticData, activeRange],
+    () => (seriesLocked ? staticData! : []),
+    [seriesLocked, staticData],
   );
 
   const kpi = useMemo(() => getPayoutChartKpiSnapshot(series), [series]);
+
+  if (series.length === 0) {
+    return (
+      <section
+        className={cn(assetsCardClass, "w-full min-w-0 space-y-3 px-5 py-10 text-center sm:py-12")}
+        aria-label={t("payouts.chart.ariaLabel")}
+      >
+        <h2 className="text-base font-semibold tracking-tight text-neutral-900 sm:text-lg">
+          {t("payouts.accrualTitle")}
+        </h2>
+        <p className="text-sm text-neutral-500">{t("payouts.chart.empty")}</p>
+      </section>
+    );
+  }
 
   const innerW = VIEW_W - PAD.left - PAD.right;
   const innerH = VIEW_H - PAD.top - PAD.bottom;
@@ -204,81 +213,53 @@ export function PayoutsAccrualChart({
 
   return (
     <section
-      className="space-y-8 rounded-3xl bg-white px-5 py-6 sm:space-y-9 sm:px-7 sm:py-8"
+      className={cn(assetsCardClass, "w-full min-w-0 space-y-5 sm:space-y-6")}
       aria-label={t("payouts.chart.ariaLabel")}
     >
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="min-w-0 space-y-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">USDT · Chart</p>
-            <span
-              className="inline-flex text-neutral-400"
-              title={t("payouts.chart.mockTooltip")}
-            >
-              <Info className="size-3.5" strokeWidth={2} aria-hidden />
-            </span>
+            <h2 className="text-base font-semibold tracking-tight text-neutral-900 sm:text-lg">
+              {t("payouts.accrualTitle")}
+            </h2>
+            <MetricsInfoTip label={t("assets.metrics.infoLabel")} tone="onLight">
+              {t("payouts.chart.hint")}
+            </MetricsInfoTip>
           </div>
-          <h2 className="text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl">Динамика начислений</h2>
-          <p className="max-w-xl text-sm leading-relaxed text-neutral-500">
-            Линия — накопительно получено; столбцы — начисления за шаг интервала. Наведите курсор для подсказки по
-            точке.
-          </p>
         </div>
-
-        <div
-          className="flex shrink-0 rounded-xl bg-neutral-100 p-1"
-          role="tablist"
-          aria-label={t("payouts.chart.intervalAria")}
-        >
-          {RANGES.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              role="tab"
-              aria-selected={rangeInteractive && activeRange === r.id}
-              disabled={!rangeInteractive}
-              onClick={() => setActiveRange(r.id)}
-              className={cn(
-                "rounded-lg px-3 py-2 text-[11px] font-semibold transition-colors",
-                rangeInteractive && activeRange === r.id
-                  ? "bg-white text-neutral-900 ring-1 ring-neutral-200/80"
-                  : "text-neutral-500 hover:text-neutral-800",
-                seriesLocked && "cursor-default opacity-60",
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        {rangeInteractive ? (
+          <MetricsRangeMenu
+            value={(activeRange === "24h" ? "7d" : activeRange === "30d" ? "30d" : activeRange === "1y" ? "1y" : "7d") as "7d" | "30d" | "90d" | "1y"}
+            onChange={(id) => setActiveRange((id === "90d" ? "30d" : id) as PayoutChartRangeId)}
+            options={[
+              { id: "7d", label: t("chart.range7d") },
+              { id: "30d", label: t("chart.range30d") },
+              { id: "1y", label: t("chart.range1y") },
+            ]}
+            ariaLabel={t("payouts.chart.intervalAria")}
+          />
+        ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <div className="rounded-2xl bg-neutral-50/90 px-4 py-4 sm:px-5 sm:py-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">Накопительно</p>
-          <p className="mt-2 font-mono text-xl font-semibold tabular-nums tracking-tight text-neutral-900 sm:text-2xl">
-            {fmtMoney(kpi.cumulativeNow)} <span className="text-sm font-sans font-medium text-neutral-400">USDT</span>
+      <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+        <div className="rounded-2xl bg-neutral-50 px-4 py-3.5">
+          <p className="text-xs text-neutral-500">{t("assets.overview.accruals")}</p>
+          <p className="mt-1.5 font-mono text-xl font-semibold tabular-nums text-neutral-900 sm:text-2xl">
+            {fmtMoney(kpi.cumulativeNow)}
+            <span className="ml-1.5 text-sm font-medium text-neutral-400">USDT</span>
           </p>
-          <p
-            className={cn(
-              "mt-1.5 text-xs font-medium tabular-nums",
-              kpi.cumulativeDeltaPct >= 0 ? "text-blue-700" : "text-neutral-500",
-            )}
-          >
-            {fmtPct(kpi.cumulativeDeltaPct)} к началу окна
+          <p className={cn("mt-1 font-mono text-xs tabular-nums", kpi.cumulativeDeltaPct >= 0 ? "text-neutral-900" : "text-neutral-500")}>
+            {fmtPct(kpi.cumulativeDeltaPct)}
           </p>
         </div>
-        <div className="rounded-2xl bg-neutral-50/90 px-4 py-4 sm:px-5 sm:py-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">Сумма за период</p>
-          <p className="mt-2 font-mono text-xl font-semibold tabular-nums tracking-tight text-neutral-900 sm:text-2xl">
-            {fmtMoney(kpi.periodVolume)} <span className="text-sm font-sans font-medium text-neutral-400">USDT</span>
+        <div className="rounded-2xl bg-neutral-50 px-4 py-3.5">
+          <p className="text-xs text-neutral-500">{t("payouts.history.stat.net")}</p>
+          <p className="mt-1.5 font-mono text-xl font-semibold tabular-nums text-neutral-900 sm:text-2xl">
+            {fmtMoney(kpi.periodVolume)}
+            <span className="ml-1.5 text-sm font-medium text-neutral-400">USDT</span>
           </p>
-          <p
-            className={cn(
-              "mt-1.5 text-xs font-medium tabular-nums",
-              kpi.periodDeltaPct >= 0 ? "text-blue-600" : "text-neutral-500",
-            )}
-          >
-            {fmtPct(kpi.periodDeltaPct)} к прошлому интервалу (мок)
+          <p className={cn("mt-1 font-mono text-xs tabular-nums", kpi.periodDeltaPct >= 0 ? "text-neutral-900" : "text-neutral-500")}>
+            {fmtPct(kpi.periodDeltaPct)}
           </p>
         </div>
       </div>
@@ -295,13 +276,13 @@ export function PayoutsAccrualChart({
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           preserveAspectRatio="xMidYMid meet"
-          className="block h-[260px] w-full max-w-full sm:h-[300px]"
+          className="block h-[280px] w-full max-w-none sm:h-[340px]"
           role="presentation"
         >
           <defs>
             <linearGradient id="payoutAreaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.28" />
-              <stop offset="55%" stopColor="#93c5fd" stopOpacity="0.08" />
+              <stop offset="0%" stopColor="#111113" stopOpacity="0.22" />
+              <stop offset="45%" stopColor="#111113" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
             </linearGradient>
             <filter id="payoutLineGlow" x="-20%" y="-20%" width="140%" height="140%">
@@ -356,6 +337,7 @@ export function PayoutsAccrualChart({
                 height={Math.max(0, h)}
                 rx={2}
                 fill={isH ? fillBarHover : fillBar}
+                opacity={isH ? 1 : 0.85}
               />
             );
           })}
@@ -437,7 +419,7 @@ export function PayoutsAccrualChart({
             x={VIEW_W - 8}
             y={yBarBase - maxBarH - 2}
             textAnchor="end"
-            fill="#93c5fd"
+            fill="#737373"
             fontSize={9}
             style={axisTextStyle}
           >
@@ -469,26 +451,26 @@ export function PayoutsAccrualChart({
                 strokeDasharray="4 4"
                 opacity={0.95}
               />
-              <circle cx={hx} cy={hy} r={5} fill="white" stroke={strokeLine} strokeWidth={2.5} />
+              <circle cx={hx} cy={hy} r={5.5} fill="#ffffff" stroke="#DC2626" strokeWidth={2.5} />
             </g>
           )}
         </svg>
 
         {hoverPoint && tipPos && (
           <div
-            className="pointer-events-none absolute z-10 min-w-[160px] max-w-[240px] rounded-xl bg-white/95 px-3 py-2.5 text-xs ring-1 ring-neutral-200/70 backdrop-blur-sm"
+            className="pointer-events-none absolute z-10 min-w-[160px] max-w-[240px] rounded-xl bg-white px-3 py-2.5 text-xs text-neutral-900 ring-1 ring-neutral-200/80 backdrop-blur-sm"
             style={{
               left: Math.min(Math.max(8, tipPos.x + 12), Math.max(8, tipPos.wrapWidth - 200)),
               top: Math.max(8, tipPos.y - 8),
             }}
           >
             <p className="font-semibold text-neutral-900">{hoverPoint.label}</p>
-            <p className="mt-1 text-neutral-600">
+            <p className="mt-1 text-neutral-500">
               Накопительно:{" "}
               <span className="font-mono font-medium tabular-nums text-neutral-900">{fmtMoney(hoverPoint.cumulativeUSDT)}</span>{" "}
               USDT
             </p>
-            <p className="text-neutral-600">
+            <p className="text-neutral-500">
               За шаг:{" "}
               <span className="font-mono font-medium tabular-nums text-neutral-900">{fmtMoney(hoverPoint.periodUSDT)}</span> USDT
             </p>
@@ -496,16 +478,6 @@ export function PayoutsAccrualChart({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-5 border-t border-neutral-100 pt-6 text-[11px] text-neutral-500">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-6 rounded-sm bg-linear-to-r from-blue-600 to-blue-400" aria-hidden />
-          Накопительно (линия + заливка)
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-6 rounded-sm bg-blue-300/50" aria-hidden />
-          Начисления за шаг (столбцы)
-        </span>
-      </div>
     </section>
   );
 }

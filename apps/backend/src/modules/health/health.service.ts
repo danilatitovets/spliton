@@ -21,9 +21,26 @@ export class HealthService {
   ) {}
 
   getLive() {
+    const commit =
+      process.env.RAILWAY_GIT_COMMIT_SHA?.trim() ||
+      process.env.SOURCE_COMMIT?.trim() ||
+      process.env.GIT_COMMIT?.trim() ||
+      process.env.RAILWAY_DEPLOYMENT_ID?.trim() ||
+      'unknown';
     return {
       status: 'ok',
       service: 'spliton-backend',
+      commit,
+      deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? null,
+      buildTime:
+        process.env.BUILD_TIME?.trim() ||
+        process.env.RAILWAY_DEPLOYMENT_CREATED_AT?.trim() ||
+        null,
+      environment:
+        process.env.RAILWAY_ENVIRONMENT_NAME ||
+        process.env.RAILWAY_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        'unknown',
       timestamp: new Date().toISOString(),
     };
   }

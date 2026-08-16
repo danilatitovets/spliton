@@ -4,12 +4,14 @@ import * as React from "react";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { SupportHelpArticleCard } from "@/components/support/support-help-article-card";
+import { SupportOrbitalIcon } from "@/components/support/support-orbital-icon";
 import {
   SupportBackLink,
   SupportPageSkeleton,
   SupportPageStatePanel,
 } from "@/components/support/support-page-states";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { resolveSupportCategoryIconSrc } from "@/constants/support-icons";
 import { ROUTES } from "@/constants/routes";
 import { isLiveHelpCenterEnabled } from "@/lib/public-env";
 import { fetchHelpCategoryBySlug, type HelpArticleSummary } from "@/services/help-center.service";
@@ -96,13 +98,18 @@ export function SupportCategoryPageContent({ slug }: { slug: string }) {
 
           {state === "ready" && category ? (
             <>
-              <header className="mt-8 max-w-2xl min-w-0">
-                <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
-                  {category.title}
-                </h1>
-                {category.description ? (
-                  <p className="mt-3 break-words text-sm leading-relaxed text-zinc-500">{category.description}</p>
-                ) : null}
+              <header className="mt-8 flex max-w-2xl min-w-0 items-start gap-4">
+                <SupportOrbitalIcon src={resolveSupportCategoryIconSrc(slug)} size="lg" />
+                <div className="min-w-0">
+                  <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
+                    {category.title}
+                  </h1>
+                  {category.description ? (
+                    <p className="mt-3 break-words text-sm leading-relaxed text-zinc-500 sm:text-base">
+                      {category.description}
+                    </p>
+                  ) : null}
+                </div>
               </header>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,5 +1,7 @@
 "use client";
 
+import "./statements-page.css";
+
 import Image from "next/image";
 
 import { Download } from "@/lib/lucide";
@@ -11,7 +13,6 @@ import { tf } from "@/lib/i18n/financial-messages";
 import { cn } from "@/lib/utils";
 
 const LOGO_MINI = "/images/LOGO/mini-logo.png";
-const LOGO_FULL = "/images/LOGO/black-logo-nofon.png";
 const USDT_ICON = "/images/currency/usdt.svg";
 
 function formatDocDate(iso: string | null | undefined, locale: string) {
@@ -99,38 +100,45 @@ export function StatementDocumentPreview({
   return (
     <div
       className={cn(
-        "stmt-doc relative overflow-hidden rounded-2xl bg-white shadow-[0_16px_48px_-28px_rgba(0,0,0,0.35)]",
+        "stmt-doc relative overflow-hidden rounded-2xl bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]",
         isReady && "stmt-doc--ready",
         isGenerating && "stmt-doc--generating",
       )}
     >
       <div className="stmt-doc-watermark pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-        <Image src={LOGO_MINI} alt="" width={120} height={120} className="size-[7.5rem] object-contain opacity-[0.04] sm:size-32" unoptimized />
+        <Image
+          src={LOGO_MINI}
+          alt=""
+          width={120}
+          height={120}
+          className="size-[7.5rem] object-contain opacity-[0.06] sm:size-32"
+          unoptimized
+        />
       </div>
 
-      <div className="stmt-doc-accent absolute inset-x-0 top-0 h-1 bg-[#B7F500]" aria-hidden />
+      <div className="stmt-doc-accent absolute inset-x-0 top-0 h-px bg-white/25" aria-hidden />
 
-      <header className="relative bg-neutral-50/70 px-4 py-4 sm:px-6 sm:py-5">
+      <header className="relative bg-white/[0.03] px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Image
-              src={LOGO_FULL}
+              src="/images/LOGO/white-logo-nofon.png"
               alt={t("statements.preview.logoAlt")}
               width={320}
               height={76}
               className="h-8 w-auto max-w-[11rem] object-contain object-left sm:h-9 sm:max-w-[13rem]"
               unoptimized
             />
-            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
               {t("statements.preview.platformTagline")}
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {t("statements.preview.referenceLabel")}
             </p>
-            <p className="mt-0.5 font-mono text-xs font-semibold text-neutral-900">{docRef}</p>
-            <p className="mt-1 text-[10px] text-neutral-500">{formatDocDate(issuedAt ?? new Date().toISOString(), intl)}</p>
+            <p className="mt-0.5 font-mono text-xs font-semibold text-white">{docRef}</p>
+            <p className="mt-1 text-[10px] text-zinc-500">{formatDocDate(issuedAt ?? new Date().toISOString(), intl)}</p>
           </div>
         </div>
       </header>
@@ -138,44 +146,44 @@ export function StatementDocumentPreview({
       <div className="relative px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-neutral-900 sm:text-lg">{kindLabel}</h3>
-            <p className="mt-1 text-xs text-neutral-500">
+            <h3 className="text-base font-semibold tracking-tight text-white sm:text-lg">{kindLabel}</h3>
+            <p className="mt-1 text-xs text-zinc-500">
               {tf(t("statements.preview.reportingPeriod"), { period: periodLabel })}
             </p>
           </div>
           <span
             className={cn(
               "stmt-doc-stamp inline-flex rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]",
-              isReady && "bg-emerald-50 text-emerald-800",
-              isGenerating && "bg-amber-50 text-amber-900",
-              isFailed && "bg-red-50 text-red-800",
-              status === "idle" && "bg-neutral-100 text-neutral-500",
+              isReady && "bg-emerald-400/15 text-emerald-200",
+              isGenerating && "bg-amber-400/15 text-amber-200",
+              isFailed && "bg-rose-400/15 text-rose-200",
+              status === "idle" && "bg-white/[0.08] text-zinc-300",
             )}
           >
             {stampLabel}
           </span>
         </div>
 
-        <dl className="stmt-doc-meta mt-4 grid gap-3 rounded-xl bg-neutral-50 px-3 py-3 sm:grid-cols-2 sm:gap-x-4 sm:px-4">
+        <dl className="stmt-doc-meta mt-4 grid gap-3 rounded-xl bg-white/[0.04] px-3 py-3 ring-1 ring-white/[0.06] sm:grid-cols-2 sm:gap-x-4 sm:px-4">
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {t("statements.preview.holder")}
             </dt>
-            <dd className="mt-0.5 text-sm font-medium text-neutral-900">{holder}</dd>
+            <dd className="mt-0.5 text-sm font-medium text-white">{holder}</dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {t("statements.preview.period")}
             </dt>
-            <dd className="mt-0.5 font-mono text-sm text-neutral-800">
+            <dd className="mt-0.5 font-mono text-sm text-zinc-200">
               {dateFrom && dateTo ? `${formatRangeDate(dateFrom, intl)} — ${formatRangeDate(dateTo, intl)}` : periodLabel}
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {t("statements.preview.currency")}
             </dt>
-            <dd className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-neutral-900">
+            <dd className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-white">
               <span className="relative size-4 shrink-0 overflow-hidden rounded-full">
                 <Image src={USDT_ICON} alt="" fill className="object-cover" sizes="16px" />
               </span>
@@ -183,36 +191,36 @@ export function StatementDocumentPreview({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {t("statements.preview.opsInPeriod")}
             </dt>
-            <dd className="mt-0.5 font-mono text-sm font-semibold text-neutral-900">{opsCount ?? "—"}</dd>
+            <dd className="mt-0.5 font-mono text-sm font-semibold text-white">{opsCount ?? "—"}</dd>
           </div>
         </dl>
 
-        <div className="stmt-doc-summary mt-4 overflow-hidden rounded-xl bg-neutral-50">
-          <div className="bg-neutral-900 px-3 py-2 sm:px-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90">
+        <div className="stmt-doc-summary mt-4 overflow-hidden rounded-xl bg-white/[0.03] ring-1 ring-white/[0.06]">
+          <div className="bg-white/[0.06] px-3 py-2 sm:px-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
               {t("statements.preview.summaryTitle")}
             </p>
           </div>
           <table className="w-full text-left text-xs sm:text-sm">
             <tbody>
               <tr>
-                <td className="px-3 py-2.5 text-neutral-600 sm:px-4">{t("statements.preview.availableBalance")}</td>
-                <td className="px-3 py-2.5 text-right font-mono font-semibold text-neutral-900 sm:px-4">
+                <td className="px-3 py-2.5 text-zinc-500 sm:px-4">{t("statements.preview.availableBalance")}</td>
+                <td className="px-3 py-2.5 text-right font-mono font-semibold text-white sm:px-4">
                   {amountValue(balance)} USDT
                 </td>
               </tr>
-              <tr className="bg-white/70">
-                <td className="px-3 py-2.5 text-neutral-600 sm:px-4">{t("statements.preview.inflow")}</td>
-                <td className="px-3 py-2.5 text-right font-mono font-semibold text-emerald-700 sm:px-4">
+              <tr className="bg-white/[0.03]">
+                <td className="px-3 py-2.5 text-zinc-500 sm:px-4">{t("statements.preview.inflow")}</td>
+                <td className="px-3 py-2.5 text-right font-mono font-semibold text-emerald-300 sm:px-4">
                   +{amountValue(inflow)} USDT
                 </td>
               </tr>
               <tr>
-                <td className="px-3 py-2.5 text-neutral-600 sm:px-4">{t("statements.preview.outflow")}</td>
-                <td className="px-3 py-2.5 text-right font-mono font-semibold text-neutral-800 sm:px-4">
+                <td className="px-3 py-2.5 text-zinc-500 sm:px-4">{t("statements.preview.outflow")}</td>
+                <td className="px-3 py-2.5 text-right font-mono font-semibold text-zinc-200 sm:px-4">
                   −{amountValue(outflow)} USDT
                 </td>
               </tr>
@@ -221,18 +229,20 @@ export function StatementDocumentPreview({
         </div>
 
         {status === "idle" ? (
-          <p className="mt-4 text-xs leading-relaxed text-neutral-500">{t("statements.preview.idleHint")}</p>
+          <p className="mt-4 text-xs leading-relaxed text-zinc-500">{t("statements.preview.idleHint")}</p>
         ) : null}
 
         {isGenerating ? (
-          <p className="stmt-doc-status mt-4 flex items-center gap-2 text-xs text-neutral-600">
+          <p className="stmt-doc-status mt-4 flex items-center gap-2 text-xs text-zinc-400">
             <SplitonLoader size="xxs" variant="light" className="shrink-0" />
             {t("statements.preview.generatingHint")}
           </p>
         ) : null}
 
         {isFailed ? (
-          <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">{t("statements.errors.requestFailed")}</p>
+          <p className="mt-4 rounded-lg bg-rose-400/10 px-3 py-2 text-xs text-rose-200">
+            {t("statements.errors.requestFailed")}
+          </p>
         ) : null}
 
         {showDownload ? (
@@ -240,23 +250,23 @@ export function StatementDocumentPreview({
             type="button"
             onClick={onDownload}
             disabled={downloading}
-            className="stmt-doc-download mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-60 sm:text-sm"
+            className="stmt-doc-download mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-white text-xs font-semibold text-black transition hover:bg-[#e8e8e8] disabled:opacity-60 sm:text-sm"
           >
-            {downloading ? <SplitonLoader size="xxs" variant="light" className="shrink-0" /> : <Download className="size-4" />}
+            {downloading ? <SplitonLoader size="xxs" variant="dark" className="shrink-0" /> : <Download className="size-4" />}
             {t("statements.preview.downloadPdf")}
           </button>
         ) : null}
       </div>
 
-      <footer className="relative bg-neutral-50/80 px-4 py-3 sm:px-6">
+      <footer className="relative bg-white/[0.03] px-4 py-3 sm:px-6">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[9px] leading-relaxed text-neutral-500">{t("statements.preview.footerDisclaimer")}</p>
-            <p className="mt-1 font-mono text-[9px] text-neutral-400">{t("statements.preview.footerContact")}</p>
+            <p className="text-[9px] leading-relaxed text-zinc-500">{t("statements.preview.footerDisclaimer")}</p>
+            <p className="mt-1 font-mono text-[9px] text-zinc-600">{t("statements.preview.footerContact")}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-2 py-1.5 shadow-[0_4px_16px_-12px_rgba(0,0,0,0.25)]">
+          <div className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2 py-1.5 ring-1 ring-white/10">
             <Image src={LOGO_MINI} alt="" width={20} height={20} className="size-5 object-contain" unoptimized />
-            <span className="text-[9px] font-semibold text-neutral-700">{t("statements.preview.spliton")}</span>
+            <span className="text-[9px] font-semibold text-zinc-200">{t("statements.preview.spliton")}</span>
           </div>
         </div>
       </footer>

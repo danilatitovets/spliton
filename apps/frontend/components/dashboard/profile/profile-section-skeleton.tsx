@@ -15,7 +15,7 @@ export function ProfileSectionSkeleton({
     return (
       <div className={cn("space-y-2", className)} aria-busy="true">
         {Array.from({ length: rows }, (_, i) => (
-          <div key={i} className="h-14 animate-pulse rounded-xl bg-neutral-100" />
+          <div key={i} className="h-14 animate-pulse rounded-xl bg-white/[0.06]" />
         ))}
       </div>
     );
@@ -24,19 +24,19 @@ export function ProfileSectionSkeleton({
   if (variant === "form") {
     return (
       <div className={cn("space-y-3", className)} aria-busy="true">
-        <div className="h-10 animate-pulse rounded-xl bg-neutral-100" />
-        <div className="h-24 animate-pulse rounded-2xl bg-neutral-100" />
-        <div className="h-32 animate-pulse rounded-2xl bg-neutral-100" />
+        <div className="h-10 animate-pulse rounded-xl bg-white/[0.06]" />
+        <div className="h-24 animate-pulse rounded-2xl bg-white/[0.06]" />
+        <div className="h-32 animate-pulse rounded-2xl bg-white/[0.06]" />
       </div>
     );
   }
 
   if (variant === "table") {
     return (
-      <div className={cn("space-y-2 rounded-xl bg-neutral-50/80 p-3", className)} aria-busy="true">
-        <div className="h-8 animate-pulse rounded-lg bg-neutral-100" />
+      <div className={cn("space-y-2 rounded-xl bg-white/[0.04]/80 p-3", className)} aria-busy="true">
+        <div className="h-8 animate-pulse rounded-lg bg-white/[0.06]" />
         {Array.from({ length: rows }, (_, i) => (
-          <div key={i} className="h-12 animate-pulse rounded-lg bg-neutral-100" />
+          <div key={i} className="h-12 animate-pulse rounded-lg bg-white/[0.06]" />
         ))}
       </div>
     );
@@ -44,8 +44,8 @@ export function ProfileSectionSkeleton({
 
   return (
     <div className={cn("space-y-3 sm:space-y-4", className)} aria-busy="true">
-      <div className="h-28 animate-pulse rounded-2xl bg-neutral-100" />
-      <div className="h-40 animate-pulse rounded-2xl bg-neutral-100" />
+      <div className="h-28 animate-pulse rounded-2xl bg-white/[0.06]" />
+      <div className="h-40 animate-pulse rounded-2xl bg-white/[0.06]" />
     </div>
   );
 }

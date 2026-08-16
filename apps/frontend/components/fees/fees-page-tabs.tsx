@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/components/providers/i18n-provider";
+import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
 import { cn } from "@/lib/utils";
 
 export type FeesTabItem<T extends string> = {
@@ -14,6 +15,8 @@ type FeesPageTabsProps<T extends string> = {
   onChange: (id: T) => void;
   className?: string;
   size?: "main" | "sub";
+  /** `underline` keeps legacy light pages; `chips` matches dark exchange style. */
+  variant?: "underline" | "chips";
 };
 
 export function FeesPageTabs<T extends string>({
@@ -22,9 +25,41 @@ export function FeesPageTabs<T extends string>({
   onChange,
   className,
   size = "main",
+  variant = "underline",
 }: FeesPageTabsProps<T>) {
   const { t } = useI18n();
   const isMain = size === "main";
+
+  if (variant === "chips") {
+    return (
+      <nav
+        className={cn(
+          "flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          className,
+        )}
+        aria-label={t("fees.tabs.navAria")}
+      >
+        {items.map((item) => {
+          const selected = active === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onChange(item.id)}
+              className={cn(
+                smExchange.chipBase,
+                selected ? smExchange.chipActive : smExchange.chipIdle,
+                isMain ? "px-3.5 py-2 text-[13px]" : "text-[12px]",
+              )}
+              aria-current={selected ? "page" : undefined}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+    );
+  }
 
   return (
     <nav

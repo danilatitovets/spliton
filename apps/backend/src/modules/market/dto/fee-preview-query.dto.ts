@@ -1,5 +1,5 @@
-import { IsNumber, IsOptional, IsPositive, IsUUID, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsUUID } from 'class-validator';
+import { IsPositiveDecimalString } from '../../../common/validation/decimal-string.decorator';
 
 export class FeePreviewQueryDto {
   @IsOptional()
@@ -10,17 +10,9 @@ export class FeePreviewQueryDto {
   @IsUUID()
   releaseId?: string;
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  @Min(0.00000001)
-  @Max(1_000_000_000)
-  units?: number;
+  @IsPositiveDecimalString({ optional: true })
+  units?: string;
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  pricePerUnit?: number;
+  @IsPositiveDecimalString({ optional: true })
+  pricePerUnit?: string;
 }

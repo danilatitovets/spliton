@@ -8,6 +8,7 @@ import {
 import { WalletLedgerService } from '../common/wallet-ledger.service';
 import { throwAdminError } from '../common/admin-http.util';
 import type { LedgerMutationContext } from '../common/ledger-mutation.types';
+import { depositCreditIdempotencyKey } from '../../deposit-ingestion/tron/tron-tx-hash';
 
 type DepositWithTx = Prisma.DepositGetPayload<{
   include: { walletTx: { include: { wallet: true } } };
@@ -23,7 +24,6 @@ export class AdminDepositSettlementService {
     ctx: LedgerMutationContext,
   ): Promise<void> {
     if (
-      row.status === DepositStatus.CONFIRMED ||
       row.status === DepositStatus.CREDITED
     ) {
       throwAdminError(
@@ -34,12 +34,13 @@ export class AdminDepositSettlementService {
     }
     const walletId = row.walletTx.walletId;
     const net = row.walletTx.netAmount;
+    const txid = row.blockchainTxid?.trim() || row.id;
     await this.ledger.creditAvailable(tx, walletId, net, {
       ...ctx,
       operationType: LedgerOperationType.DEPOSIT_SETTLE,
       sourceEntityType: 'deposit',
       sourceEntityId: row.id,
-      idempotencyKey: `deposit-settle:${row.id}`,
+      idempotencyKey: depositCreditIdempotencyKey(row.chainNetwork, txid),
       walletTransactionId: row.walletTxId,
     });
     await tx.walletTransaction.update({
@@ -61,7 +62,6 @@ export class AdminDepositSettlementService {
     row: DepositWithTx,
   ): Promise<void> {
     if (
-      row.status === DepositStatus.CONFIRMED ||
       row.status === DepositStatus.CREDITED
     ) {
       throwAdminError(

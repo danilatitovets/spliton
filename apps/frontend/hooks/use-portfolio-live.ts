@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { useCabinetDemoPreview } from "@/hooks/use-cabinet-demo-preview";
 import {
   adaptOverviewStats,
   adaptPositionRow,
@@ -20,6 +21,7 @@ import {
   type PortfolioMetricsApi,
   type PortfolioOverviewApi,
 } from "@/services/portfolio.service";
+import { getClientCache, setClientCache } from "@/lib/client-data-cache";
 import { useWalletActivityLive } from "@/hooks/use-wallet-activity-live";
 
 function errMsg(e: unknown): string {
@@ -28,24 +30,33 @@ function errMsg(e: unknown): string {
 
 export function usePortfolioLiveEnabled(): boolean {
   const { isAuthenticated } = useAuth();
+  const demoPreview = useCabinetDemoPreview();
+  if (demoPreview) return false;
   return getWalletDataSource() === "live" && isAuthenticated;
 }
 
 export function usePortfolioOverviewLive() {
-  const { authorizedFetch } = useAuth();
+  const { authorizedFetch, user } = useAuth();
   const { locale } = useI18n();
   const live = usePortfolioLiveEnabled();
-  const [overview, setOverview] = useState<PortfolioOverviewApi | null>(null);
-  const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [walletLoading, setWalletLoading] = useState(false);
+  const userScope = user?.id ?? "anon";
+  const overviewKey = `assets:overview:${userScope}`;
+  const walletKey = `assets:wallet-summary:${userScope}`;
+  const cachedOverview = live ? getClientCache<PortfolioOverviewApi>(overviewKey) : null;
+  const cachedWallet = live ? getClientCache<WalletSummary>(walletKey) : null;
+  const [overview, setOverview] = useState<PortfolioOverviewApi | null>(cachedOverview);
+  const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(cachedWallet);
+  const [loading, setLoading] = useState(() => live && !cachedOverview);
+  const [walletLoading, setWalletLoading] = useState(() => live && !cachedWallet);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!live) return;
-    setLoading(true);
-    setWalletLoading(true);
+    const hadOverview = Boolean(getClientCache(overviewKey));
+    const hadWallet = Boolean(getClientCache(walletKey));
+    if (!hadOverview) setLoading(true);
+    if (!hadWallet) setWalletLoading(true);
     setError(null);
     setWalletError(null);
     try {
@@ -55,21 +66,23 @@ export function usePortfolioOverviewLive() {
       ]);
       if (overviewResult.status === "fulfilled") {
         setOverview(overviewResult.value);
+        setClientCache(overviewKey, overviewResult.value);
       } else {
-        setOverview(null);
+        if (!hadOverview) setOverview(null);
         setError(errMsg(overviewResult.reason));
       }
 
       if (walletResult.status === "fulfilled") {
         setWalletSummary(walletResult.value);
+        setClientCache(walletKey, walletResult.value);
       } else {
-        setWalletSummary(null);
+        if (!hadWallet) setWalletSummary(null);
         setWalletError(walletErrorMessage(walletResult.reason));
       }
     } catch (e) {
       setError(errMsg(e));
-      setOverview(null);
-      setWalletSummary(null);
+      if (!hadOverview) setOverview(null);
+      if (!hadWallet) setWalletSummary(null);
       setWalletError(walletErrorMessage(e));
     } finally {
       setLoading(false);

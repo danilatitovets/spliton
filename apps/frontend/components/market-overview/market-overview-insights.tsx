@@ -73,11 +73,11 @@ export function MarketOverviewInsights({
     <section className="mx-auto w-full max-w-[1400px] px-4 pb-10 md:px-6 lg:px-8">
       <header className="mb-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+          <span className="font-mono text-[10px] font-semibold font-medium tracking-wide text-zinc-500">
             {t("marketOverview.insights.kicker")}
           </span>
           {!live ? (
-            <span className="rounded-lg bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+            <span className="rounded-lg bg-white/5 px-2 py-0.5 text-[10px] font-medium tracking-wide text-zinc-400">
               {t("marketOverview.insights.mockBadge")}
             </span>
           ) : null}

@@ -217,7 +217,7 @@ export class PortfolioChartsService {
     if (ms == null) {
       return {
         window,
-        asset: 'USDT · TRC20',
+        asset: 'USDT',
         left: null,
         right: null,
         deltaAccrualsPct: null,
@@ -251,7 +251,7 @@ export class PortfolioChartsService {
 
     return {
       window,
-      asset: 'USDT · TRC20',
+      asset: 'USDT',
       left: {
         titleKey: this.panTitleKey('previous', window),
         from: previousStart.toISOString(),

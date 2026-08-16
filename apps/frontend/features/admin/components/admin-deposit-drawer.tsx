@@ -45,6 +45,7 @@ type AdminDepositDrawerProps = {
   loading?: boolean;
   canMutate?: boolean;
   onAction?: (action: DepositPendingAction, note: string) => Promise<void>;
+  onRecheck?: () => Promise<void>;
 };
 
 function FieldHint({ text }: { text: string }) {
@@ -67,6 +68,7 @@ export function AdminDepositDrawer({
   loading,
   canMutate = false,
   onAction,
+  onRecheck,
 }: AdminDepositDrawerProps) {
   const a = useAdminI18n();
   const tabs: { id: TabId; label: string }[] = [
@@ -147,6 +149,11 @@ export function AdminDepositDrawer({
                     >
                       {a.actions.manualReview}
                     </AdminDrawerSecondaryButton>
+                    {onRecheck ? (
+                      <AdminDrawerSecondaryButton onClick={() => void onRecheck()}>
+                        Recheck chain
+                      </AdminDrawerSecondaryButton>
+                    ) : null}
                     <AdminDrawerSecondaryButton
                       onClick={() =>
                         setPending({

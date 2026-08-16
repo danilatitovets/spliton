@@ -14,6 +14,9 @@ export function configureE2eDatabase(): void {
   const testDirectUrl = process.env.TEST_DIRECT_URL?.trim();
 
   if (testDbUrl) {
+    // Mark before remapping DATABASE_URL so cleanup guards do not treat
+    // TEST_DATABASE_URL === DATABASE_URL as "running on shared main DB".
+    process.env.E2E_ISOLATED_DATABASE = '1';
     process.env.DATABASE_URL = testDbUrl;
     if (testDirectUrl) {
       process.env.DIRECT_URL = testDirectUrl;

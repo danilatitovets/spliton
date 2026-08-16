@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { upcomingDistributions } from "@/components/dashboard/assets/assets-mock-data";
+import { EmptyState } from "@/components/shared/data-states/empty-state";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ROUTES } from "@/constants/routes";
 
@@ -25,7 +26,7 @@ export function UpcomingPayoutsCard({ preview = false }: { preview?: boolean }) 
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">{t("payouts.recent.empty")}</p>
+        <EmptyState situation="payoutsPending" message={t("payouts.recent.empty")} compact className="mt-4" />
       ) : (
         <div className="mt-4 divide-y divide-neutral-200">
           {items.map((item) => (

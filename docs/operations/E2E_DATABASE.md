@@ -6,8 +6,8 @@ Backend e2e tests create real rows (users `@example.com`, wallets, orders, trade
 
 | Variable | Purpose |
 |----------|---------|
-| `TEST_DATABASE_URL` | Pooled URL for Jest + scripts (port 6543, `pgbouncer=true`) |
-| `TEST_DIRECT_URL` | Direct URL for `prisma migrate deploy` (port 5432) |
+| `TEST_DATABASE_URL` | Nest-under-test DB URL. Prefer local Docker `:5433` or Supabase **session** `:5432` (no `pgbouncer=true`) |
+| `TEST_DIRECT_URL` | Direct/same URL for `prisma migrate deploy` |
 | `ALLOW_E2E_CLEANUP` | Set to `1` only to override cleanup guards on a known-safe test DB |
 | `ALLOW_E2E_SETUP` | Set to `1` only to run `test:db:setup` against production-looking URLs |
 | `E2E_SKIP_GLOBAL_CLEANUP` | Skip Jest global teardown cleanup (`1`) |
@@ -16,15 +16,21 @@ Backend e2e tests create real rows (users `@example.com`, wallets, orders, trade
 
 ## 1. Create dedicated test DB
 
-1. Create a Supabase project (e.g. `spliton-e2e`) or local Postgres instance.
-2. Add to repo root `.env`:
+1. Prefer local Docker: `docker compose -f docker-compose.test.yml up -d` (port **5433**).
+2. Or create a Supabase project (e.g. `spliton-e2e`).
+3. Add to repo root `.env`:
 
 ```env
-TEST_DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true
-TEST_DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres
+# Local Docker (preferred for destructive resets)
+TEST_DATABASE_URL=postgresql://postgres:spliton_e2e@127.0.0.1:5433/spliton_e2e
+TEST_DIRECT_URL=postgresql://postgres:spliton_e2e@127.0.0.1:5433/spliton_e2e
+
+# Or dedicated Supabase e2e — session pooler for Nest interactive $transaction:
+# TEST_DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+# TEST_DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres
 ```
 
-Do **not** point `TEST_DATABASE_URL` at production or staging unless you fully understand data loss risk.
+Do **not** point `TEST_DATABASE_URL` at production or staging unless you fully understand data loss risk. Do **not** use transaction pooler `:6543?pgbouncer=true` for Nest-under-test.
 
 ## 2. Apply migrations
 

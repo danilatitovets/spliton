@@ -197,6 +197,7 @@ export function adaptCatalogCardToItem(
       volume24hUsdt: card.volume24hUsdt,
       volume7dUsdt: card.volume7dUsdt,
       liquidityLabel: formatLiquidityScore(card.liquidityScore, locale),
+      liquidityScore: card.liquidityScore ?? undefined,
       secondaryMarketEnabled: card.secondaryMarketEnabled,
       hasSparkline: false,
       hasAudioPreview: false,
@@ -253,6 +254,7 @@ export function adaptCatalogCardToItem(
     nextPayoutDate: card.nextPayoutDate,
     secondaryMarketEnabled: card.secondaryMarketEnabled,
     activeListingsCount: card.activeSecondaryListingsCount,
+    liquidityScore: card.liquidityScore ?? undefined,
     hasSparkline: false,
     hasAudioPreview: false,
   };

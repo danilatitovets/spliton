@@ -16,7 +16,7 @@ import {
   surveyAnswersToNote,
   type PartnerSurveyAnswers,
 } from "@/components/partner-program/partner-intro-survey";
-import { PartnerLogoMark, PartnerSurface } from "@/components/partner-program/partner-surface";
+import { PartnerSurface } from "@/components/partner-program/partner-surface";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -59,9 +59,7 @@ function PartnerFormSteps({ active, t }: { active: 1 | 2 | 3; t: (key: string) =
             <span
               className={cn(
                 "flex size-8 items-center justify-center rounded-full text-[11px] font-bold",
-                done && "bg-white text-black",
-                isActive && "bg-[#B7F500] text-black",
-                !done && !isActive && "bg-white/[0.06] text-zinc-500",
+                done || isActive ? "bg-white text-black" : "bg-white/[0.06] text-zinc-500",
               )}
             >
               {done ? <Check className="size-3.5" strokeWidth={3} /> : step.id}
@@ -107,17 +105,14 @@ function PartnerCabinetHeader({
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <div className="flex min-w-0 items-start gap-3">
-        <PartnerLogoMark />
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{t("partner.application.brand")}</p>
-          <h2 id="partner-cabinet-modal-title" className="mt-0.5 text-lg font-semibold text-white sm:text-xl">
-            {t("partner.application.cabinet.title")}
-          </h2>
-          <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
-            {t("partner.application.cabinet.subtitle")}
-          </p>
-        </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{t("partner.application.brand")}</p>
+        <h2 id="partner-cabinet-modal-title" className="mt-0.5 text-lg font-semibold text-white sm:text-xl">
+          {t("partner.application.cabinet.title")}
+        </h2>
+        <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-500">
+          {t("partner.application.cabinet.subtitle")}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {status ? <StatusBadge status={status} t={t} /> : null}
@@ -388,7 +383,7 @@ function PartnerApplicationModalBody({ onClose }: { onClose: () => void }) {
           <button
             type="submit"
             disabled={submitting}
-            className="partner-app-submit inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#B7F500] px-6 text-sm font-semibold text-black transition hover:bg-[#c8ff3d] disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto"
+            className="partner-app-submit inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-black transition hover:bg-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-55 sm:w-auto"
           >
             {submitting ? (
               <>
@@ -474,22 +469,19 @@ export function PartnerApplicationPanel() {
         imageOpacity="opacity-50"
         overlayClassName="bg-black/58"
       >
-        <div className="flex min-w-0 items-start gap-3">
-          <PartnerLogoMark />
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
-              {t("partner.application.brand")}
-            </p>
-            <h2 className="mt-0.5 text-lg font-semibold text-white sm:text-xl">{t("partner.application.cabinet.title")}</h2>
-            <p className="mt-1 max-w-md text-sm leading-relaxed text-zinc-300">{t("partner.application.panel.subtitle")}</p>
-          </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+            {t("partner.application.brand")}
+          </p>
+          <h2 className="mt-0.5 text-lg font-semibold text-white sm:text-xl">{t("partner.application.cabinet.title")}</h2>
+          <p className="mt-1 max-w-md text-sm leading-relaxed text-zinc-300">{t("partner.application.panel.subtitle")}</p>
         </div>
         <button
           type="button"
           onClick={openModal}
           className={cn(
             buttonVariants({ size: "lg" }),
-            "h-11 shrink-0 border-0 bg-[#B7F500] px-6 text-sm font-semibold text-black hover:bg-[#c8ff3d]",
+            "h-11 shrink-0 rounded-full border-0 bg-white px-6 text-sm font-semibold text-black hover:bg-[#e8e8e8]",
           )}
         >
           {t("partner.process.apply.submit")}

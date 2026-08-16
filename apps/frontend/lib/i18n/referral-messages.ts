@@ -37,6 +37,14 @@ const RU: Record<string, string> = {
   "referral.program.shareCopied": "Ссылка скопирована",
   "referral.program.shareText": "Присоединяйся к Spliton — revenue share по музыкальным трекам.",
 
+  "referral.promo.aria": "Быстрые действия",
+  "referral.promo.catalog.title": "Каталог релизов",
+  "referral.promo.catalog.subtitle": "Выберите релиз и купите UNT — награды считаются после квалифицирующих действий друзей.",
+  "referral.promo.catalog.cta": "Открыть каталог",
+  "referral.promo.calculator.title": "Калькулятор доходности",
+  "referral.promo.calculator.subtitle": "Прикиньте сценарий выплат перед тем, как делиться ссылкой.",
+  "referral.promo.calculator.cta": "Открыть калькулятор",
+
   "referral.summary.title": "Сводка",
   "referral.summary.invited": "Приглашено",
   "referral.summary.active": "Активные",
@@ -222,6 +230,14 @@ const EN: Record<string, string> = {
   "referral.program.share": "Share",
   "referral.program.shareCopied": "Link copied",
   "referral.program.shareText": "Join Spliton — revenue share on music tracks.",
+
+  "referral.promo.aria": "Quick actions",
+  "referral.promo.catalog.title": "Release catalog",
+  "referral.promo.catalog.subtitle": "Pick a release and buy UNT — rewards unlock after friends complete qualifying actions.",
+  "referral.promo.catalog.cta": "Open catalog",
+  "referral.promo.calculator.title": "Yield calculator",
+  "referral.promo.calculator.subtitle": "Model payout scenarios before you share your link.",
+  "referral.promo.calculator.cta": "Open calculator",
 
   "referral.summary.title": "Summary",
   "referral.summary.invited": "Invited",
@@ -409,6 +425,14 @@ const ES: Record<string, string> = {
   "referral.program.shareCopied": "Enlace copiado",
   "referral.program.shareText": "Únete a Spliton — revenue share en pistas musicales.",
 
+  "referral.promo.aria": "Acciones rápidas",
+  "referral.promo.catalog.title": "Catálogo de lanzamientos",
+  "referral.promo.catalog.subtitle": "Elige un lanzamiento y compra UNT: las recompensas se activan tras acciones calificadas.",
+  "referral.promo.catalog.cta": "Abrir catálogo",
+  "referral.promo.calculator.title": "Calculadora de rendimiento",
+  "referral.promo.calculator.subtitle": "Estima escenarios de pago antes de compartir tu enlace.",
+  "referral.promo.calculator.cta": "Abrir calculadora",
+
   "referral.summary.title": "Resumen",
   "referral.summary.invited": "Invitados",
   "referral.summary.active": "Activos",
@@ -594,6 +618,14 @@ const PT: Record<string, string> = {
   "referral.program.share": "Partilhar",
   "referral.program.shareCopied": "Ligação copiada",
   "referral.program.shareText": "Junta-te ao Spliton — revenue share em faixas musicais.",
+
+  "referral.promo.aria": "Ações rápidas",
+  "referral.promo.catalog.title": "Catálogo de lançamentos",
+  "referral.promo.catalog.subtitle": "Escolha um lançamento e compre UNT — as recompensas ativam após ações qualificantes.",
+  "referral.promo.catalog.cta": "Abrir catálogo",
+  "referral.promo.calculator.title": "Calculadora de rendimento",
+  "referral.promo.calculator.subtitle": "Simule cenários de payout antes de partilhar o link.",
+  "referral.promo.calculator.cta": "Abrir calculadora",
 
   "referral.summary.title": "Resumo",
   "referral.summary.invited": "Convidados",

@@ -12,11 +12,36 @@ import {
   type Prisma,
 } from '@prisma/client';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: { url: process.env.DIRECT_URL || process.env.DATABASE_URL },
-  },
-});
+let defaultPrisma: PrismaClient | null = null;
+
+function getPrisma(client?: PrismaClient): PrismaClient {
+  if (client) return client;
+  if (!defaultPrisma) {
+    defaultPrisma = new PrismaClient({
+      datasources: {
+        db: { url: process.env.DIRECT_URL || process.env.DATABASE_URL },
+      },
+    });
+  }
+  return defaultPrisma;
+}
+
+async function withEngineRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      last = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/Response from the Engine was empty|Engine is not yet connected|P1017/i.test(msg)) {
+        throw e;
+      }
+      await new Promise((r) => setTimeout(r, 150 * (attempt + 1)));
+    }
+  }
+  throw last;
+}
 
 type LinkRef = { href: string; label: string };
 
@@ -528,7 +553,8 @@ async function cleanupJunkHelpCategories(knownSlugs: Set<string>): Promise<numbe
   return removed;
 }
 
-export async function seedHelpCenter(): Promise<void> {
+export async function seedHelpCenter(client?: PrismaClient): Promise<void> {
+  const prisma = getPrisma(client);
   const authorUserId = await resolveAuthorUserId();
   if (!authorUserId) {
     console.warn(
@@ -576,35 +602,37 @@ export async function seedHelpCenter(): Promise<void> {
       continue;
     }
 
-    await prisma.helpArticle.upsert({
-      where: { slug: article.slug },
-      update: {
-        categoryId,
-        titleTranslations: ru(article.title),
-        excerptTranslations: ru(article.excerpt),
-        contentTranslations: ru(article.content),
-        status: HelpArticleStatus.PUBLISHED,
-        sortOrder: article.sortOrder,
-        isFeatured: article.isFeatured ?? false,
-        isPopular: article.isPopular ?? false,
-        isGettingStarted: article.isGettingStarted ?? false,
-        publishedAt,
-        authorUserId,
-      },
-      create: {
-        slug: article.slug,
-        categoryId,
-        titleTranslations: ru(article.title),
-        excerptTranslations: ru(article.excerpt),
-        contentTranslations: ru(article.content),
-        status: HelpArticleStatus.PUBLISHED,
-        sortOrder: article.sortOrder,
-        isFeatured: article.isFeatured ?? false,
-        isPopular: article.isPopular ?? false,
-        isGettingStarted: article.isGettingStarted ?? false,
-        publishedAt,
-        authorUserId,
-      },
+    await withEngineRetry(async () => {
+      await prisma.helpArticle.upsert({
+        where: { slug: article.slug },
+        update: {
+          categoryId,
+          titleTranslations: ru(article.title),
+          excerptTranslations: ru(article.excerpt),
+          contentTranslations: ru(article.content),
+          status: HelpArticleStatus.PUBLISHED,
+          sortOrder: article.sortOrder,
+          isFeatured: article.isFeatured ?? false,
+          isPopular: article.isPopular ?? false,
+          isGettingStarted: article.isGettingStarted ?? false,
+          publishedAt,
+          authorUserId,
+        },
+        create: {
+          slug: article.slug,
+          categoryId,
+          titleTranslations: ru(article.title),
+          excerptTranslations: ru(article.excerpt),
+          contentTranslations: ru(article.content),
+          status: HelpArticleStatus.PUBLISHED,
+          sortOrder: article.sortOrder,
+          isFeatured: article.isFeatured ?? false,
+          isPopular: article.isPopular ?? false,
+          isGettingStarted: article.isGettingStarted ?? false,
+          publishedAt,
+          authorUserId,
+        },
+      });
     });
     articleCount += 1;
   }
@@ -624,5 +652,5 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await defaultPrisma?.$disconnect();
   });

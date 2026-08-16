@@ -47,7 +47,7 @@ export type MarketListingsResponse = {
 
 export const DEFAULT_MARKET_LISTINGS_QUERY: MarketListingsQuery = {
   page: 1,
-  limit: 100,
+  limit: 20,
   status: "purchasable",
   sort: "availability",
 };

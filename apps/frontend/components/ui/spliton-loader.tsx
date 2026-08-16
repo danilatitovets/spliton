@@ -82,7 +82,7 @@ export function SplitonLoader({
       </div>
 
       <div
-        className="relative z-10 flex items-center justify-center overflow-hidden bg-white shadow-sm"
+        className="relative z-10 flex items-center justify-center overflow-hidden"
         style={{
           width: dims.logo,
           height: dims.logo,

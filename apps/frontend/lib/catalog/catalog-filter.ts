@@ -1,4 +1,5 @@
 import type { CatalogItem } from "@/lib/catalog-mock";
+import { genresMatch } from "@/lib/catalog/catalog-genre";
 import { catalogItemAvailabilityPriority } from "@/lib/catalog/catalog-purchase.util";
 import type { CatalogFundingPhase, CatalogGridView, CatalogKindFilter, CatalogSortKey } from "@/types/catalog/page";
 
@@ -45,6 +46,13 @@ function parseSharePrice(item: CatalogItem): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function parseLiquidityScore(item: CatalogItem): number | undefined {
+  if (item.liquidityScore != null && Number.isFinite(item.liquidityScore)) {
+    return item.liquidityScore;
+  }
+  return undefined;
+}
+
 export function catalogMatchesFilters(
   item: CatalogItem,
   filters: {
@@ -56,16 +64,32 @@ export function catalogMatchesFilters(
     maxPrice: string;
     minProgress: string;
     minYield: string;
+    minLiquidity?: string;
+    favoritesOnly?: boolean;
+    favoriteIds?: Set<string>;
   },
 ): boolean {
-  const { kind, phase, genre, query, minPrice, maxPrice, minProgress, minYield } = filters;
+  const {
+    kind,
+    phase,
+    genre,
+    query,
+    minPrice,
+    maxPrice,
+    minProgress,
+    minYield,
+    minLiquidity,
+    favoritesOnly,
+    favoriteIds,
+  } = filters;
   if (kind === "funding" && item.kind !== "funding") return false;
   if (kind === "market" && item.kind !== "market") return false;
   if (item.kind === "funding" && (kind === "all" || kind === "funding")) {
     if (phase === "open" && item.status !== "open") return false;
     if (phase === "payouts" && item.status !== "payouts") return false;
   }
-  if (genre && item.genre !== genre) return false;
+  if (genre && !genresMatch(item.genre, genre)) return false;
+  if (favoritesOnly && favoriteIds && !favoriteIds.has(item.id)) return false;
   const q = query.trim().toLowerCase();
   if (q) {
     const hay = `${item.title} ${item.artist}`.toLowerCase();
@@ -79,6 +103,9 @@ export function catalogMatchesFilters(
   const maxPriceValue = priceRange.max ?? NaN;
   const minProgressValue = parseFloat(minProgress.replace(/\s/g, "").replace(",", "."));
   const minYieldValue = parseFloat(minYield.replace(/\s/g, "").replace(",", "."));
+  const minLiquidityValue = minLiquidity
+    ? parseFloat(minLiquidity.replace(/\s/g, "").replace(",", "."))
+    : NaN;
 
   if (item.kind === "market") {
     const price = parseSharePrice(item);
@@ -90,6 +117,11 @@ export function catalogMatchesFilters(
     if (Number.isFinite(minProgressValue) && item.pct < minProgressValue) return false;
     const yieldPct = parseYieldPct(item);
     if (Number.isFinite(minYieldValue) && yieldPct < minYieldValue) return false;
+  }
+
+  if (Number.isFinite(minLiquidityValue)) {
+    const score = parseLiquidityScore(item);
+    if (score == null || score < minLiquidityValue) return false;
   }
 
   return true;
@@ -140,6 +172,52 @@ export function sortCatalogItems(items: CatalogItem[], sort: CatalogSortKey, cat
         const ya = parseYieldPct(left);
         const yb = parseYieldPct(right);
         if (ya !== yb) return yb - ya;
+        return (catalogOrder.get(left.id) ?? 0) - (catalogOrder.get(right.id) ?? 0);
+      }),
+    );
+    return arr;
+  }
+  if (sort === "liquidity_desc") {
+    arr.sort((a, b) =>
+      compareWithAvailabilityTier(a, b, (left, right) => {
+        const la = parseLiquidityScore(left) ?? -1;
+        const lb = parseLiquidityScore(right) ?? -1;
+        if (la !== lb) return lb - la;
+        return (catalogOrder.get(left.id) ?? 0) - (catalogOrder.get(right.id) ?? 0);
+      }),
+    );
+    return arr;
+  }
+  if (sort === "volume24h_desc") {
+    arr.sort((a, b) =>
+      compareWithAvailabilityTier(a, b, (left, right) => {
+        const va =
+          left.kind === "market" && left.volume24hUsdt
+            ? parseFloat(left.volume24hUsdt.replace(/\s/g, "").replace(",", ".")) || -1
+            : -1;
+        const vb =
+          right.kind === "market" && right.volume24hUsdt
+            ? parseFloat(right.volume24hUsdt.replace(/\s/g, "").replace(",", ".")) || -1
+            : -1;
+        if (va !== vb) return vb - va;
+        return (catalogOrder.get(left.id) ?? 0) - (catalogOrder.get(right.id) ?? 0);
+      }),
+    );
+    return arr;
+  }
+  if (sort === "price_asc" || sort === "price_desc") {
+    const dir = sort === "price_asc" ? 1 : -1;
+    arr.sort((a, b) =>
+      compareWithAvailabilityTier(a, b, (left, right) => {
+        const pa =
+          left.kind === "market"
+            ? parseSharePrice(left)
+            : parseFloat(left.unitPriceUsdt.replace(/\s/g, "").replace(",", ".")) || 0;
+        const pb =
+          right.kind === "market"
+            ? parseSharePrice(right)
+            : parseFloat(right.unitPriceUsdt.replace(/\s/g, "").replace(",", ".")) || 0;
+        if (pa !== pb) return (pa - pb) * dir;
         return (catalogOrder.get(left.id) ?? 0) - (catalogOrder.get(right.id) ?? 0);
       }),
     );

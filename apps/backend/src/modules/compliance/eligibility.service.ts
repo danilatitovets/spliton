@@ -37,15 +37,107 @@ export class EligibilityService {
   }
 
   async check(userId: string, action: ConsentSource): Promise<EligibilityResult> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        status: true,
-        emailVerifiedAt: true,
-        deletedAt: true,
-        profile: { select: { countryCode: true } },
-      },
-    });
+    const results = await this.checkMany(userId, [action]);
+    return results.get(action)!;
+  }
+
+  /**
+   * Evaluate multiple eligibility actions with shared user/AML/KYC/consent loads
+   * (~few RTTs instead of ~5+ per action).
+   */
+  async checkMany(
+    userId: string,
+    actions: ConsentSource[],
+    options?: {
+      missingBySource?: Map<
+        ConsentSource,
+        Awaited<ReturnType<LegalConsentsService['getMissingConsents']>>
+      >;
+    },
+  ): Promise<Map<ConsentSource, EligibilityResult>> {
+    const unique = [...new Set(actions)];
+    const out = new Map<ConsentSource, EligibilityResult>();
+    if (unique.length === 0) return out;
+
+    const [user, aml, kyc, missingBySource] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          status: true,
+          emailVerifiedAt: true,
+          deletedAt: true,
+          profile: { select: { countryCode: true } },
+        },
+      }),
+      this.prisma.userAmlProfile.findUnique({ where: { userId } }),
+      this.prisma.kycVerification.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      options?.missingBySource
+        ? Promise.resolve(options.missingBySource)
+        : this.consents.getMissingConsentsForSources(userId, unique),
+    ]);
+
+    const country = user?.profile?.countryCode ?? undefined;
+    const scopesNeeded = new Set<
+      'registration' | 'deposits' | 'withdrawals' | 'primary' | 'secondary' | 'payouts'
+    >();
+    for (const action of unique) {
+      const scope = this.actionToCountryScope(action);
+      if (scope && country) scopesNeeded.add(scope);
+    }
+    const countryResults = new Map<
+      string,
+      Awaited<ReturnType<CountryRestrictionsService['checkCountry']>>
+    >();
+    if (country && scopesNeeded.size > 0) {
+      await Promise.all(
+        [...scopesNeeded].map(async (scope) => {
+          countryResults.set(scope, await this.countries.checkCountry(country, scope));
+        }),
+      );
+    }
+
+    for (const action of unique) {
+      out.set(
+        action,
+        this.evaluateLoaded(action, {
+          user,
+          aml,
+          kyc,
+          missing: missingBySource.get(action) ?? [],
+          countryCheck: (() => {
+            const scope = this.actionToCountryScope(action);
+            return scope ? countryResults.get(scope) : undefined;
+          })(),
+        }),
+      );
+    }
+    return out;
+  }
+
+  private evaluateLoaded(
+    action: ConsentSource,
+    ctx: {
+      user:
+        | {
+            status: UserStatus;
+            emailVerifiedAt: Date | null;
+            deletedAt: Date | null;
+            profile: { countryCode: string | null } | null;
+          }
+        | null;
+      aml: {
+        riskLevel: AmlRiskLevel;
+        restrictions: unknown;
+      } | null;
+      kyc: { status: KycStatus } | null;
+      missing: Awaited<ReturnType<LegalConsentsService['getMissingConsents']>>;
+      countryCheck?: Awaited<ReturnType<CountryRestrictionsService['checkCountry']>>;
+    },
+  ): EligibilityResult {
+    const { user, aml, kyc, missing, countryCheck } = ctx;
     if (!user || user.deletedAt) {
       return this.denied('ACCOUNT_RESTRICTED', ELIGIBILITY_MESSAGES.ACCOUNT_RESTRICTED);
     }
@@ -58,9 +150,6 @@ export class EligibilityService {
       return this.denied('ACCOUNT_RESTRICTED', ELIGIBILITY_MESSAGES.ACCOUNT_RESTRICTED);
     }
 
-    const aml = await this.prisma.userAmlProfile.findUnique({
-      where: { userId },
-    });
     if (aml?.riskLevel === AmlRiskLevel.BLOCKED) {
       return this.denied('AML_BLOCKED', ELIGIBILITY_MESSAGES.AML_BLOCKED);
     }
@@ -69,21 +158,15 @@ export class EligibilityService {
       return this.denied('ACCOUNT_RESTRICTED', ELIGIBILITY_MESSAGES.ACCOUNT_RESTRICTED);
     }
 
-    const country = user.profile?.countryCode ?? undefined;
-    const scope = this.actionToCountryScope(action);
-    if (scope && country) {
-      const countryCheck = await this.countries.checkCountry(country, scope);
-      if (!countryCheck.allowed) {
-        return this.denied(
-          'COUNTRY_BLOCKED',
-          ELIGIBILITY_MESSAGES.COUNTRY_BLOCKED,
-          undefined,
-          countryCheck.reason,
-        );
-      }
+    if (countryCheck && !countryCheck.allowed) {
+      return this.denied(
+        'COUNTRY_BLOCKED',
+        ELIGIBILITY_MESSAGES.COUNTRY_BLOCKED,
+        undefined,
+        countryCheck.reason,
+      );
     }
 
-    const missing = await this.consents.getMissingConsents(userId, action);
     const unpublished = this.consents.getUnpublishedPolicyTypes(missing);
     if (unpublished.length > 0 && isFinancialConsentSource(action)) {
       return this.denied(
@@ -104,10 +187,6 @@ export class EligibilityService {
       );
     }
 
-    const kyc = await this.prisma.kycVerification.findFirst({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' },
-    });
     const needsKyc =
       (action === ConsentSource.WITHDRAWAL && this.kycRequiredForWithdrawal()) ||
       ((action === ConsentSource.SECONDARY_TRADE ||
@@ -134,6 +213,13 @@ export class EligibilityService {
   }
 
   async assertAllowed(userId: string, action: ConsentSource): Promise<void> {
+    if (
+      process.env.NODE_ENV === 'test' &&
+      process.env.E2E_BYPASS_COMPLIANCE === 'true'
+    ) {
+      this.assertFeatureForAction(action);
+      return;
+    }
     await this.enforcement.assertUserCanTransact(userId);
     const result = await this.check(userId, action);
     if (result.allowed) {
@@ -214,6 +300,9 @@ export class EligibilityService {
     switch (action) {
       case ConsentSource.REGISTER:
         return 'registration';
+      case ConsentSource.LOGIN:
+        // canDeposit uses LOGIN (no consent types); still enforce deposit country bans.
+        return 'deposits';
       case ConsentSource.WITHDRAWAL:
         return 'withdrawals';
       case ConsentSource.PRIMARY_PURCHASE:

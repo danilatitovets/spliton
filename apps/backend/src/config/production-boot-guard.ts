@@ -31,6 +31,20 @@ export function collectProductionBootIssues(
     });
   }
 
+  if (depositsEnabled && tronMode === 'tron' && !env.TRON_USDT_CONTRACT?.trim()) {
+    issues.push({
+      code: 'TRON_USDT_CONTRACT_MISSING',
+      message: 'TRON_PROVIDER_MODE=tron requires TRON_USDT_CONTRACT.',
+    });
+  }
+
+  if (isTruthy(env.ALLOW_SHARED_DEPOSIT_ADDRESS) || env.DEPOSIT_SHARED_ADDRESS?.trim()) {
+    issues.push({
+      code: 'SHARED_DEPOSIT_ADDRESS_IN_PRODUCTION',
+      message: 'Shared deposit addresses are forbidden in production.',
+    });
+  }
+
   if (isTruthy(env.ALLOW_DEV_DEPOSIT_ADDRESS)) {
     issues.push({
       code: 'DEV_DEPOSIT_ADDRESS_IN_PRODUCTION',

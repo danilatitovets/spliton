@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Plus, Search, SlidersHorizontal, Star } from "@/lib/lucide";
+import { Plus, Search, SlidersHorizontal } from "@/lib/lucide";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -17,7 +18,6 @@ import { SplitonLoader } from "@/components/ui/spliton-loader";
 import {
   countActiveWatchlistFilters,
   SecondaryMarketWatchlistFiltersSheet,
-  watchlistFiltersSummary,
 } from "@/components/dashboard/secondary-market/secondary-market-watchlist-filters-sheet";
 import {
   DEFAULT_WATCHLIST_FILTERS,
@@ -26,6 +26,7 @@ import {
   type WatchlistItem,
 } from "@/components/dashboard/secondary-market/secondary-market-watchlist.types";
 import { ExchangeNeonSparkline } from "@/components/shared/charts/exchange-neon-sparkline";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { secondaryMarketBookHref, secondaryMarketHref } from "@/constants/dashboard/secondary-market";
 import { analyticsReleaseDetailPath, secondaryMarketReleaseAnalyticsPath } from "@/constants/routes";
 import {
@@ -42,6 +43,9 @@ import {
   type WatchlistItemDto,
 } from "@/services/secondary-market.service";
 import { getWalletDataSource } from "@/services/wallet.service";
+
+const WATCHLIST_HERO_ICON = "/images/secondary-market/watchlist-hero.png";
+const WATCHLIST_HEADER_VIDEO = "/videos/position-holding-bg.mp4";
 
 const SEED: WatchlistItem[] = [
   {
@@ -259,16 +263,18 @@ export function SecondaryMarketWatchlistTab() {
 
   const showToast = React.useCallback((msg: string) => {
     setToastMessage(msg);
-    window.setTimeout(() => setToastMessage(null), 4000);
+    window.setTimeout(() => setToastMessage(null), 1800);
   }, []);
 
   const remove = async (id: string) => {
     if (isLive) {
+      const prev = liveItems;
+      setLiveItems((items) => items.filter((x) => x.id !== id));
       try {
         await removeWatchlistItem(authorizedFetch, id);
-        await loadLive();
         showToast(t("secondaryMarket.toast.removedFromWatchlist"));
       } catch (e) {
+        setLiveItems(prev);
         setError(marketErrorMessage(e));
       }
       return;
@@ -349,51 +355,84 @@ export function SecondaryMarketWatchlistTab() {
   }
 
   return (
-    <div className="relative space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <p className="max-w-[62ch] font-mono text-[11px] leading-relaxed text-zinc-600">
-          {t("secondaryMarket.watchlist.intro")}
-        </p>
-        <button
-          type="button"
-          onClick={() => setIsAddOpen(true)}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-full bg-[#B7F500] px-4 font-mono text-[12px] font-semibold text-black transition hover:bg-[#c8ff3d] active:scale-[0.98]"
-        >
-          <Plus className="size-4" strokeWidth={2.5} aria-hidden />
-          {t("secondaryMarket.watchlist.add")}
-        </button>
+    <div className="relative space-y-6">
+      <header className="relative isolate overflow-hidden rounded-2xl">
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <video
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-[12px] motion-reduce:hidden"
+            src={WATCHLIST_HEADER_VIDEO}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/72 to-black" />
+        </div>
+        <div className="relative z-10 flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-6">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="relative size-[4.5rem] shrink-0 sm:size-20">
+              <Image
+                src={WATCHLIST_HERO_ICON}
+                alt=""
+                fill
+                sizes="80px"
+                className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                unoptimized
+                aria-hidden
+                priority
+              />
+            </div>
+            <div className="min-w-0 pt-0.5">
+              <h1 className="text-xl font-semibold tracking-tight text-white md:text-2xl">
+                {t("secondaryMarket.tabs.watchlist")}
+              </h1>
+              <p className="mt-1.5 max-w-[62ch] text-[13px] leading-relaxed text-white/55">
+                {t("secondaryMarket.watchlist.intro")}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-full bg-white px-4 text-[13px] font-semibold text-black transition hover:bg-[#e8e8e8] active:scale-[0.98]"
+          >
+            <Plus className="size-4" strokeWidth={2.5} aria-hidden />
+            {t("secondaryMarket.watchlist.add")}
+          </button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="rounded-2xl bg-white/[0.04] p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">{t("secondaryMarket.watchlist.inList")}</p>
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-white">{summary.n}</p>
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">{t("secondaryMarket.watchlist.listingsCount")}</p>
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-zinc-200">{summary.sumListings}</p>
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">{t("secondaryMarket.watchlist.deals24h")}</p>
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-white/90">{summary.sumDeals}</p>
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">{t("secondaryMarket.watchlist.liquidCount")}</p>
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-zinc-300">{summary.hi}</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.watchlist.inList")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white">{summary.n}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.watchlist.listingsCount")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-zinc-200">{summary.sumListings}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.watchlist.deals24h")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[#B7F500]/90">{summary.sumDeals}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.watchlist.liquidCount")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-zinc-300">{summary.hi}</p>
-        </div>
-      </div>
-
-      <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+      <div className="flex flex-wrap gap-2">
         {SEGMENT_QUICK.map((chip) => (
           <button
             key={chip.id}
             type="button"
             onClick={() => patchFilters({ segment: chip.id })}
             className={cn(
-              "shrink-0 rounded-lg px-3 py-1.5 font-mono text-[12px] font-medium transition-colors",
+              "rounded-full px-3.5 py-2 text-[12px] font-medium tracking-[-0.01em] transition-colors",
               filters.segment === chip.id
-                ? "bg-[#222222] text-white"
-                : "bg-transparent text-zinc-500 hover:text-zinc-300",
+                ? "bg-white text-black"
+                : "bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-zinc-200",
             )}
           >
             {t(chip.labelKey)}
@@ -403,36 +442,30 @@ export function SecondaryMarketWatchlistTab() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600" aria-hidden />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-600" aria-hidden />
           <input
             type="search"
             value={filters.query}
             onChange={(e) => patchFilters({ query: e.target.value })}
             placeholder={t("secondaryMarket.watchlist.searchPlaceholder")}
-            className="h-10 w-full rounded-xl bg-[#111111] py-2 pl-10 pr-3 font-mono text-sm text-white placeholder:text-zinc-600 outline-none ring-1 ring-white/10 focus:ring-[#B7F500]/35"
+            className="h-11 w-full rounded-full bg-white/[0.06] py-2 pl-10 pr-4 text-sm text-white placeholder:text-zinc-600 outline-none transition focus:bg-white/[0.09]"
             aria-label={t("secondaryMarket.aria.searchWatchlist")}
           />
         </div>
         <button
           type="button"
           onClick={() => setIsFiltersOpen(true)}
-          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#111111] px-4 font-mono text-[12px] font-medium text-zinc-200 ring-1 ring-white/10 transition hover:ring-[#B7F500]/35"
+          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
         >
           <SlidersHorizontal className="size-4 text-zinc-500" aria-hidden />
           {t("secondaryMarket.aria.filters")}
           {activeFilterCount > 0 ? (
-            <span className="flex size-5 items-center justify-center rounded-full bg-[#B7F500] text-[10px] font-bold text-black">
+            <span className="flex size-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black">
               {activeFilterCount}
             </span>
           ) : null}
-          <ChevronDown className="size-3.5 text-zinc-600 md:hidden" aria-hidden />
         </button>
       </div>
-
-      <p className="font-mono text-[11px] text-zinc-600">
-        {watchlistFiltersSummary(filters, t)} · {filtered.length}{" "}
-        {filtered.length === 1 ? t("secondaryMarket.watchlist.releaseOne") : t("secondaryMarket.watchlist.releaseMany")}
-      </p>
 
       <SecondaryMarketWatchlistFiltersSheet
         open={isFiltersOpen}
@@ -460,51 +493,66 @@ export function SecondaryMarketWatchlistTab() {
       />
 
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
-          <SplitonLoader size="xxs" variant="light" className="shrink-0" />
+        <div className="flex items-center gap-2 text-[12px] text-zinc-500">
+          <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
           {t("secondaryMarket.watchlist.updating")}
         </div>
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl bg-[#111111] px-6 py-16 text-center ring-1 ring-white/6">
-          <Star className="mx-auto size-10 text-zinc-700" strokeWidth={1.25} aria-hidden />
-          <h2 className="mt-4 text-lg font-semibold text-white">{t("secondaryMarket.empty.watchlistEmpty")}</h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-16 text-center">
+          <div className="relative mx-auto size-28">
+            <Image
+              src={WATCHLIST_HERO_ICON}
+              alt=""
+              fill
+              sizes="112px"
+              className="object-contain opacity-90"
+              unoptimized
+              aria-hidden
+            />
+          </div>
+          <h2 className="mt-5 text-lg font-semibold tracking-tight text-white">{t("secondaryMarket.empty.watchlistEmpty")}</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
             {t("secondaryMarket.watchlist.emptyDesc")}
           </p>
           <button
             type="button"
             onClick={() => setIsAddOpen(true)}
-            className="mt-6 inline-flex h-10 items-center gap-2 rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black"
+            className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-black transition hover:bg-[#e8e8e8]"
           >
             <Plus className="size-4" aria-hidden />
             {t("secondaryMarket.watchlist.addRelease")}
           </button>
           <Link
             href={secondaryMarketHref("market")}
-            className="mt-3 block font-mono text-[12px] text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+            className="mt-3 block text-[12px] text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
           >
             {t("secondaryMarket.watchlist.orOpenMarket")}
           </Link>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl bg-[#111111] px-6 py-14 text-center ring-1 ring-white/6">
-          <p className="font-mono text-sm text-zinc-500">{t("secondaryMarket.empty.noResults")}</p>
-          <button type="button" onClick={resetFilters} className="mt-3 font-mono text-[12px] text-zinc-400 hover:text-white hover:underline">
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-14 text-center">
+          <p className="text-sm font-semibold text-white">{t("secondaryMarket.empty.noResults")}</p>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="mt-4 text-[12px] text-zinc-400 underline-offset-2 hover:text-white hover:underline"
+          >
             {t("secondaryMarket.filters.resetFilters")}
           </button>
           <button
             type="button"
             onClick={() => setIsFiltersOpen(true)}
-            className="mt-3 block w-full font-mono text-[12px] text-zinc-500 hover:text-zinc-300"
+            className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-white/[0.06] px-4 text-[12px] font-medium text-zinc-300 transition hover:bg-white/[0.1]"
           >
+            <SlidersHorizontal className="size-4" aria-hidden />
             {t("secondaryMarket.filters.changeFilters")}
           </button>
         </div>
       ) : (
         <>
-          <div className="divide-y divide-white/6 md:hidden">
+          <div className="divide-y divide-white/[0.05] md:hidden">
             {filtered.map((row) => {
               const pos = row.change24hPct >= 0;
               return (
@@ -512,13 +560,13 @@ export function SecondaryMarketWatchlistTab() {
                   key={row.id}
                   type="button"
                   onClick={() => setSelectedItem(row)}
-                  className="flex w-full items-start gap-3 py-3.5 text-left transition hover:bg-white/2"
+                  className="flex w-full items-start gap-3 py-3.5 text-left transition hover:bg-white/[0.02]"
                 >
                   <CoverThumb symbol={row.symbol} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-[14px] font-semibold text-white">{row.track}</p>
+                        <p className="truncate text-[14px] font-semibold tracking-[-0.01em] text-white">{row.track}</p>
                         <p className="truncate text-[12px] text-zinc-500">
                           {row.symbol} · {formatUsdt(row.pricePerUnit)} USDT
                         </p>
@@ -526,7 +574,7 @@ export function SecondaryMarketWatchlistTab() {
                       <span
                         className={cn(
                           "shrink-0 font-mono text-[12px] font-semibold tabular-nums",
-                          pos ? "text-[#B7F500]" : "text-fuchsia-300",
+                          pos ? "text-emerald-300/90" : "text-rose-300/90",
                         )}
                       >
                         {pos ? "+" : ""}
@@ -534,7 +582,7 @@ export function SecondaryMarketWatchlistTab() {
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <span className="font-mono text-[11px] text-zinc-600">
+                      <span className="text-[11px] text-zinc-600">
                         {formatMessage(t("secondaryMarket.watchlist.deals24hShort"), {
                           count: row.deals24h,
                           liquidity: liquidityLabel(row.liquidity, t),
@@ -550,20 +598,34 @@ export function SecondaryMarketWatchlistTab() {
             })}
           </div>
 
-          <div className="hidden min-w-0 overflow-x-auto rounded-2xl bg-[#111111] ring-1 ring-white/6 md:block">
+          <div className="hidden min-w-0 overflow-x-auto rounded-2xl bg-white/[0.04] md:block">
             <table className="w-full min-w-[900px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-white/10 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
-                  <th className="min-w-[200px] px-3 py-2.5 font-normal">{t("secondaryMarket.watchlist.columnTrack")}</th>
-                  <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.orders.columnPrice")}</th>
-                  <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.watchlist.column24h")}</th>
-                  <th className="hidden px-3 py-2.5 text-right font-normal lg:table-cell">{t("secondaryMarket.watchlist.deals24h")}</th>
-                  <th className="hidden px-3 py-2.5 font-normal lg:table-cell">{t("secondaryMarket.listings.columnLiquidity")}</th>
-                  <th className="hidden px-3 py-2.5 font-normal xl:table-cell">{t("secondaryMarket.watchlist.columnDynamics")}</th>
-                  <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.listings.columnActions")}</th>
+                <tr className="text-zinc-500">
+                  <th className="min-w-[200px] px-3.5 py-3 font-normal">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.watchlist.columnTrack")}</span>
+                  </th>
+                  <th className="px-3.5 py-3 text-right font-normal">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.orders.columnPrice")}</span>
+                  </th>
+                  <th className="px-3.5 py-3 text-right font-normal">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.watchlist.column24h")}</span>
+                  </th>
+                  <th className="hidden px-3.5 py-3 text-right font-normal lg:table-cell">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.watchlist.deals24h")}</span>
+                  </th>
+                  <th className="hidden px-3.5 py-3 font-normal lg:table-cell">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.listings.columnLiquidity")}</span>
+                  </th>
+                  <th className="hidden px-3.5 py-3 font-normal xl:table-cell">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.watchlist.columnDynamics")}</span>
+                  </th>
+                  <th className="px-3.5 py-3 text-right font-normal">
+                    <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.listings.columnActions")}</span>
+                  </th>
                 </tr>
               </thead>
-              <tbody className="font-mono text-[12px] text-zinc-300">
+              <tbody className="text-[13px] text-zinc-300">
                 {filtered.map((row) => {
                   const pos = row.change24hPct >= 0;
                   return (
@@ -577,69 +639,70 @@ export function SecondaryMarketWatchlistTab() {
                           setSelectedItem(row);
                         }
                       }}
-                      className="cursor-pointer border-b border-white/5 transition-colors hover:bg-white/3 focus-visible:bg-white/4 focus-visible:outline-none"
+                      className="cursor-pointer border-t border-white/[0.04] transition-colors hover:bg-white/[0.02] focus-visible:bg-white/[0.04] focus-visible:outline-none"
                     >
-                      <td className="px-3 py-2.5 align-middle">
+                      <td className="px-3.5 py-3 align-middle">
                         <div className="flex items-center gap-2.5">
                           <CoverThumb symbol={row.symbol} />
                           <div className="min-w-0">
-                            <p className="truncate text-[13px] font-medium text-white">{row.track}</p>
-                            <p className="truncate text-[11px] text-zinc-600">
+                            <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-white">{row.track}</p>
+                            <p className="truncate text-[11px] text-zinc-500">
                               {row.artist} · {row.symbol}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 text-right align-middle tabular-nums text-white">
+                      <td className="px-3.5 py-3 text-right align-middle font-mono tabular-nums text-white">
                         {formatUsdt(row.pricePerUnit)}
                       </td>
                       <td
                         className={cn(
-                          "px-3 py-2.5 text-right align-middle text-xs font-semibold tabular-nums",
-                          pos ? "text-[#B7F500]" : "text-fuchsia-300",
+                          "px-3.5 py-3 text-right align-middle font-mono text-[12px] font-semibold tabular-nums",
+                          pos ? "text-emerald-300/90" : "text-rose-300/90",
                         )}
                       >
                         {pos ? "+" : ""}
                         {row.change24hPct.toLocaleString("ru-RU", { maximumFractionDigits: 1 })}%
                       </td>
-                      <td className="hidden px-3 py-2.5 text-right align-middle tabular-nums lg:table-cell">
+                      <td className="hidden px-3.5 py-3 text-right align-middle font-mono tabular-nums lg:table-cell">
                         {row.deals24h}
                       </td>
-                      <td className="hidden px-3 py-2.5 align-middle lg:table-cell">
+                      <td className="hidden px-3.5 py-3 align-middle lg:table-cell">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
-                            row.liquidity === "high" && "bg-[#B7F500]/12 text-[#d4f570]",
-                            row.liquidity === "med" && "bg-zinc-500/15 text-zinc-400",
+                            row.liquidity === "high" && "bg-white/[0.08] text-white",
+                            row.liquidity === "med" && "bg-white/[0.06] text-zinc-300",
                             row.liquidity === "low" && "bg-amber-500/12 text-amber-200/90",
                           )}
                         >
                           {liquidityLabel(row.liquidity, t)}
                         </span>
                       </td>
-                      <td className="hidden px-3 py-2.5 align-middle xl:table-cell">
+                      <td className="hidden px-3.5 py-3 align-middle xl:table-cell">
                         {row.spark.length >= 2 ? (
                           <ExchangeNeonSparkline values={row.spark} trend={pos ? "up" : "down"} width={72} height={22} detailSegments={4} />
                         ) : null}
                       </td>
-                      <td className="px-3 py-2.5 text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3.5 py-3 text-right align-middle" onClick={(e) => e.stopPropagation()}>
                         <div className="flex flex-wrap items-center justify-end gap-1.5">
-                          <Link
+                          <SplitonCtaPill
                             href={bookHref(row.bookMarketId)}
-                            className="inline-flex rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-medium text-zinc-300 hover:border-white/25 hover:text-white"
+                            tone="onDark"
+                            className="h-8 gap-1.5 pl-3 pr-1 text-[11px] font-medium tracking-[-0.01em] [&>span:last-child]:size-6 [&>span:last-child>svg]:size-3"
                           >
                             {row.bookMarketId ? t("secondaryMarket.actions.orderBook") : t("secondaryMarket.tabs.market")}
-                          </Link>
+                          </SplitonCtaPill>
                           <Link
                             href={secondaryMarketReleaseAnalyticsPath(row.releaseId)}
                             scroll={false}
-                            className="inline-flex rounded-full border border-white/12 px-2.5 py-1 text-[11px] font-medium text-zinc-300 hover:border-white/22 hover:text-white"
+                            className="inline-flex h-8 items-center rounded-full bg-white/[0.06] px-2.5 text-[11px] font-medium text-zinc-300 transition hover:bg-white/[0.1] hover:text-white"
                           >
                             {t("secondaryMarket.watchlist.analytics")}
                           </Link>
                           <Link
                             href={`${analyticsReleaseDetailPath(getSecondaryMarketAnalyticsCatalogIdForReleaseSlug(row.releaseId))}?from=catalog`}
-                            className="inline-flex rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-black hover:opacity-90"
+                            className="inline-flex h-8 items-center rounded-full bg-white px-2.5 text-[11px] font-semibold text-black transition hover:bg-[#e8e8e8]"
                           >
                             {t("secondaryMarket.actions.release")}
                           </Link>
@@ -658,9 +721,9 @@ export function SecondaryMarketWatchlistTab() {
         <div
           role="status"
           aria-live="polite"
-          className="pointer-events-none fixed bottom-6 left-1/2 z-130 max-w-[min(100vw-2rem,28rem)] -translate-x-1/2 px-4"
+          className="pointer-events-none fixed bottom-20 left-1/2 z-130 -translate-x-1/2 px-4 md:bottom-6"
         >
-          <div className="rounded-xl bg-zinc-950/95 px-4 py-3 font-mono text-[12px] text-zinc-100 shadow-lg ring-1 ring-white/10">
+          <div className="rounded-2xl bg-zinc-950/95 px-4 py-3 text-[12px] font-medium text-zinc-100 shadow-lg">
             {toastMessage}
           </div>
         </div>

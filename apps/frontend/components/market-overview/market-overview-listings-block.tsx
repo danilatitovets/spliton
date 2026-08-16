@@ -50,44 +50,85 @@ export function MarketOverviewListingsBlock({
           {t("marketOverview.listings.empty")}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl bg-[#111111]">
-          <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
-            <thead>
-              <tr className="text-zinc-500">
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.release")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.units")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.price")}</th>
-                <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.total")}</th>
-                <th className="px-3 py-2.5 text-right font-normal">{t("marketOverview.listings.table.action")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((l) => (
-                <tr key={l.id} className="text-zinc-300">
-                  <td className="px-3 py-2 align-middle">
-                    <div className="font-semibold text-white">{l.releaseSymbol}</div>
-                    <div className="text-[12px] text-zinc-500">{l.releaseTitle}</div>
-                  </td>
-                  <td className="px-3 py-2 align-middle font-mono tabular-nums">{l.units}</td>
-                  <td className="px-3 py-2 align-middle font-mono tabular-nums">{l.pricePerUnitUsdt} USDT</td>
-                  <td className="px-3 py-2 align-middle font-mono tabular-nums">{l.totalUsdt} USDT</td>
-                  <td className="px-3 py-2 align-middle text-right">
-                    {l.buyable ? (
-                      <Link
-                        href={secondaryMarketListingInfoPath(l.id)}
-                        className="text-[12px] font-medium text-[#B7F500] hover:underline"
-                      >
-                        {t("marketOverview.listings.buy")}
-                      </Link>
-                    ) : (
-                      <span className="text-[12px] text-zinc-600">{t("marketOverview.listings.unavailable")}</span>
-                    )}
-                  </td>
+        <>
+          <ul className="space-y-2 md:hidden" role="list">
+            {items.map((l) => (
+              <li key={l.id} className="rounded-xl bg-[#111111] px-3.5 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-white">{l.releaseSymbol}</p>
+                    <p className="truncate text-[12px] text-zinc-500">{l.releaseTitle}</p>
+                  </div>
+                  {l.buyable ? (
+                    <Link
+                      href={secondaryMarketListingInfoPath(l.id)}
+                      className="shrink-0 text-[12px] font-medium text-[#B7F500]"
+                    >
+                      {t("marketOverview.listings.buy")}
+                    </Link>
+                  ) : (
+                    <span className="shrink-0 text-[12px] text-zinc-600">
+                      {t("marketOverview.listings.unavailable")}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.listings.table.units")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-zinc-200">{l.units}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-600">{t("marketOverview.listings.table.price")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-zinc-200">{l.pricePerUnitUsdt}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-zinc-600">{t("marketOverview.listings.table.total")}</p>
+                    <p className="mt-0.5 font-mono tabular-nums text-white">{l.totalUsdt}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto rounded-xl bg-[#111111] md:block">
+            <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
+              <thead>
+                <tr className="text-zinc-500">
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.release")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.units")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.price")}</th>
+                  <th className="px-3 py-2.5 font-normal">{t("marketOverview.listings.table.total")}</th>
+                  <th className="px-3 py-2.5 text-right font-normal">{t("marketOverview.listings.table.action")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((l) => (
+                  <tr key={l.id} className="text-zinc-300">
+                    <td className="px-3 py-2 align-middle">
+                      <div className="font-semibold text-white">{l.releaseSymbol}</div>
+                      <div className="text-[12px] text-zinc-500">{l.releaseTitle}</div>
+                    </td>
+                    <td className="px-3 py-2 align-middle font-mono tabular-nums">{l.units}</td>
+                    <td className="px-3 py-2 align-middle font-mono tabular-nums">{l.pricePerUnitUsdt} USDT</td>
+                    <td className="px-3 py-2 align-middle font-mono tabular-nums">{l.totalUsdt} USDT</td>
+                    <td className="px-3 py-2 align-middle text-right">
+                      {l.buyable ? (
+                        <Link
+                          href={secondaryMarketListingInfoPath(l.id)}
+                          className="text-[12px] font-medium text-[#B7F500] hover:underline"
+                        >
+                          {t("marketOverview.listings.buy")}
+                        </Link>
+                      ) : (
+                        <span className="text-[12px] text-zinc-600">{t("marketOverview.listings.unavailable")}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   );

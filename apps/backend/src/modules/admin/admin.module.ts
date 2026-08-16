@@ -15,6 +15,7 @@ import { ReleaseApprovalService } from '../release-approval/release-approval.ser
 import { AdminReleaseApprovalController } from '../release-approval/admin-release-approval.controller';
 import { AdminOperatorSlaController } from './v1/admin-operator-sla.controller';
 import { OperatorSlaModule } from '../operator-sla/operator-sla.module';
+import { DepositIngestionModule } from '../deposit-ingestion/deposit-ingestion.module';
 
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -199,6 +200,7 @@ import {
     TreasuryModule,
     NotificationsModule,
     OperatorSlaModule,
+    DepositIngestionModule,
   ],
 
   controllers: [

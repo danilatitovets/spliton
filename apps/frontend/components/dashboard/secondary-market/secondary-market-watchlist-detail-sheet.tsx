@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ExternalLink, Star, Trash2 } from "@/lib/lucide";
 
 import { SecondaryMarketResponsiveSheet } from "@/components/dashboard/secondary-market/secondary-market-responsive-sheet";
-import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import type { WatchlistItem } from "@/components/dashboard/secondary-market/secondary-market-watchlist.types";
 import { ExchangeNeonSparkline } from "@/components/shared/charts/exchange-neon-sparkline";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -12,10 +12,6 @@ import { secondaryMarketBookHref, secondaryMarketHref } from "@/constants/dashbo
 import { analyticsReleaseDetailPath, secondaryMarketReleaseAnalyticsPath } from "@/constants/routes";
 import { getSecondaryMarketAnalyticsCatalogIdForReleaseSlug } from "@/mocks/dashboard/secondary-market-listings.mock";
 import { cn } from "@/lib/utils";
-import {
-  smTableActionReleasePill,
-  smTableActionSecondaryPill,
-} from "@/components/dashboard/secondary-market/secondary-market-table-action-styles";
 
 function formatUsdt(n: number) {
   return n.toLocaleString("ru-RU", {
@@ -50,31 +46,33 @@ export function SecondaryMarketWatchlistDetailSheet({ item, onOpenChange, onRemo
     <SecondaryMarketResponsiveSheet
       open={item != null}
       onOpenChange={onOpenChange}
+      side="right"
+      headerVideo
       title={item?.track ?? t("secondaryMarket.listingDetail.releaseFallback")}
       description={item ? `${item.artist} · ${item.symbol}` : undefined}
       widthClassName="md:w-[min(100vw-1rem,480px)]"
       footer={
         item ? (
           <div className="space-y-2">
-            <Link
+            <SplitonCtaPill
               href={bookHref(item.bookMarketId)}
-              className={cn(smExchange.submitBuy, "inline-flex h-11 items-center justify-center")}
-              onClick={() => onOpenChange(false)}
+              tone="onDark"
+              className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[13px] font-semibold"
             >
               {item.bookMarketId ? t("secondaryMarket.watchlist.openBook") : t("secondaryMarket.actions.goToMarket")}
-            </Link>
+            </SplitonCtaPill>
             <div className="flex gap-2">
               <Link
                 href={secondaryMarketReleaseAnalyticsPath(item.releaseId)}
                 scroll={false}
-                className={cn(smTableActionSecondaryPill, "h-10 flex-1 justify-center")}
+                className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-white/[0.06] px-4 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
                 onClick={() => onOpenChange(false)}
               >
                 {t("secondaryMarket.watchlist.analytics")}
               </Link>
               <Link
                 href={`${analyticsReleaseDetailPath(getSecondaryMarketAnalyticsCatalogIdForReleaseSlug(item.releaseId))}?from=catalog`}
-                className={cn(smTableActionReleasePill, "h-10 flex-1 justify-center")}
+                className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white/[0.06] px-4 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
                 onClick={() => onOpenChange(false)}
               >
                 {t("secondaryMarket.actions.release")}
@@ -87,7 +85,7 @@ export function SecondaryMarketWatchlistDetailSheet({ item, onOpenChange, onRemo
                 onRemove(item.id);
                 onOpenChange(false);
               }}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-fuchsia-500/15 font-mono text-[12px] font-semibold text-fuchsia-200 transition hover:bg-fuchsia-500/22"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-white/[0.04] text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.08] hover:text-zinc-200"
             >
               <Trash2 className="size-4" aria-hidden />
               {t("secondaryMarket.watchlist.removeFromList")}
@@ -100,8 +98,8 @@ export function SecondaryMarketWatchlistDetailSheet({ item, onOpenChange, onRemo
         <div className="space-y-4 pb-2">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Star className="size-4 fill-[#B7F500]/25 text-[#B7F500]" aria-hidden />
-              <span className="font-mono text-[11px] text-zinc-500">{t("secondaryMarket.watchlist.inWatchlist")}</span>
+              <Star className="size-4 fill-white text-white" aria-hidden />
+              <span className="text-[11px] text-zinc-500">{t("secondaryMarket.watchlist.inWatchlist")}</span>
             </div>
             {item.spark.length >= 2 ? (
               <ExchangeNeonSparkline
@@ -114,7 +112,7 @@ export function SecondaryMarketWatchlistDetailSheet({ item, onOpenChange, onRemo
             ) : null}
           </div>
 
-          <dl className="space-y-0 font-mono text-[12px]">
+          <dl className="space-y-0 text-[12px]">
             {[
               [t("secondaryMarket.trade.pricePerUnitUnt"), `${formatUsdt(item.pricePerUnit)} USDT`],
               [
@@ -126,12 +124,12 @@ export function SecondaryMarketWatchlistDetailSheet({ item, onOpenChange, onRemo
               [t("secondaryMarket.watchlist.deals24h"), String(item.deals24h)],
               [t("secondaryMarket.analytics.liquidity"), liquidityLabel(item.liquidity, t)],
             ].map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-4 border-b border-white/5 py-2.5">
-                <dt className="text-zinc-600">{label}</dt>
+              <div key={label} className="flex justify-between gap-4 border-b border-white/[0.05] py-2.5">
+                <dt className="text-zinc-500">{label}</dt>
                 <dd
                   className={cn(
-                    "text-right tabular-nums text-zinc-200",
-                    label === change24hLabel && (pos ? "text-[#B7F500]" : "text-fuchsia-300"),
+                    "text-right font-mono tabular-nums text-zinc-200",
+                    label === change24hLabel && (pos ? "text-emerald-300/90" : "text-rose-300/90"),
                   )}
                 >
                   {value}
@@ -140,7 +138,7 @@ export function SecondaryMarketWatchlistDetailSheet({ item, onOpenChange, onRemo
             ))}
           </dl>
 
-          <p className="rounded-xl bg-white/3 p-3.5 text-[12px] leading-relaxed text-zinc-500">
+          <p className="rounded-2xl bg-white/[0.04] p-3.5 text-[12px] leading-relaxed text-zinc-500">
             {t("secondaryMarket.watchlist.detailHint")}
           </p>
         </div>

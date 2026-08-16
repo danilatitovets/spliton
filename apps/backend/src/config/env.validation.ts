@@ -92,9 +92,21 @@ export const envValidationSchema = Joi.object({
   }),
   TRON_PROVIDER_URL: Joi.string().optional().allow(''),
   TRON_API_KEY: Joi.string().optional().allow(''),
+  TRON_NETWORK: Joi.string().valid('mainnet', 'nile', 'shasta').default('mainnet'),
   TRON_CONFIRMATIONS: Joi.number().integer().min(1).default(20),
+  TRON_CONFIRMATIONS_REQUIRED: Joi.number().integer().min(1).optional(),
   TRON_POLL_INTERVAL: Joi.number().integer().min(5000).default(15000),
-  TRON_USDT_CONTRACT: Joi.string().optional().allow(''),
+  DEPOSIT_SCAN_INTERVAL_MS: Joi.number().integer().min(5000).optional(),
+  TRON_USDT_CONTRACT: Joi.when('TRON_PROVIDER_MODE', {
+    is: 'tron',
+    then: Joi.string().required(),
+    otherwise: Joi.string().optional().allow(''),
+  }),
+  ALLOW_SHARED_DEPOSIT_ADDRESS: Joi.boolean().default(false),
+  /** Shared TRC20 deposit address — development/test only, never production. */
+  DEPOSIT_SHARED_ADDRESS: Joi.string().optional().allow(''),
+  TREASURY_HOT_WALLET_ADDRESS: Joi.string().optional().allow(''),
+  TREASURY_COLD_WALLET_ADDRESS: Joi.string().optional().allow(''),
   REPORT_WORKER_ENABLED: Joi.when('NODE_ENV', {
     is: 'development',
     then: Joi.boolean().default(false),
@@ -147,4 +159,5 @@ export const envValidationSchema = Joi.object({
   KILL_SWITCH_DISABLE_SECONDARY_TRADING: Joi.boolean().default(false),
   KILL_SWITCH_DISABLE_PRIMARY_PURCHASES: Joi.boolean().default(false),
   KILL_SWITCH_DISABLE_DEPOSIT_CREDIT: Joi.boolean().default(false),
+  KILL_SWITCH_DISABLE_DEPOSITS: Joi.boolean().default(false),
 });

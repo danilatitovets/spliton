@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useAuth } from "@/components/providers/auth-provider";
@@ -19,12 +20,12 @@ import {
 import {
   countActiveTradeHistoryFilters,
   SecondaryMarketTradeHistoryFiltersSheet,
-  tradeHistoryFiltersSummary,
   type TradeHistoryFiltersState,
 } from "@/components/dashboard/secondary-market/secondary-market-trade-history-filters-sheet";
 import { SecondaryMarketTradeDetailSheet } from "@/components/dashboard/secondary-market/secondary-market-trade-detail-sheet";
 import { ArrowDown, ArrowUp, ChevronDown, Download, ExternalLink, LayoutPanelTop, MoreHorizontal, Search, SlidersHorizontal } from "@/lib/lucide";
 import { SplitonLoader } from "@/components/ui/spliton-loader";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 
 import {
   secondaryMarketBookHref,
@@ -37,6 +38,7 @@ import {
 } from "@/constants/routes";
 import { getSecondaryMarketAnalyticsCatalogIdForReleaseSlug } from "@/mocks/dashboard/secondary-market-listings.mock";
 import { cn } from "@/lib/utils";
+import { smExchange } from "@/components/dashboard/secondary-market/secondary-market-exchange-styles";
 
 import {
   smTableActionIconCircle,
@@ -48,6 +50,9 @@ import {
   smTableActionReleasePill,
   smTableActionSecondaryPill,
 } from "@/components/dashboard/secondary-market/secondary-market-table-action-styles";
+
+const HISTORY_HERO_ICON = "/images/secondary-market/history-hero.png";
+const HISTORY_HEADER_VIDEO = "/videos/position-holding-bg.mp4";
 
 type TradeSide = "buy" | "sell";
 type SettlementStatus = "settled" | "processing" | "failed";
@@ -355,7 +360,7 @@ function CoverThumb({ ticker }: { ticker: string }) {
   const hue = ticker.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
   return (
     <div
-      className="size-9 shrink-0 rounded-xl ring-1 ring-white/10"
+      className="size-9 shrink-0 rounded-full"
       style={{
         background: `linear-gradient(145deg, hsl(${hue}, 42%, 26%) 0%, hsl(${(hue + 48) % 360}, 28%, 10%) 100%)`,
       }}
@@ -396,13 +401,13 @@ function settlementTooltip(s: SettlementStatus, t: (key: string) => string): str
 function settlementPillClass(s: SettlementStatus) {
   switch (s) {
     case "settled":
-      return "bg-[#B7F500]/12 text-[#d4f570] ring-1 ring-[#B7F500]/22";
+      return "bg-[#B7F500]/15 text-[#B7F500]";
     case "processing":
-      return "bg-amber-500/12 text-amber-200/95 ring-1 ring-amber-400/20";
+      return "bg-amber-500/12 text-amber-200/95";
     case "failed":
-      return "bg-fuchsia-500/12 text-fuchsia-200/90 ring-1 ring-fuchsia-400/22";
+      return "bg-fuchsia-500/15 text-fuchsia-300/90";
     default:
-      return "bg-zinc-600/20 text-zinc-400";
+      return "bg-white/[0.04] text-zinc-500";
   }
 }
 
@@ -477,14 +482,14 @@ function SortTh({
   align?: "left" | "right";
 }) {
   return (
-    <th className={cn("px-3 py-2.5 font-normal", align === "right" && "text-right")}>
+    <th className={cn("px-3.5 py-3 font-normal", align === "right" && "text-right")}>
       <button
         type="button"
         onClick={onClick}
         className={cn(
-          "inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider transition-colors",
+          "inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide transition-colors",
           align === "right" && "ml-auto flex-row-reverse",
-          active ? "text-[#d4f570]" : "text-zinc-600 hover:text-zinc-400",
+          active ? "text-white" : "text-zinc-500 hover:text-zinc-300",
         )}
       >
         {label}
@@ -504,16 +509,16 @@ function SortTh({
 
 function TableSkeleton() {
   return (
-    <div className="min-w-0 overflow-hidden rounded-2xl bg-[#111111] ring-1 ring-white/6">
-      <div className="border-b border-white/8 px-3 py-2.5">
-        <div className="h-3 w-40 animate-pulse rounded bg-zinc-800" />
+    <div className="min-w-0 overflow-hidden rounded-2xl bg-white/[0.04]">
+      <div className="border-b border-white/[0.05] px-3.5 py-3">
+        <div className="h-3 w-40 animate-pulse rounded bg-white/[0.06]" />
       </div>
-      <div className="divide-y divide-white/5 p-3 space-y-3">
+      <div className="space-y-3 divide-y divide-white/[0.04] p-3.5">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-3">
-            <div className="h-9 w-24 shrink-0 animate-pulse rounded-lg bg-zinc-800" />
-            <div className="h-9 flex-1 animate-pulse rounded-lg bg-zinc-800/80" />
-            <div className="h-9 w-20 shrink-0 animate-pulse rounded-lg bg-zinc-800/60" />
+          <div key={i} className="flex gap-3 pt-3 first:pt-0">
+            <div className="h-9 w-24 shrink-0 animate-pulse rounded-full bg-white/[0.06]" />
+            <div className="h-9 flex-1 animate-pulse rounded-full bg-white/[0.05]" />
+            <div className="h-9 w-20 shrink-0 animate-pulse rounded-full bg-white/[0.04]" />
           </div>
         ))}
       </div>
@@ -570,25 +575,6 @@ export function SecondaryMarketTradeHistoryTab() {
     setToastMessage(msg);
     window.setTimeout(() => setToastMessage(null), 4000);
   }, []);
-
-  const summaryRows = React.useMemo(
-    () => trades.filter((t) => inPeriod(t, filters.period)),
-    [trades, filters.period],
-  );
-
-  const summary = React.useMemo(() => {
-    let turnover = 0;
-    let fees = 0;
-    let buys = 0;
-    let sells = 0;
-    for (const t of summaryRows) {
-      turnover += t.grossAmount;
-      fees += t.feeAmount;
-      if (t.side === "buy") buys += 1;
-      else sells += 1;
-    }
-    return { count: summaryRows.length, turnover, fees, buys, sells };
-  }, [summaryRows]);
 
   const filteredSorted = React.useMemo(() => {
     const q = filters.query.trim().toLowerCase();
@@ -668,51 +654,94 @@ export function SecondaryMarketTradeHistoryTab() {
 
   return (
     <div className="relative space-y-6">
-      <p className="max-w-[62ch] font-mono text-[11px] leading-relaxed text-zinc-600">
-        {t("secondaryMarket.trade.intro")}
-      </p>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.trade.kpiTrades")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white">{summary.count}</p>
-          <p className="mt-1 font-mono text-[10px] text-zinc-600">{t("secondaryMarket.trade.kpiForPeriod")}</p>
+      <header className="relative isolate overflow-hidden rounded-2xl">
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <video
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-[12px] motion-reduce:hidden"
+            src={HISTORY_HEADER_VIDEO}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/72 to-black" />
         </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.trade.kpiTurnover")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white">{formatUsdt(summary.turnover)}</p>
-          <p className="mt-1 font-mono text-[10px] text-zinc-600">{t("secondaryMarket.trade.kpiGrossUsdt")}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.trade.fee")}</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-zinc-300">{formatUsdt(summary.fees)}</p>
-          <p className="mt-1 font-mono text-[10px] text-zinc-600">{t("secondaryMarket.trade.kpiFeesTotal")}</p>
-        </div>
-        <div className="rounded-2xl bg-[#111111] p-4 ring-1 ring-white/6">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{t("secondaryMarket.trade.kpiBuySell")}</p>
-          <div className="mt-1 flex items-baseline gap-4 font-mono text-2xl font-semibold tabular-nums">
-            <span className="text-[#B7F500]">{summary.buys}</span>
-            <span className="text-fuchsia-300/95">{summary.sells}</span>
+        <div className="relative z-10 flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-6">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="relative size-[4.5rem] shrink-0 sm:size-20">
+              <Image
+                src={HISTORY_HERO_ICON}
+                alt=""
+                fill
+                sizes="80px"
+                className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                unoptimized
+                aria-hidden
+                priority
+              />
+            </div>
+            <div className="min-w-0 pt-0.5">
+              <h1 className="text-xl font-semibold tracking-tight text-white md:text-2xl">
+                {t("secondaryMarket.tabs.history")}
+              </h1>
+              <p className="mt-1.5 max-w-[62ch] text-[13px] leading-relaxed text-white/55">
+                {t("secondaryMarket.trade.intro")}
+              </p>
+            </div>
           </div>
-          <p className="mt-1 font-mono text-[10px] text-zinc-600">{t("secondaryMarket.trade.kpiTradeCount")}</p>
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={loading || filteredSorted.length === 0}
+            className="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-full bg-white/[0.08] px-4 text-[13px] font-medium text-zinc-200 backdrop-blur-sm transition hover:bg-white/[0.12] hover:text-white disabled:pointer-events-none disabled:opacity-40"
+          >
+            <Download className="size-4 shrink-0 opacity-70" aria-hidden />
+            CSV
+          </button>
         </div>
-      </div>
+      </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("secondaryMarket.aria.periodSummary")}>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t("secondaryMarket.aria.periodSummary")}>
           {PERIOD_QUICK.map((opt) => (
             <button
               key={opt.id}
               type="button"
               onClick={() => patchFilters({ period: opt.id })}
               className={cn(
-                "rounded-full px-2.5 py-1 font-mono text-[11px] font-medium transition-colors",
-                filters.period === opt.id
-                  ? "bg-[#B7F500] text-black"
-                  : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300",
+                smExchange.chipBase,
+                filters.period === opt.id ? smExchange.chipActive : smExchange.chipIdle,
               )}
             >
               {t(opt.key)}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5">
+          {(
+            [
+              { id: "all" as const, label: t("secondaryMarket.filters.all") },
+              { id: "buy" as const, label: t("secondaryMarket.side.buy") },
+              { id: "sell" as const, label: t("secondaryMarket.side.sell") },
+            ] as const
+          ).map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => patchFilters({ sideFilter: chip.id })}
+              className={cn(
+                smExchange.chipBase,
+                filters.sideFilter === chip.id
+                  ? chip.id === "buy"
+                    ? "bg-[#B7F500] text-black"
+                    : chip.id === "sell"
+                      ? "bg-fuchsia-400 text-black"
+                      : smExchange.chipActive
+                  : smExchange.chipIdle,
+              )}
+            >
+              {chip.label}
             </button>
           ))}
         </div>
@@ -721,7 +750,7 @@ export function SecondaryMarketTradeHistoryTab() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600"
+            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-600"
             aria-hidden
           />
           <input
@@ -729,40 +758,24 @@ export function SecondaryMarketTradeHistoryTab() {
             value={filters.query}
             onChange={(e) => patchFilters({ query: e.target.value })}
             placeholder={t("secondaryMarket.filters.searchTrades")}
-            className="h-10 w-full rounded-xl bg-[#111111] py-2 pl-10 pr-3 font-mono text-sm text-white placeholder:text-zinc-600 outline-none ring-1 ring-white/10 focus:ring-[#B7F500]/35"
+            className={smExchange.inputPill}
             aria-label={t("secondaryMarket.aria.searchTrades")}
           />
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsFiltersOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-[#111111] px-4 font-mono text-[12px] font-medium text-zinc-200 ring-1 ring-white/10 transition hover:ring-[#B7F500]/35"
-          >
-            <SlidersHorizontal className="size-4 text-zinc-500" aria-hidden />
-            {t("secondaryMarket.trade.filters")}
-            {activeFilterCount > 0 ? (
-              <span className="flex size-5 items-center justify-center rounded-full bg-[#B7F500] text-[10px] font-bold text-black">
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </button>
-          <button
-            type="button"
-            onClick={exportCsv}
-            disabled={loading || filteredSorted.length === 0}
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 font-mono text-[12px] font-medium text-zinc-200 transition hover:border-[#B7F500]/35 hover:text-white disabled:pointer-events-none disabled:opacity-40"
-          >
-            <Download className="size-4 shrink-0 text-zinc-500" aria-hidden />
-            CSV
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsFiltersOpen(true)}
+          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
+        >
+          <SlidersHorizontal className="size-4 text-zinc-500" aria-hidden />
+          {t("secondaryMarket.trade.filters")}
+          {activeFilterCount > 0 ? (
+            <span className="flex size-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-black">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </button>
       </div>
-
-      <p className="font-mono text-[11px] text-zinc-600">
-        {tradeHistoryFiltersSummary(filters, t, locale)} · {filteredSorted.length}{" "}
-        {filteredSorted.length === 1 ? t("secondaryMarket.trade.tradeCountOne") : t("secondaryMarket.trade.tradeCountMany")}
-      </p>
 
       <SecondaryMarketTradeHistoryFiltersSheet
         open={isFiltersOpen}
@@ -775,7 +788,7 @@ export function SecondaryMarketTradeHistoryTab() {
       />
 
       {loading ? (
-        <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
+        <div className="flex items-center gap-2 text-[12px] text-zinc-500">
           <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
           {t("secondaryMarket.trade.loadingJournal")}
         </div>
@@ -784,30 +797,41 @@ export function SecondaryMarketTradeHistoryTab() {
       {loading ? (
         <TableSkeleton />
       ) : trades.length === 0 ? (
-        <div className="rounded-2xl bg-[#111111] px-6 py-16 text-center ring-1 ring-white/6">
-          <h2 className="text-lg font-semibold tracking-tight text-white">{t("secondaryMarket.empty.noTrades")}</h2>
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-16 text-center">
+          <div className="relative mx-auto size-28">
+            <Image
+              src={HISTORY_HERO_ICON}
+              alt=""
+              fill
+              sizes="112px"
+              className="object-contain opacity-90"
+              unoptimized
+              aria-hidden
+            />
+          </div>
+          <h2 className="mt-5 text-lg font-semibold tracking-tight text-white">{t("secondaryMarket.empty.noTrades")}</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">
             {t("secondaryMarket.empty.noTradesDesc")}
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
+          <div className="mt-8 flex flex-col items-center justify-center gap-2 sm:flex-row">
+            <SplitonCtaPill
               href={marketHref}
-              scroll={false}
-              className="inline-flex h-10 min-w-[200px] items-center justify-center rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black hover:opacity-90"
+              tone="onDark"
+              className="h-11 min-w-[200px] justify-between gap-3 pl-5 pr-1.5 text-[13px] font-semibold"
             >
               {t("secondaryMarket.trade.openMarket")}
-            </Link>
+            </SplitonCtaPill>
             <Link
               href={catalogOverviewHref}
               scroll={false}
-              className="inline-flex h-10 min-w-[200px] items-center justify-center rounded-full border border-white/15 bg-transparent px-5 font-mono text-[12px] font-medium text-zinc-200 hover:border-white/25 hover:text-white"
+              className="inline-flex h-11 min-w-[200px] items-center justify-center rounded-full bg-white/[0.06] px-5 text-[13px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
             >
               {t("secondaryMarket.trade.toMarketAnalytics")}
             </Link>
           </div>
         </div>
       ) : filteredSorted.length === 0 ? (
-        <div className="rounded-2xl bg-[#111111] px-6 py-16 text-center ring-1 ring-white/6">
+        <div className="rounded-2xl bg-white/[0.04] px-6 py-16 text-center">
           <h2 className="text-lg font-semibold tracking-tight text-white">{t("secondaryMarket.empty.noResults")}</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">
             {t("secondaryMarket.trade.emptyFilterDesc")}
@@ -815,14 +839,14 @@ export function SecondaryMarketTradeHistoryTab() {
           <button
             type="button"
             onClick={resetFilters}
-            className="mt-4 font-mono text-[12px] text-zinc-400 underline-offset-2 hover:text-white hover:underline"
+            className="mt-4 text-[12px] text-zinc-400 underline-offset-2 hover:text-white hover:underline"
           >
             {t("secondaryMarket.filters.resetFilters")}
           </button>
           <button
             type="button"
             onClick={() => setIsFiltersOpen(true)}
-            className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-[#111111] px-4 font-mono text-[12px] font-medium text-zinc-300 ring-1 ring-white/10"
+            className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-white/[0.06] px-4 text-[12px] font-medium text-zinc-300 transition hover:bg-white/[0.1]"
           >
             <SlidersHorizontal className="size-4" aria-hidden />
             {t("secondaryMarket.filters.changeFilters")}
@@ -831,15 +855,23 @@ export function SecondaryMarketTradeHistoryTab() {
       ) : (
         <>
           <div className="hidden md:block">
-            <div className="max-h-[min(70vh,720px)] overflow-auto rounded-2xl bg-[#111111] ring-1 ring-white/6">
+            <div className="max-h-[min(70vh,720px)] overflow-auto rounded-2xl bg-[#111111] ring-1 ring-white/[0.08]">
               <table className="w-full min-w-[1040px] border-collapse text-left">
-                <thead className="sticky top-0 z-20 bg-[#111111] shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.06)]">
-                  <tr className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+                <thead className="sticky top-0 z-20 bg-[#111111]/90 backdrop-blur-md">
+                  <tr className="text-zinc-500">
                     <SortTh label={t("secondaryMarket.sort.time")} active={filters.sortKey === "time"} dir={filters.sortDir} onClick={() => toggleSort("time")} />
-                    <th className="px-3 py-2.5 font-normal">{t("secondaryMarket.trade.tradeId")}</th>
-                    <th className="min-w-[200px] px-3 py-2.5 font-normal">{t("secondaryMarket.trade.columnListingRelease")}</th>
-                    <th className="px-3 py-2.5 font-normal">{t("secondaryMarket.orders.columnSide")}</th>
-                    <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.orders.columnUnits")}</th>
+                    <th className="px-3.5 py-3 font-normal">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.trade.tradeId")}</span>
+                    </th>
+                    <th className="min-w-[200px] px-3.5 py-3 font-normal">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.trade.columnListingRelease")}</span>
+                    </th>
+                    <th className="px-3.5 py-3 font-normal">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.orders.columnSide")}</span>
+                    </th>
+                    <th className="px-3.5 py-3 text-right font-normal">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.orders.columnUnits")}</span>
+                    </th>
                     <SortTh
                       label={t("secondaryMarket.sort.price")}
                       align="right"
@@ -854,18 +886,24 @@ export function SecondaryMarketTradeHistoryTab() {
                       dir={filters.sortDir}
                       onClick={() => toggleSort("gross")}
                     />
-                    <th className="hidden px-3 py-2.5 text-right font-normal lg:table-cell">{t("secondaryMarket.trade.fee")}</th>
-                    <th className="px-3 py-2.5 text-right font-normal">
-                      <span className="block">{t("secondaryMarket.trade.total")}</span>
-                      <span className="mt-0.5 block text-[9px] font-normal normal-case tracking-normal text-zinc-600">
+                    <th className="hidden px-3.5 py-3 text-right font-normal lg:table-cell">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.trade.fee")}</span>
+                    </th>
+                    <th className="px-3.5 py-3 text-right font-normal">
+                      <span className="block text-[11px] uppercase tracking-wide">{t("secondaryMarket.trade.total")}</span>
+                      <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-zinc-600">
                         {t("secondaryMarket.trade.totalSubheader")}
                       </span>
                     </th>
-                    <th className="hidden px-3 py-2.5 font-normal xl:table-cell">{t("secondaryMarket.trade.columnSettlement")}</th>
-                    <th className="px-3 py-2.5 text-right font-normal">{t("secondaryMarket.actions.actions")}</th>
+                    <th className="hidden px-3.5 py-3 font-normal xl:table-cell">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.trade.columnSettlement")}</span>
+                    </th>
+                    <th className="px-3.5 py-3 text-right font-normal">
+                      <span className="text-[11px] uppercase tracking-wide">{t("secondaryMarket.actions.actions")}</span>
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-[12px] text-zinc-300">
+                <tbody className="text-[13px] text-zinc-300">
                   {filteredSorted.map((row) => {
                     const stack = stackHrefForTicker(row.ticker);
                     return (
@@ -879,56 +917,58 @@ export function SecondaryMarketTradeHistoryTab() {
                             setSelectedTrade(row);
                           }
                         }}
-                        className="cursor-pointer border-b border-white/5 transition-colors hover:bg-white/4 focus-visible:bg-white/6 focus-visible:outline-none"
+                        className="cursor-pointer border-t border-white/[0.04] transition-colors hover:bg-white/[0.02] focus-visible:bg-white/[0.04] focus-visible:outline-none"
                       >
-                        <td className="whitespace-nowrap px-3 py-2.5 align-middle text-[11px] text-zinc-500">
+                        <td className="whitespace-nowrap px-3.5 py-3 align-middle font-mono text-[11px] text-zinc-500">
                           {formatDateTime(row.timestamp)}
                         </td>
-                        <td className="px-3 py-2.5 align-middle text-[11px] text-zinc-600">{row.id}</td>
-                        <td className="px-3 py-2.5 align-middle">
+                        <td className="px-3.5 py-3 align-middle font-mono text-[11px] text-zinc-600">{row.id}</td>
+                        <td className="px-3.5 py-3 align-middle">
                           <div className="flex items-center gap-2.5">
                             <CoverThumb ticker={row.ticker} />
                             <div className="min-w-0">
-                              <p className="truncate text-[13px] font-medium text-white">{row.title}</p>
-                              <p className="truncate text-[11px] text-zinc-600">
+                              <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-white">{row.title}</p>
+                              <p className="truncate text-[11px] text-zinc-500">
                                 {row.artist} · {row.ticker}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 align-middle">
+                        <td className="px-3.5 py-3 align-middle">
                           <span
                             className={cn(
-                              "text-xs font-semibold",
-                              row.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300/95",
+                              "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                              row.side === "buy"
+                                ? "bg-[#B7F500]/15 text-[#B7F500]"
+                                : "bg-fuchsia-400/15 text-fuchsia-400",
                             )}
                           >
                             {row.side === "buy" ? t("secondaryMarket.side.buy") : t("secondaryMarket.side.sell")}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 text-right align-middle tabular-nums">{row.units}</td>
-                        <td className="px-3 py-2.5 text-right align-middle tabular-nums text-white">
+                        <td className="px-3.5 py-3 text-right align-middle font-mono tabular-nums">{row.units}</td>
+                        <td className="px-3.5 py-3 text-right align-middle font-mono tabular-nums text-white">
                           {formatUsdt(row.price)}
                         </td>
-                        <td className="px-3 py-2.5 text-right align-middle tabular-nums">{formatUsdt(row.grossAmount)}</td>
-                        <td className="hidden px-3 py-2.5 text-right align-middle tabular-nums text-zinc-500 lg:table-cell">
+                        <td className="px-3.5 py-3 text-right align-middle font-mono tabular-nums">{formatUsdt(row.grossAmount)}</td>
+                        <td className="hidden px-3.5 py-3 text-right align-middle font-mono tabular-nums text-zinc-500 lg:table-cell">
                           {formatUsdt(row.feeAmount)}
                         </td>
-                        <td className="px-3 py-2.5 text-right align-middle tabular-nums text-zinc-100">
+                        <td className="px-3.5 py-3 text-right align-middle font-mono tabular-nums text-zinc-100">
                           {formatUsdt(row.netAmount)}
                         </td>
-                        <td className="hidden px-3 py-2.5 align-middle xl:table-cell">
+                        <td className="hidden px-3.5 py-3 align-middle xl:table-cell">
                           <span
                             title={settlementTooltip(row.settlementStatus, t)}
                             className={cn(
-                              "inline-flex cursor-help rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
+                              "inline-flex cursor-help rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                               settlementPillClass(row.settlementStatus),
                             )}
                           >
                             {settlementLabel(row.settlementStatus, locale)}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 text-right align-middle" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-3.5 py-3 text-right align-middle" onClick={(e) => e.stopPropagation()}>
                           <div
                             className="relative flex flex-nowrap items-center justify-end gap-2.5"
                             ref={openMenuId === row.id ? menuRef : undefined}
@@ -1009,7 +1049,7 @@ export function SecondaryMarketTradeHistoryTab() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 md:hidden">
+          <div className="flex flex-col gap-2 md:hidden">
             {filteredSorted.map((row) => {
               const stack = stackHrefForTicker(row.ticker);
               return (
@@ -1017,14 +1057,14 @@ export function SecondaryMarketTradeHistoryTab() {
                   key={row.id}
                   type="button"
                   onClick={() => setSelectedTrade(row)}
-                  className="w-full rounded-2xl border border-white/8 bg-[#111111] p-4 text-left ring-1 ring-white/5 transition hover:border-white/12 hover:bg-white/3"
+                  className="w-full rounded-2xl bg-[#111111] p-4 text-left ring-1 ring-white/[0.08] transition hover:bg-white/[0.04]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-1 gap-3">
                       <CoverThumb ticker={row.ticker} />
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-white">{row.title}</p>
-                        <p className="truncate font-mono text-[11px] text-zinc-600">
+                        <p className="truncate font-semibold tracking-[-0.01em] text-white">{row.title}</p>
+                        <p className="truncate text-[11px] text-zinc-500">
                           {row.artist} · {row.ticker}
                         </p>
                         <p className="mt-2 font-mono text-[10px] text-zinc-600">{formatDateTime(row.timestamp)}</p>
@@ -1032,36 +1072,38 @@ export function SecondaryMarketTradeHistoryTab() {
                     </div>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase",
-                        row.side === "buy" ? "bg-[#B7F500]/14 text-[#d4f570]" : "bg-fuchsia-500/14 text-fuchsia-200/90",
+                        "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase",
+                        row.side === "buy"
+                          ? "bg-[#B7F500]/15 text-[#B7F500]"
+                          : "bg-fuchsia-400/15 text-fuchsia-400",
                       )}
                     >
                       {row.side === "buy" ? t("secondaryMarket.side.buy") : t("secondaryMarket.side.sell")}
                     </span>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 font-mono text-[11px]">
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-[11px]">
                     <div>
                       <p className="text-zinc-600">Gross</p>
-                      <p className="mt-0.5 tabular-nums text-zinc-200">{formatUsdt(row.grossAmount)}</p>
+                      <p className="mt-0.5 font-mono tabular-nums text-zinc-200">{formatUsdt(row.grossAmount)}</p>
                     </div>
                     <div>
                       <p className="text-zinc-600">{t("secondaryMarket.trade.total")}</p>
-                      <p className="mt-0.5 tabular-nums text-white">{formatUsdt(row.netAmount)}</p>
+                      <p className="mt-0.5 font-mono tabular-nums text-white">{formatUsdt(row.netAmount)}</p>
                     </div>
                     <div>
                       <p className="text-zinc-600">{t("secondaryMarket.sort.price")}</p>
-                      <p className="mt-0.5 tabular-nums text-zinc-300">{formatUsdt(row.price)}</p>
+                      <p className="mt-0.5 font-mono tabular-nums text-zinc-300">{formatUsdt(row.price)}</p>
                     </div>
                     <div>
                       <p className="text-zinc-600">Units</p>
-                      <p className="mt-0.5 tabular-nums text-zinc-300">{row.units}</p>
+                      <p className="mt-0.5 font-mono tabular-nums text-zinc-300">{row.units}</p>
                     </div>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span
                       title={settlementTooltip(row.settlementStatus, t)}
                       className={cn(
-                        "inline-flex cursor-help rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase",
+                        "inline-flex cursor-help rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
                         settlementPillClass(row.settlementStatus),
                       )}
                     >
@@ -1100,7 +1142,7 @@ export function SecondaryMarketTradeHistoryTab() {
           aria-live="polite"
           className="pointer-events-none fixed bottom-6 left-1/2 z-130 max-w-[min(100vw-2rem,28rem)] -translate-x-1/2 px-4"
         >
-          <div className="rounded-xl bg-zinc-950/95 px-4 py-3 font-mono text-[12px] text-zinc-100 shadow-lg ring-1 ring-white/10">
+          <div className="rounded-2xl bg-zinc-950/95 px-4 py-3 text-[12px] text-zinc-100 shadow-lg">
             {toastMessage}
           </div>
         </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import { catalogBuyUnitsPath } from "@/constants/routes";
+import { InlineToastBanner, useInlineToast } from "@/hooks/use-inline-toast";
 import { isCatalogPrimaryPurchasable } from "@/lib/catalog/catalog-purchase.util";
 import { catalogReleaseDetailHref } from "@/lib/catalog/catalog-release-nav";
 import { catalogItems } from "@/lib/catalog-mock";
@@ -15,13 +16,23 @@ import { useCatalogActiveFilters } from "./hooks/use-catalog-active-filters";
 import { useCatalogScreenState } from "./hooks/use-catalog-screen-state";
 import { CatalogFiltersAside } from "./sections/catalog-filters-aside";
 import { CatalogMainArea } from "./sections/catalog-main-area";
-import { CatalogSearchModal } from "./ui/catalog-search-modal";
 
 export function CatalogScreen() {
   const router = useRouter();
   const state = useCatalogScreenState();
   const { t, locale } = useI18n();
   const [searchOpen, setSearchOpen] = useState(false);
+  const { message: favoriteToast, showToast: showFavoriteToast } = useInlineToast(1800);
+  const toggleFavorite = state.toggleFavorite;
+
+  const handleToggleFavorite = useCallback(
+    async (id: string) => {
+      const result = await toggleFavorite(id);
+      if (result === "added") showFavoriteToast(t("catalog.favorite.toastAdded"));
+      if (result === "removed") showFavoriteToast(t("catalog.favorite.toastRemoved"));
+    },
+    [showFavoriteToast, t, toggleFavorite],
+  );
 
   const activeFilters = useCatalogActiveFilters({
     query: state.query,
@@ -34,6 +45,7 @@ export function CatalogScreen() {
     minProgress: state.minProgress,
     minYield: state.minYield,
     minLiquidity: state.minLiquidity,
+    favoritesOnly: state.favoritesOnly,
     onQuery: state.setQuery,
     onKind: state.setKind,
     onPhase: state.setPhase,
@@ -44,6 +56,7 @@ export function CatalogScreen() {
     onMinProgress: state.setMinProgress,
     onMinYield: state.setMinYield,
     onMinLiquidity: state.setMinLiquidity,
+    onFavoritesOnly: state.setFavoritesOnly,
     locale,
     t,
   });
@@ -70,7 +83,7 @@ export function CatalogScreen() {
         return;
       }
 
-      router.push(catalogBuyUnitsPath(item.slug ?? item.releaseId));
+      router.push(catalogBuyUnitsPath(item.releaseId || item.slug || ""));
       return;
     }
     if (item.type === "genre") {
@@ -82,14 +95,6 @@ export function CatalogScreen() {
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-black lg:flex-row lg:items-stretch">
-      <CatalogSearchModal
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-        query={state.query}
-        onQuery={state.setQuery}
-        onSelectSuggestion={handleSuggestion}
-        liveMode={state.liveMode}
-      />
       <CatalogFiltersAside
         query={state.query}
         onQuery={state.setQuery}
@@ -114,6 +119,8 @@ export function CatalogScreen() {
         onMinYield={state.setMinYield}
         minLiquidity={state.minLiquidity}
         onMinLiquidity={state.setMinLiquidity}
+        favoritesOnly={state.favoritesOnly}
+        onFavoritesOnly={state.setFavoritesOnly}
         priceLabel={state.priceLabel}
         filteredCount={state.matchingCount}
         totalCount={state.catalogTotal}
@@ -148,6 +155,18 @@ export function CatalogScreen() {
         genre={state.genre}
         onGenre={state.setGenre}
         onFocusSearch={() => setSearchOpen(true)}
+        searchOpen={searchOpen}
+        onSearchOpenChange={setSearchOpen}
+        query={state.query}
+        onQuery={state.setQuery}
+        onSelectSuggestion={handleSuggestion}
+        favoritesOnly={state.favoritesOnly}
+        isFavorite={state.isFavorite}
+        onToggleFavorite={handleToggleFavorite}
+      />
+      <InlineToastBanner
+        message={favoriteToast}
+        className="pointer-events-none fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-950/95 px-3 py-1.5 text-[12px] font-medium text-zinc-100 ring-1 ring-white/10 md:bottom-6"
       />
     </div>
   );

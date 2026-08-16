@@ -2,6 +2,8 @@ import type { MarketListingSortKey, MarketListingStatusFilter } from "@/lib/seco
 
 export type MarketTabSegment = "all" | "electronic" | "pop" | "hiphop" | "rock" | "liquid";
 
+export const MARKET_TAB_PAGE_SIZE = 20;
+
 export type MarketTabFiltersState = {
   search: string;
   segment: MarketTabSegment;
@@ -38,6 +40,8 @@ function parseOptionalNumber(raw: string): number | undefined {
 export function marketTabFiltersToApiQuery(
   filters: MarketTabFiltersState,
   debouncedSearch: string,
+  page = 1,
+  pageSize = MARKET_TAB_PAGE_SIZE,
 ) {
   const genre =
     filters.segment === "liquid" || filters.segment === "all"
@@ -46,8 +50,8 @@ export function marketTabFiltersToApiQuery(
   const liquidity = filters.segment === "liquid" ? ("high" as const) : undefined;
 
   return {
-    page: 1,
-    limit: 100,
+    page: Math.max(1, page),
+    limit: pageSize,
     search: debouncedSearch.trim() || undefined,
     status: filters.status,
     genre,

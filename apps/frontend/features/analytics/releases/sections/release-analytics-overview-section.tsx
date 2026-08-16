@@ -1,22 +1,16 @@
 "use client";
 
-import { AnalyticsStatCard } from "@/components/shared/analytics/analytics-stat-card";
 import { PeriodButton } from "@/components/shared/exchange/period-button";
 import { CatalogStatsSkeleton } from "@/features/catalog/ui/catalog-skeleton";
 import { releaseAnalyticsPeriodLabel } from "@/lib/analytics/period-label";
+import { cn } from "@/lib/utils";
 import type { ReleaseAnalyticsOverviewApi } from "@/services/release-analytics.service";
 import type { ReleaseAnalyticsPeriod } from "@/types/analytics/releases";
 
 import { YieldDynamicsChart } from "../ui/yield-dynamics-chart";
+import { AnalyticsHeaderTip } from "../ui/analytics-header-tip";
 
-const STAT_CARD_BACKGROUNDS = {
-  metric: "/images/myactiv/metrik.png",
-  active: "/images/catalogbuy/2.png",
-  payouts: "/images/gotov/1.png",
-  volume: "/images/assetsunt/backgraund.png",
-} as const;
-
-const NO_DATA = "Недостаточно данных";
+const NO_DATA_LABELS = new Set(["Недостаточно данных", "Нет данных", "No data", "Sin datos", "Sem dados"]);
 
 export type ReleaseAnalyticsOverviewStats = {
   totalReleases: string;
@@ -37,6 +31,8 @@ export type ReleaseAnalyticsOverviewStats = {
   payoutLag: string;
 };
 
+type ViewTab = "overview" | "rankings" | "trading";
+
 export function ReleaseAnalyticsOverviewSection({
   period,
   onPeriodChange,
@@ -45,6 +41,9 @@ export function ReleaseAnalyticsOverviewSection({
   loading,
   overviewError,
   mockMode,
+  onRetry,
+  viewTab,
+  onViewTab,
 }: {
   period: ReleaseAnalyticsPeriod;
   onPeriodChange: (p: ReleaseAnalyticsPeriod) => void;
@@ -53,60 +52,95 @@ export function ReleaseAnalyticsOverviewSection({
   loading?: boolean;
   overviewError?: boolean;
   mockMode?: boolean;
+  onRetry?: () => void;
+  viewTab: ViewTab;
+  onViewTab: (tab: ViewTab) => void;
 }) {
-  const kpiCards: {
-    label: string;
-    value: string;
-    bg: (typeof STAT_CARD_BACKGROUNDS)[keyof typeof STAT_CARD_BACKGROUNDS];
-    href?: string;
-  }[] = [
-    { label: "Всего релизов", value: stats.totalReleases, bg: STAT_CARD_BACKGROUNDS.metric },
-    { label: "Активные релизы", value: stats.active, bg: STAT_CARD_BACKGROUNDS.active },
-    { label: "С выплатами", value: stats.payoutsReleases, bg: STAT_CARD_BACKGROUNDS.payouts },
-    { label: "Первичный объём", value: stats.primaryVolume, bg: STAT_CARD_BACKGROUNDS.volume },
-    { label: "Вторичный объём", value: stats.secondaryVolume, bg: STAT_CARD_BACKGROUNDS.volume },
-    { label: "Начисления/выплаты", value: stats.payouts, bg: STAT_CARD_BACKGROUNDS.payouts },
-    { label: "Средняя доходность", value: stats.avgYield, bg: STAT_CARD_BACKGROUNDS.metric },
-    { label: "Средний прогресс", value: stats.avgProgress, bg: STAT_CARD_BACKGROUNDS.active },
-    { label: "Средняя ликвидность", value: stats.avgLiquidity, bg: STAT_CARD_BACKGROUNDS.metric },
-    { label: "Холдеры", value: stats.holders, bg: STAT_CARD_BACKGROUNDS.active },
-    { label: "Листинги", value: stats.listings, bg: STAT_CARD_BACKGROUNDS.payouts },
+  const kpiCards: { label: string; value: string; tip: string; href?: string }[] = [
     {
-      label: "Лидер по объёму",
-      value: stats.topVolume,
-      href: stats.topVolumeHref,
-      bg: STAT_CARD_BACKGROUNDS.volume,
+      label: "Всего релизов",
+      value: stats.totalReleases,
+      tip: "Число публичных релизов за выбранный период.",
     },
     {
-      label: "Лидер по выплатам",
-      value: stats.topPayouts,
-      href: stats.topPayoutsHref,
-      bg: STAT_CARD_BACKGROUNDS.payouts,
+      label: "Активные",
+      value: stats.active,
+      tip: "Релизы с открытым первичным или вторичным рынком.",
+    },
+    {
+      label: "Ср. доходность",
+      value: stats.avgYield,
+      tip: "Средняя ожидаемая / фактическая доходность по выборке.",
+    },
+    {
+      label: "Первичный объём",
+      value: stats.primaryVolume,
+      tip: "Сумма покупок на первичном рынке (USDT).",
+    },
+    {
+      label: "Вторичный объём",
+      value: stats.secondaryVolume,
+      tip: "Оборот вторичных сделок за период (USDT).",
+    },
+    {
+      label: "Выплаты",
+      value: stats.payouts,
+      tip: "Начисленные и выплаченные суммы держателям.",
+    },
+    {
+      label: "Холдеры",
+      value: stats.holders,
+      tip: "Уникальные держатели UNT по активным релизам.",
+    },
+    {
+      label: "Листинги",
+      value: stats.listings,
+      tip: "Активные заявки на вторичном рынке.",
     },
   ];
 
-  const visibleKpiCards = kpiCards.filter((card) => card.value !== NO_DATA);
+  const visibleKpiCards = kpiCards.filter((card) => !NO_DATA_LABELS.has(card.value));
+
+  const tabs: { id: ViewTab; label: string }[] = [
+    { id: "overview", label: "Обзор" },
+    { id: "rankings", label: "Рейтинги" },
+    { id: "trading", label: "Торговые данные" },
+  ];
 
   return (
     <section>
-      <div className="sticky top-0 z-[55] shrink-0 bg-black/90 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-4 py-4 md:flex-row md:items-end md:justify-between md:px-6 lg:px-8">
-          <div className="min-w-0">
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-white md:text-2xl">
-              Аналитика релизов
-            </h1>
-
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-              Период
+      <div className="sticky top-0 z-[55] shrink-0 border-b border-white/[0.06] bg-black/90 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-4 py-3 md:px-6 lg:px-8">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold tracking-tight text-white md:text-2xl">Аналитика релизов</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => onViewTab(tab.id)}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-[12px] font-semibold transition",
+                      viewTab === tab.id
+                        ? "bg-zinc-200 text-black"
+                        : "bg-transparent text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {(["7d", "30d", "90d", "all"] as const).map((p) => (
-                <PeriodButton key={p} tone="neutral" active={period === p} onClick={() => onPeriodChange(p)}>
-                  {releaseAnalyticsPeriodLabel(p)}
-                </PeriodButton>
-              ))}
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="text-[12px] font-medium text-zinc-500">Период</div>
+              <div className="flex flex-wrap gap-1.5">
+                {(["7d", "30d", "90d", "all"] as const).map((p) => (
+                  <PeriodButton key={p} tone="neutral" active={period === p} onClick={() => onPeriodChange(p)}>
+                    {releaseAnalyticsPeriodLabel(p)}
+                  </PeriodButton>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -114,43 +148,52 @@ export function ReleaseAnalyticsOverviewSection({
 
       <div className="mx-auto w-full max-w-[1400px] px-4 py-4 md:px-6 lg:px-8">
         {overviewError ? (
-          <p className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
+          <p className="mb-4 rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-zinc-400">
             Метрики временно недоступны
+            {onRetry ? (
+              <button type="button" className="ml-3 text-zinc-200 underline" onClick={onRetry}>
+                Обновить
+              </button>
+            ) : null}
           </p>
         ) : null}
 
         {loading ? (
           <CatalogStatsSkeleton />
         ) : visibleKpiCards.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+          <div className="flex gap-2.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {visibleKpiCards.map((card) => (
-              <AnalyticsStatCard
-                key={card.label}
-                label={card.label}
-                value={card.value}
-                href={card.href}
-                backgroundSrc={card.bg}
-                priority={card.label === "Средняя доходность"}
-              />
+              <div key={card.label} className="min-w-[132px] shrink-0 rounded-xl bg-[#141414] px-3.5 py-3">
+                <div className="text-[11px] text-zinc-500">
+                  <AnalyticsHeaderTip label={card.label} tip={card.tip} />
+                </div>
+                {card.href ? (
+                  <a
+                    href={card.href}
+                    className="mt-2 block truncate font-mono text-[20px] font-semibold tabular-nums tracking-tight text-white hover:underline"
+                  >
+                    {card.value}
+                  </a>
+                ) : (
+                  <div className="mt-2 truncate font-mono text-[20px] font-semibold tabular-nums tracking-tight text-white">
+                    {card.value}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         ) : null}
 
-        <div className="mt-5 w-full">
-          <div className="flex items-start justify-between gap-3 px-0.5">
-            <h2 className="font-mono text-sm font-semibold tracking-tight text-white">Динамика доходности</h2>
-            <div className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-              {releaseAnalyticsPeriodLabel(period)}
-            </div>
-          </div>
-          <div className="mt-3 w-full min-w-0">
+        {viewTab === "overview" || viewTab === "trading" ? (
+          <div className="mt-5 w-full min-w-0">
             <YieldDynamicsChart
               period={period}
               yieldDynamics={overview?.yieldDynamics}
               mockMode={mockMode}
+              onRetry={onRetry}
             />
           </div>
-        </div>
+        ) : null}
       </div>
     </section>
   );

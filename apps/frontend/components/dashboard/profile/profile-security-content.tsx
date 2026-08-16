@@ -1,29 +1,36 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
 import { SplitonLoadingView } from "@/components/ui/spliton-loader";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, ChevronRight, Lock, Mail, ShieldCheck } from "@/lib/lucide";
+import { useCallback, useEffect, useState } from "react";
 
 import { ProductDemoBanner } from "@/components/shared/product-demo-banner";
 import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
 import { ROUTES } from "@/constants/routes";
-import { FeesPageTabs } from "@/components/fees/fees-page-tabs";
 import { ProfilePasswordChangePanel } from "@/components/dashboard/profile/profile-password-change-panel";
+import {
+  ProfileOkxHeader,
+  ProfileOkxRecommended,
+  ProfileOkxRow,
+  ProfileOkxSection,
+  ProfileOkxSpotlight,
+  ProfileOkxToggle,
+} from "@/components/dashboard/profile/profile-okx";
+import { PROFILE_GLASS, profileLineIcon } from "@/components/dashboard/profile/profile-shared";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { ProfileSecurityEventsList } from "@/components/dashboard/profile/profile-security-events-list";
 import { ProfileSessionsList } from "@/components/dashboard/profile/profile-sessions-list";
 import { ProfileTwoFactorPanel } from "@/components/dashboard/profile/profile-two-factor-panel";
-import { profileCardClass, profileSecondaryButtonClass } from "@/components/dashboard/profile/profile-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { formatDate } from "@/lib/i18n/formatters";
 import { profileSecurityLastActive } from "@/lib/i18n/profile-messages";
 import {
+  formatSecurityEventIp,
+  parseUserAgentShort,
   securityLevelBadgeLabel,
   securityRecommendationText,
 } from "@/lib/profile/security-labels";
 import { isAccountCenterDemoMode, isLiveAccountEnabled } from "@/lib/public-env";
-import { cn } from "@/lib/utils";
 import {
   fetchNotificationPreferences,
   patchNotificationPreferences,
@@ -42,58 +49,16 @@ import {
 } from "@/services/user-me.service";
 import type { SecuritySessionRow } from "@/constants/dashboard/profile-security";
 
-type PageTab = "login" | "sessions" | "withdraw";
+function maskEmail(email: string | undefined | null): string {
+  if (!email) return "—";
+  const [user, domain] = email.split("@");
+  if (!user || !domain) return email;
+  const visible = user.slice(0, Math.min(3, user.length));
+  return `${visible}***@${domain}`;
+}
 
-const PAGE_TABS: { id: PageTab; labelKey: string }[] = [
-  { id: "login", labelKey: "profile.security.tab.login" },
-  { id: "sessions", labelKey: "profile.security.tab.sessions" },
-  { id: "withdraw", labelKey: "profile.security.tab.withdraw" },
-];
-
-function PreferenceToggle({
-  id,
-  title,
-  description,
-  checked,
-  onChange,
-  disabled,
-}: {
-  id: string;
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange?: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  const interactive = Boolean(onChange) && !disabled;
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-neutral-100 py-4 last:border-0">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-neutral-900">{title}</p>
-        <p className="mt-0.5 text-xs text-neutral-500">{description}</p>
-      </div>
-      <button
-        id={id}
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        disabled={!interactive}
-        onClick={() => onChange?.(!checked)}
-        className={cn(
-          "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-          checked ? "bg-lime-400" : "bg-neutral-200",
-          !interactive && "cursor-not-allowed opacity-50",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 left-0.5 size-6 rounded-full bg-white shadow transition-transform",
-            checked && "translate-x-5",
-          )}
-        />
-      </button>
-    </div>
-  );
+function looksLikeUserAgent(value: string): boolean {
+  return /mozilla\/|applewebkit|chrome\/|safari\/|gecko\//i.test(value) || value.length > 64;
 }
 
 function mapApiSessions(
@@ -106,14 +71,22 @@ function mapApiSessions(
   const sorted = [...active].sort(
     (a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime(),
   );
-  return sorted.map((row, index) => ({
-    id: row.id,
-    device: row.device?.trim() || row.userAgent?.slice(0, 48) || browserLabel,
-    location: "—",
-    ip: row.ip ?? "—",
-    lastActive: profileSecurityLastActive(row.lastActiveAt, locale),
-    current: index === 0,
-  }));
+  return sorted.map((row, index) => {
+    const rawDevice = row.device?.trim() ?? "";
+    const device =
+      rawDevice && !looksLikeUserAgent(rawDevice)
+        ? rawDevice
+        : parseUserAgentShort(row.userAgent || rawDevice, locale) || browserLabel;
+    const anyCurrent = sorted.some((s) => s.isCurrent);
+    return {
+      id: row.id,
+      device,
+      location: "—",
+      ip: formatSecurityEventIp(row.ip, locale) ?? "—",
+      lastActive: profileSecurityLastActive(row.lastActiveAt, locale),
+      current: anyCurrent ? Boolean(row.isCurrent) : index === 0,
+    };
+  });
 }
 
 export function ProfileSecurityContent() {
@@ -122,7 +95,6 @@ export function ProfileSecurityContent() {
   const live = isLiveAccountEnabled() && isAuthenticated;
   const demo = isAccountCenterDemoMode();
 
-  const [tab, setTab] = useState<PageTab>("login");
   const [loading, setLoading] = useState(live);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [accountCenter, setAccountCenter] = useState<AccountCenterSummary | null>(null);
@@ -191,6 +163,8 @@ export function ProfileSecurityContent() {
   const security = accountCenter?.security;
   const level = security?.level ?? "LOW";
   const topRec = security?.recommendations?.find((r) => !r.isCompleted);
+  const score = security?.score ?? (demo ? 55 : 0);
+  const maxScore = security?.maxScore ?? 100;
 
   const patchPref = useCallback(
     async (key: keyof UserSecurityPreferences | "emailSecurity", value: boolean) => {
@@ -257,19 +231,17 @@ export function ProfileSecurityContent() {
       )
     : t("profile.security.password.neverChanged");
 
-  const tabItems = useMemo(
-    () => PAGE_TABS.map((item) => ({ id: item.id, label: t(item.labelKey) })),
-    [t],
-  );
+  const statusText =
+    live && security
+      ? `${securityLevelBadgeLabel(level, locale)}${topRec ? ` / ${securityRecommendationText(topRec.code, locale).title}` : ""}`
+      : t("profile.security.demoDescription");
 
-  const statusText = live && security
-    ? `${securityLevelBadgeLabel(level, locale)}${topRec ? ` · ${securityRecommendationText(topRec.code, locale).title}` : ""}`
-    : t("profile.security.demoDescription");
+  const emailDescription = [maskEmail(user?.email), resendMsg].filter(Boolean).join(". ");
 
   if (live && loading) {
     return (
       <SplitonLoadingView
-        variant="light"
+        variant="dark"
         size="lg"
         minHeight="min-h-[40vh]"
         label={t("common.loading")}
@@ -279,7 +251,7 @@ export function ProfileSecurityContent() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       {demo ? <ProductDemoBanner messageKey="profile.security.demoBanner" /> : null}
 
       {loadError ? (
@@ -291,83 +263,103 @@ export function ProfileSecurityContent() {
       ) : null}
 
       {passwordSuccess ? (
-        <p className="rounded-xl bg-lime-50 px-4 py-3 text-sm text-lime-900" role="status">
+        <p className="rounded-xl bg-[#B7F500]/12 px-4 py-3 text-sm text-[#B7F500]" role="status">
           {t("profile.security.password.success")}
         </p>
       ) : null}
 
-      <p className="text-sm text-neutral-600">{statusText}</p>
+      <ProfileOkxHeader
+        score={score}
+        scoreMax={maxScore}
+        title={t("profile.security.protectionLevel")}
+        subtitle={statusText}
+        cta={
+          <SplitonCtaPill
+            type="button"
+            tone="onDark"
+            className="min-w-[12rem]"
+            onClick={() =>
+              document.getElementById("security-auth")?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          >
+            {t("profile.okx.increase")}
+          </SplitonCtaPill>
+        }
+      />
 
-      <FeesPageTabs items={tabItems} active={tab} onChange={setTab} />
+      <ProfileOkxSpotlight
+        icon={PROFILE_GLASS.securitySpotlight}
+        headline={t("profile.okx.spotlight.security.headline")}
+        body={t("profile.okx.spotlight.security.body")}
+        detailsHref={ROUTES.trust}
+        detailsLabel={t("profile.okx.details")}
+        cta={
+          <SplitonCtaPill
+            type="button"
+            tone="onDark"
+            className="w-full min-w-0"
+            onClick={() =>
+              document.getElementById("security-2fa")?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          >
+            {t("profile.okx.setup")}
+          </SplitonCtaPill>
+        }
+      />
 
-      {tab === "login" ? (
-        <section className={cn(profileCardClass, "divide-y divide-neutral-100")}>
-          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <Mail className="mt-0.5 size-4 shrink-0 text-neutral-400" aria-hidden />
-              <div>
-                <p className="text-sm font-medium text-neutral-900">{t("profile.security.email.title")}</p>
-                <p className="mt-0.5 text-xs text-neutral-500">{user?.email ?? "—"}</p>
-                <span
-                  className={cn(
-                    "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                    emailVerified ? "bg-lime-100 text-lime-950" : "bg-amber-50 text-amber-900",
-                  )}
-                >
-                  {emailVerified ? <Check className="size-3" aria-hidden /> : null}
-                  {emailVerified ? t("profile.security.email.verified") : t("profile.security.email.unverified")}
-                </span>
-                {resendMsg ? <p className="mt-1 text-xs text-neutral-600">{resendMsg}</p> : null}
-              </div>
-            </div>
-            {live && !emailVerified ? (
-              <button
+      <ProfileOkxSection id="security-auth" title={t("profile.okx.authMethods")}>
+        <ProfileOkxRow
+          icon={profileLineIcon("email")}
+          title={t("profile.security.email.title")}
+          description={emailDescription}
+          badge={
+            emailVerified ? (
+              <ProfileOkxRecommended>{t("profile.security.email.verified")}</ProfileOkxRecommended>
+            ) : undefined
+          }
+          action={
+            live && !emailVerified ? (
+              <SplitonCtaPill
                 type="button"
+                tone="onDark"
                 disabled={resendBusy}
                 onClick={() => void handleResendEmail()}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-black px-4 text-xs font-semibold text-white disabled:opacity-60"
+                className="min-w-[9.5rem]"
               >
-                {resendBusy ? t("profile.security.email.resendSending") : t("profile.security.email.resend")}
-              </button>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <Lock className="mt-0.5 size-4 shrink-0 text-neutral-400" aria-hidden />
-              <div>
-                <p className="text-sm font-medium text-neutral-900">{t("profile.security.password.title")}</p>
-                <p className="mt-0.5 text-xs text-neutral-500">{passwordMeta}</p>
-              </div>
-            </div>
-            {live && passwordSet ? (
-              <button
+                {resendBusy ? t("profile.security.email.resendSending") : t("profile.okx.setup")}
+              </SplitonCtaPill>
+            ) : undefined
+          }
+        />
+        <ProfileOkxRow
+          icon={profileLineIcon("password")}
+          title={t("profile.security.password.title")}
+          description={passwordMeta}
+          action={
+            live && passwordSet ? (
+              <SplitonCtaPill
                 type="button"
+                tone="onDark"
                 onClick={() => setPasswordPanelOpen(true)}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-black px-4 text-xs font-semibold text-white"
+                className="min-w-[9.5rem]"
               >
-                {t("profile.security.changePassword")}
-              </button>
-            ) : null}
-          </div>
-          <ProfilePasswordChangePanel
-            open={passwordPanelOpen}
-            onOpenChange={setPasswordPanelOpen}
-            onSuccess={() => {
-              setPasswordSuccess(true);
-              void loadAll();
-            }}
-          />
-
-          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-lime-700" aria-hidden />
-              <div>
-                <p className="text-sm font-medium text-neutral-900">{t("profile.security.twoFa.title")}</p>
-                <p className="mt-0.5 text-xs text-neutral-500">{t("profile.security.twoFa.descriptionShort")}</p>
-              </div>
-            </div>
-            {live ? (
+                {t("profile.okx.change")}
+              </SplitonCtaPill>
+            ) : undefined
+          }
+        />
+        <ProfileOkxRow
+          id="security-2fa"
+          icon={profileLineIcon("twoFa")}
+          title={t("profile.security.twoFa.title")}
+          description={t("profile.security.twoFa.descriptionShort")}
+          badge={
+            twoFaEnabled ? undefined : (
+              <ProfileOkxRecommended>{t("profile.okx.new")}</ProfileOkxRecommended>
+            )
+          }
+          action={
+            live ? (
               <ProfileTwoFactorPanel
                 enabled={twoFaEnabled}
                 onEnabledChange={(v) => {
@@ -376,107 +368,137 @@ export function ProfileSecurityContent() {
                 }}
               />
             ) : (
-              <span className="text-xs font-medium text-neutral-500">{t("profile.security.twoFa.disabled")}</span>
-            )}
-          </div>
+              <span className="text-xs font-medium text-zinc-500">{t("profile.security.twoFa.disabled")}</span>
+            )
+          }
+        />
+      </ProfileOkxSection>
 
-          <div className="flex flex-wrap gap-2 py-4">
-            <Link
-              href={ROUTES.forgotPassword}
-              className="text-xs font-semibold text-neutral-800 hover:underline"
-            >
-              {t("profile.security.recoverAccess")}
-            </Link>
-            <span className="text-neutral-300">·</span>
-            <Link
-              href={ROUTES.dashboardSupport}
-              className="text-xs font-semibold text-neutral-800 hover:underline"
-            >
-              {t("profile.security.reportSuspicious")}
-            </Link>
-          </div>
-        </section>
-      ) : null}
+      <ProfilePasswordChangePanel
+        open={passwordPanelOpen}
+        onOpenChange={setPasswordPanelOpen}
+        onSuccess={() => {
+          setPasswordSuccess(true);
+          void loadAll();
+        }}
+      />
 
-      {tab === "sessions" ? (
-        <section className={profileCardClass}>
-          <p className="text-xs text-neutral-500">{t("profile.security.access.descriptionShort")}</p>
-          {sessionsError ? (
-            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
-              {String(sessionsError)}
-            </p>
-          ) : null}
-          <ProfileSessionsList sessions={sessions} onRevoke={revoke} live={live} />
-          {live ? (
-            <button
-              type="button"
-              onClick={logoutOthers}
-              className={cn(profileSecondaryButtonClass, "mt-4 h-9 w-full text-xs sm:w-auto")}
-            >
-              {t("profile.security.revokeAll")}
-            </button>
-          ) : null}
-
-          {live && securityEvents.length > 0 ? (
-            <div className="mt-6 border-t border-neutral-100 pt-4">
-              <h3 className="text-sm font-semibold text-neutral-900">{t("profile.security.events.title")}</h3>
-              <ProfileSecurityEventsList events={securityEvents} timeZone={userTimezone} />
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      {tab === "withdraw" ? (
-        <section className={profileCardClass}>
-          <p className="text-xs text-neutral-500">{t("profile.security.balance.descriptionShort")}</p>
-          <div className="mt-3">
-            <PreferenceToggle
+      <ProfileOkxSection id="security-advanced" title={t("profile.okx.advanced")}>
+        <ProfileOkxRow
+          icon={profileLineIcon("email")}
+          title={t("profile.security.withdrawEmail.title")}
+          description={t("profile.security.withdrawEmail.descriptionShort")}
+          action={
+            <ProfileOkxToggle
               id="withdraw-email"
-              title={t("profile.security.withdrawEmail.title")}
-              description={t("profile.security.withdrawEmail.descriptionShort")}
               checked={prefs?.withdrawalEmailConfirmationEnabled ?? false}
               onChange={live ? (v) => void patchPref("withdrawalEmailConfirmationEnabled", v) : undefined}
               disabled={!live || prefsSaving === "withdrawalEmailConfirmationEnabled"}
             />
-            <PreferenceToggle
+          }
+        />
+        <ProfileOkxRow
+          icon={profileLineIcon("whitelist")}
+          title={t("profile.security.whitelist.title")}
+          description={t("profile.security.whitelist.descriptionShort")}
+          badge={<ProfileOkxRecommended>{t("profile.okx.recommended")}</ProfileOkxRecommended>}
+          action={
+            <ProfileOkxToggle
               id="whitelist"
-              title={t("profile.security.whitelist.title")}
-              description={t("profile.security.whitelist.descriptionShort")}
               checked={prefs?.withdrawalAddressWhitelistEnabled ?? false}
               onChange={live ? (v) => void patchPref("withdrawalAddressWhitelistEnabled", v) : undefined}
               disabled={!live || prefsSaving === "withdrawalAddressWhitelistEnabled"}
             />
-            <PreferenceToggle
+          }
+        />
+        <ProfileOkxRow
+          icon={profileLineIcon("alert")}
+          title={t("profile.security.alertNewDevice.title")}
+          description={t("profile.security.alertNewDevice.descriptionShort")}
+          action={
+            <ProfileOkxToggle
               id="al-dev"
-              title={t("profile.security.alertNewDevice.title")}
-              description={t("profile.security.alertNewDevice.descriptionShort")}
               checked={prefs?.suspiciousLoginAlertsEnabled ?? true}
               onChange={live ? (v) => void patchPref("suspiciousLoginAlertsEnabled", v) : undefined}
               disabled={!live || prefsSaving === "suspiciousLoginAlertsEnabled"}
             />
-            <PreferenceToggle
+          }
+        />
+        <ProfileOkxRow
+          icon={profileLineIcon("email")}
+          title={t("profile.security.preferences.emailSecurity.title")}
+          description={t("profile.security.preferences.emailSecurity.descriptionShort")}
+          action={
+            <ProfileOkxToggle
               id="email-sec"
-              title={t("profile.security.preferences.emailSecurity.title")}
-              description={t("profile.security.preferences.emailSecurity.descriptionShort")}
               checked={emailSecurityEnabled}
               onChange={live ? (v) => void patchPref("emailSecurity", v) : undefined}
               disabled={!live || prefsSaving === "emailSecurity"}
             />
+          }
+        />
+        <ProfileOkxRow
+          icon={profileLineIcon("withdraw")}
+          title={t("profile.security.withdrawManageLink")}
+          description={t("profile.security.balance.descriptionShort")}
+          action={
+            <SplitonCtaPill href={ROUTES.dashboardPayouts} tone="onDark" className="min-w-[9.5rem]">
+              {t("profile.okx.manage")}
+            </SplitonCtaPill>
+          }
+        />
+        {prefsError ? (
+          <p className="px-4 py-3 text-xs text-red-400 sm:px-5" role="alert">
+            {prefsError}
+          </p>
+        ) : null}
+      </ProfileOkxSection>
+
+      <ProfileOkxSection
+        title={t("profile.okx.devices")}
+        description={t("profile.security.access.descriptionShort")}
+      >
+        {sessionsError ? (
+          <p className="px-5 py-3 text-xs text-red-300 sm:px-6" role="alert">
+            {String(sessionsError)}
+          </p>
+        ) : null}
+        <ProfileSessionsList sessions={sessions} onRevoke={revoke} live={live} />
+        {live ? (
+          <div className="px-5 py-4 sm:px-6">
+            <SplitonCtaPill type="button" tone="onDark" onClick={logoutOthers} className="w-full min-w-0 sm:w-auto">
+              {t("profile.security.revokeAll")}
+            </SplitonCtaPill>
           </div>
-          {prefsError ? (
-            <p className="mt-2 text-xs text-red-600" role="alert">
-              {prefsError}
-            </p>
-          ) : null}
-          <Link
-            href={ROUTES.dashboardPayouts}
-            className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-neutral-800 hover:underline"
-          >
-            {t("profile.security.withdrawManageLink")}
-            <ChevronRight className="size-3.5" aria-hidden />
-          </Link>
-        </section>
+        ) : null}
+      </ProfileOkxSection>
+
+      {live ? (
+        <ProfileOkxSection title={t("profile.security.events.title")}>
+          <ProfileSecurityEventsList events={securityEvents} timeZone={userTimezone} />
+        </ProfileOkxSection>
       ) : null}
+
+      <ProfileOkxSection title={t("profile.okx.account")}>
+        <ProfileOkxRow
+          icon={profileLineIcon("password")}
+          title={t("profile.security.recoverAccess")}
+          action={
+            <SplitonCtaPill href={ROUTES.forgotPassword} tone="onDark" className="min-w-[9.5rem]">
+              {t("profile.okx.manage")}
+            </SplitonCtaPill>
+          }
+        />
+        <ProfileOkxRow
+          icon={profileLineIcon("support")}
+          title={t("profile.security.reportSuspicious")}
+          action={
+            <SplitonCtaPill href={ROUTES.dashboardSupport} tone="onDark" className="min-w-[9.5rem]">
+              {t("profile.okx.use")}
+            </SplitonCtaPill>
+          }
+        />
+      </ProfileOkxSection>
     </div>
   );
 }

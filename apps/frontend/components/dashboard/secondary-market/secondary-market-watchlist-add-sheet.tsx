@@ -15,7 +15,7 @@ function ReleaseThumb({ symbol }: { symbol: string }) {
   const hue = symbol.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
   return (
     <div
-      className="size-11 shrink-0 rounded-xl ring-1 ring-white/10"
+      className="size-11 shrink-0 rounded-full"
       style={{
         background: `linear-gradient(145deg, hsl(${hue}, 42%, 28%) 0%, hsl(${(hue + 48) % 360}, 28%, 12%) 100%)`,
       }}
@@ -83,13 +83,15 @@ export function SecondaryMarketWatchlistAddSheet({ open, onOpenChange, candidate
     <SecondaryMarketResponsiveSheet
       open={open}
       onOpenChange={onOpenChange}
+      side="right"
+      headerVideo
       title={t("secondaryMarket.watchlist.addTitle")}
       description={t("secondaryMarket.watchlist.addDesc")}
       widthClassName="md:w-[min(100vw-1rem,440px)]"
     >
       <div className="space-y-4 pb-2">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600" aria-hidden />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-600" aria-hidden />
           <input
             type="search"
             value={search}
@@ -100,18 +102,18 @@ export function SecondaryMarketWatchlistAddSheet({ open, onOpenChange, candidate
         </div>
 
         {error ? (
-          <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200 ring-1 ring-red-500/25">{error}</p>
+          <p className="rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p>
         ) : null}
 
         {candidates.length === 0 ? (
           <div className="py-10 text-center">
-            <p className="text-sm font-medium text-white">{t("secondaryMarket.watchlist.allReleasesInList")}</p>
+            <p className="text-sm font-semibold text-white">{t("secondaryMarket.watchlist.allReleasesInList")}</p>
             <p className="mt-2 text-[13px] text-zinc-500">{t("secondaryMarket.watchlist.openMarketForNew")}</p>
           </div>
         ) : filtered.length === 0 ? (
           <p className="py-8 text-center text-sm text-zinc-500">{t("secondaryMarket.listings.noMatches")}</p>
         ) : (
-          <ul className="max-h-[min(420px,52vh)] space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]">
+          <ul className="max-h-[min(420px,52vh)] divide-y divide-white/[0.05] overflow-y-auto overscroll-contain [scrollbar-width:thin]">
             {filtered.map((c) => {
               const isAdding = addingId === c.releaseId;
               const isAdded = addedId === c.releaseId;
@@ -121,17 +123,17 @@ export function SecondaryMarketWatchlistAddSheet({ open, onOpenChange, candidate
                     type="button"
                     disabled={isAdding}
                     onClick={() => void handleAdd(c)}
-                    className="flex w-full items-center gap-3 rounded-xl bg-[#111111] px-3 py-2.5 text-left ring-1 ring-white/6 transition hover:bg-[#161616] hover:ring-white/10 disabled:opacity-60"
+                    className="flex w-full items-center gap-3 px-1 py-3 text-left transition hover:bg-white/[0.02] disabled:opacity-60"
                   >
                     <ReleaseThumb symbol={c.symbol} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[14px] font-semibold text-white">{c.track}</p>
-                      <p className="mt-0.5 font-mono text-[11px] text-zinc-500">
+                      <p className="truncate text-[14px] font-semibold tracking-[-0.01em] text-white">{c.track}</p>
+                      <p className="mt-0.5 text-[11px] text-zinc-500">
                         {c.artist} · {c.symbol} · {formatUsdt(c.pricePerUnit)} USDT
                       </p>
                     </div>
                     {isAdded ? (
-                      <CheckCircle2 className="size-5 shrink-0 text-[#B7F500]" aria-hidden />
+                      <CheckCircle2 className="size-5 shrink-0 text-white" aria-hidden />
                     ) : isAdding ? (
                       <SplitonLoader size="xxs" variant="dark" className="shrink-0" />
                     ) : (

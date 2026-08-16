@@ -1,5 +1,5 @@
-import { IsIn, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsPositiveDecimalString } from '../../../common/validation/decimal-string.decorator';
 
 export class MarketOrderSubmitDto {
   @IsString()
@@ -11,17 +11,11 @@ export class MarketOrderSubmitDto {
   @IsIn(['LIMIT', 'MARKET', 'limit', 'market'])
   type!: 'LIMIT' | 'MARKET' | 'limit' | 'market';
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  price?: number;
+  @IsPositiveDecimalString({ optional: true })
+  price?: string;
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  units?: number;
+  @IsPositiveDecimalString({ optional: true })
+  units?: string;
 
   @IsOptional()
   @IsString()

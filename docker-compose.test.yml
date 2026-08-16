@@ -1,0 +1,21 @@
+services:
+  postgres-e2e:
+    image: postgres:16-alpine
+    # Prefer this name; an older local volume may already run as spliton-e2e-pg on :5433.
+    container_name: spliton-e2e-pg
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: spliton_e2e
+      POSTGRES_DB: spliton_e2e
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d spliton_e2e"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - spliton_e2e_pgdata:/var/lib/postgresql/data
+
+volumes:
+  spliton_e2e_pgdata:

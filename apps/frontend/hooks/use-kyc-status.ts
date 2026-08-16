@@ -42,14 +42,16 @@ export function useKycStatus() {
 
   const start = useCallback(
     async (countryCode?: string) => {
-      if (!live) return;
+      if (!live) return false;
       setSubmitting(true);
       setError(null);
       try {
         const res = await startKycVerification(authorizedFetch, countryCode);
         setData(res);
+        return true;
       } catch (e) {
         setError(localizedApiError(e));
+        return false;
       } finally {
         setSubmitting(false);
       }
@@ -59,14 +61,16 @@ export function useKycStatus() {
 
   const submitManual = useCallback(
     async (body: { countryCode: string; documentType: string; documentReference: string }) => {
-      if (!live) return;
+      if (!live) return false;
       setSubmitting(true);
       setError(null);
       try {
         const res = await submitKycManual(authorizedFetch, body);
         setData(res);
+        return true;
       } catch (e) {
         setError(localizedApiError(e));
+        return false;
       } finally {
         setSubmitting(false);
       }

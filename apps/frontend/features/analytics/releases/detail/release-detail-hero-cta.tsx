@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 import type { ReleaseDetailPageData } from "@/types/analytics/release-detail";
@@ -26,31 +25,31 @@ export function ReleaseDetailHeroCta({ data }: { data: ReleaseDetailPageData }) 
   if (!primaryCta && !secondaryCta) return null;
 
   return (
-    <div className="mt-4 flex flex-wrap gap-2 sm:mt-5">
+    <div className="mt-4 flex flex-col gap-2.5 sm:mt-5 sm:flex-row sm:flex-wrap sm:gap-3">
       {primaryCta ? (
         primaryCta.disabled ? (
           <span
-            className="inline-flex cursor-not-allowed items-center rounded-full bg-white/8 px-5 py-2.5 text-sm font-semibold text-zinc-500"
+            className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center rounded-full bg-white/8 px-6 text-[14px] font-medium tracking-normal text-zinc-500 sm:w-auto"
             title={primaryCta.reasonKey ? t(primaryCta.reasonKey) : undefined}
           >
             {t(primaryCta.labelKey)}
           </span>
         ) : (
-          <Link
-            href={primaryCta.href}
-            className="inline-flex items-center rounded-full bg-[#B7F500] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#c9ff52]"
-          >
+          <SplitonCtaPill href={primaryCta.href} tone="onDark" className="w-full min-w-0 sm:w-auto sm:min-w-[10.5rem]">
             {t(primaryCta.labelKey)}
-          </Link>
+          </SplitonCtaPill>
         )
       ) : null}
       {secondaryCta && !secondaryCta.disabled ? (
-        <Link
+        <SplitonCtaPill
           href={secondaryCta.href}
-          className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          tone="onDark"
+          variant="ghost"
+          withArrow={false}
+          className="w-full sm:w-auto"
         >
           {t(secondaryCta.labelKey)}
-        </Link>
+        </SplitonCtaPill>
       ) : null}
     </div>
   );
@@ -60,7 +59,7 @@ export function ReleaseDetailLifecycleBadge({ data }: { data: ReleaseDetailPageD
   return (
     <span
       className={cn(
-        "rounded-full px-2.5 py-0.5 text-[10px] font-semibold ring-1 sm:text-[11px]",
+        "rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-normal ring-1 sm:text-[12px]",
         lifecycleBadgeClass(data.pageState.badgeTone),
       )}
     >

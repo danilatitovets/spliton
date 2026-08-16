@@ -546,6 +546,9 @@ export class AdminSecondaryMarketService {
       );
     }
     const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        SELECT id FROM market_listings WHERE id = ${id}::uuid FOR UPDATE
+      `;
       const existing = await tx.marketListing.findFirst({
         where: { id, deletedAt: null },
       });
@@ -575,41 +578,57 @@ export class AdminSecondaryMarketService {
       }
 
       const unlock = existing.unitsAvailable;
-      const position = await tx.userPosition.findUnique({
-        where: {
-          userId_releaseId: {
-            userId: existing.sellerUserId,
-            releaseId: existing.releaseId,
-          },
-        },
-      });
-      if (position && unlock.greaterThan(0)) {
-        await tx.userPosition.update({
-          where: { id: position.id },
-          data: {
-            unitsAvailable: position.unitsAvailable.plus(unlock),
-            unitsLocked: position.unitsLocked.minus(unlock),
-          },
-        });
+      const cas = await tx.$executeRaw`
+        UPDATE market_listings
+        SET status = 'CANCELLED', updated_at = NOW()
+        WHERE id = ${id}::uuid
+          AND status IN ('ACTIVE', 'PAUSED')
+          AND deleted_at IS NULL
+      `;
+      if (Number(cas) !== 1) {
+        throwAdminError(
+          'LISTING_NOT_CANCELLABLE',
+          'Listing cannot be cancelled in current status',
+          HttpStatus.CONFLICT,
+        );
       }
 
-      const row = await tx.marketListing.update({
-        where: { id },
-        data: { status: ListingStatus.CANCELLED },
-        include: listingInclude,
-      });
-
       if (unlock.greaterThan(0)) {
+        const posUpdated = await tx.$executeRaw`
+          UPDATE user_positions
+          SET
+            units_available = units_available + ${unlock},
+            units_locked = units_locked - ${unlock},
+            updated_at = NOW()
+          WHERE user_id = ${existing.sellerUserId}::uuid
+            AND release_id = ${existing.releaseId}::uuid
+            AND units_locked >= ${unlock}
+        `;
+        if (Number(posUpdated) !== 1) {
+          throwAdminError(
+            'POSITION_LOCK_MISMATCH',
+            'Locked units mismatch; cancel aborted',
+            HttpStatus.CONFLICT,
+          );
+        }
+
         await tx.ownershipLedger.create({
           data: {
             userId: existing.sellerUserId,
             releaseId: existing.releaseId,
             eventType: OwnershipEventType.UNLOCK_AFTER_CANCEL,
             unitsDelta: unlock,
+            sourceEntityType: 'listing',
+            sourceEntityId: id,
             happenedAt: new Date(),
           },
         });
       }
+
+      const row = await tx.marketListing.findFirstOrThrow({
+        where: { id },
+        include: listingInclude,
+      });
 
       return { row, beforeStatus: existing.status };
     });

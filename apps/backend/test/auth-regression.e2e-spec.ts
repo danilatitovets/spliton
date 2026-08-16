@@ -61,7 +61,7 @@ describe('Auth regression (e2e)', () => {
   });
 
   it('H: GET /health -> 200', async () => {
-    const res = await request(app.getHttpServer()).get('/health').expect(200);
+    const res = await request(app!.getHttpServer()).get('/health').expect(200);
     expect(res.body).toMatchObject({
       status: 'ok',
       service: 'spliton-backend',
@@ -69,14 +69,14 @@ describe('Auth regression (e2e)', () => {
   });
 
   it('H: GET /health/db -> 200', async () => {
-    const res = await request(app.getHttpServer())
+    const res = await request(app!.getHttpServer())
       .get('/health/db')
       .expect(200);
     expect(res.body).toMatchObject({ status: 'ok', database: 'connected' });
   });
 
   it('H: GET /releases -> 200', async () => {
-    await request(app.getHttpServer()).get('/releases').expect(200);
+    await request(app!.getHttpServer()).get('/releases').expect(200);
   });
 
   it('A–E: register -> verify -> login -> me -> refresh rotation', async () => {
@@ -193,7 +193,7 @@ describe('Auth regression (e2e)', () => {
       .expect(201)
       .expect(({ body }) => expect(body).toEqual({ success: true }));
 
-    await request(app.getHttpServer())
+    await request(app!.getHttpServer())
       .post('/auth/register')
       .send(e2eRegisterPayload(email, password))
       .expect(201);

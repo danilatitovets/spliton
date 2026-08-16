@@ -142,7 +142,7 @@ const RU: Record<string, string> = {
   "support.email.responseTime": "Среднее время ответа: до 24 часов.",
 
   "support.contact.label": "Поддержка",
-  "support.contact.title": "Обращения по email",
+  "support.contact.title": "Поддержка",
   "support.contact.description":
     "Поддержка Spliton принимает обращения по почте и через тикеты в кабинете. Укажите детали операции — мы ответим в рабочие дни.",
   "support.contact.instructions":
@@ -151,7 +151,7 @@ const RU: Record<string, string> = {
   "support.contact.writeEmailShort": "Написать на почту",
   "support.contact.mailSubject": "Spliton — обращение в поддержку",
   "support.contact.loggedIn": "Уже вошли в аккаунт?",
-  "support.contact.createTicket": "Создать обращение в кабинете",
+  "support.contact.createTicket": "Создать обращение",
   "support.contact.responseTime": "Среднее время ответа по почте — до 24 часов в рабочие дни.",
 
   "support.tickets.pageTitle": "Поддержка",
@@ -364,7 +364,7 @@ const EN: Record<string, string> = {
   "support.email.responseTime": "Average response time: up to 24 hours.",
 
   "support.contact.label": "Support",
-  "support.contact.title": "Email requests",
+  "support.contact.title": "Support",
   "support.contact.description":
     "Spliton support accepts requests by email and account tickets. Include operation details — we reply on business days.",
   "support.contact.instructions":
@@ -373,7 +373,7 @@ const EN: Record<string, string> = {
   "support.contact.writeEmailShort": "Write email",
   "support.contact.mailSubject": "Spliton — support request",
   "support.contact.loggedIn": "Already signed in?",
-  "support.contact.createTicket": "Create a ticket in your account",
+  "support.contact.createTicket": "Create a ticket",
   "support.contact.responseTime": "Average email response time — up to 24 hours on business days.",
 
   "support.tickets.pageTitle": "Support",
@@ -584,7 +584,7 @@ const ES: Record<string, string> = {
   "support.email.responseTime": "Tiempo medio de respuesta: hasta 24 horas.",
 
   "support.contact.label": "Soporte",
-  "support.contact.title": "Consultas por email",
+  "support.contact.title": "Soporte",
   "support.contact.description":
     "El soporte Spliton acepta consultas por correo y tickets en la cuenta. Indique detalles de la operación — respondemos en días laborables.",
   "support.contact.instructions":
@@ -593,7 +593,7 @@ const ES: Record<string, string> = {
   "support.contact.writeEmailShort": "Escribir correo",
   "support.contact.mailSubject": "Spliton — consulta de soporte",
   "support.contact.loggedIn": "¿Ya inició sesión?",
-  "support.contact.createTicket": "Crear ticket en la cuenta",
+  "support.contact.createTicket": "Crear ticket",
   "support.contact.responseTime": "Tiempo medio de respuesta por correo — hasta 24 horas en días laborables.",
 
   "support.tickets.pageTitle": "Soporte",
@@ -804,7 +804,7 @@ const PT: Record<string, string> = {
   "support.email.responseTime": "Tempo médio de resposta: até 24 horas.",
 
   "support.contact.label": "Suporte",
-  "support.contact.title": "Pedidos por email",
+  "support.contact.title": "Suporte",
   "support.contact.description":
     "O suporte Spliton aceita pedidos por email e tickets na conta. Indique detalhes da operação — respondemos em dias úteis.",
   "support.contact.instructions":
@@ -813,7 +813,7 @@ const PT: Record<string, string> = {
   "support.contact.writeEmailShort": "Enviar e-mail",
   "support.contact.mailSubject": "Spliton — pedido de suporte",
   "support.contact.loggedIn": "Já iniciou sessão?",
-  "support.contact.createTicket": "Criar pedido na conta",
+  "support.contact.createTicket": "Criar pedido",
   "support.contact.responseTime": "Tempo médio de resposta por email — até 24 horas em dias úteis.",
 
   "support.tickets.pageTitle": "Suporte",

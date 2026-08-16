@@ -1,4 +1,11 @@
+import { invalidateClientCache } from "@/lib/client-data-cache";
+import { invalidateWalletBalanceCache } from "@/lib/wallet-balance-cache";
 import { walletApiUrl } from "@/services/wallet.service";
+
+function invalidatePrivateFinancialCaches(): void {
+  invalidateClientCache("assets:");
+  invalidateWalletBalanceCache();
+}
 
 export type RichMarketListingDto = {
   id: string;
@@ -305,7 +312,7 @@ export async function fetchMarketListings(
 ): Promise<MarketListingsResponse & { items: RichMarketListingDto[] }> {
   const params = buildMarketListingsQueryParams({
     page: 1,
-    limit: 100,
+    limit: 20,
     status: "purchasable",
     sort: "availability",
     ...query,
@@ -352,14 +359,21 @@ export async function fetchUserHoldings(
 
 export async function createListing(
   authorizedFetch: AuthorizedFetch,
-  body: { releaseId: string; units: number; pricePerUnit: number },
+  body: { releaseId: string; units: string | number; pricePerUnit: string | number },
 ): Promise<RichMarketListingDto> {
+  const payload = {
+    releaseId: body.releaseId,
+    units: String(body.units),
+    pricePerUnit: String(body.pricePerUnit),
+  };
   const res = await authorizedFetch(walletApiUrl(PATHS.listings), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
-  return parseJson(res);
+  const listing = await parseJson<RichMarketListingDto>(res);
+  invalidatePrivateFinancialCaches();
+  return listing;
 }
 
 export async function cancelListing(
@@ -370,18 +384,30 @@ export async function cancelListing(
     method: "POST",
   });
   await parseJson(res);
+  invalidatePrivateFinancialCaches();
 }
 
 export async function buyListing(
   authorizedFetch: AuthorizedFetch,
   listingId: string,
+  idempotencyKey?: string,
 ): Promise<BuyTradeResult> {
+  const key =
+    idempotencyKey?.trim() ||
+    (typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? `secondary-buy-${listingId}-${crypto.randomUUID()}`
+      : `secondary-buy-${listingId}-${Date.now()}`);
   const res = await authorizedFetch(walletApiUrl(PATHS.buy), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ listingId }),
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": key,
+    },
+    body: JSON.stringify({ listingId, idempotencyKey: key }),
   });
-  return parseJson(res);
+  const result = await parseJson<BuyTradeResult>(res);
+  invalidatePrivateFinancialCaches();
+  return result;
 }
 
 export async function fetchFeePreview(

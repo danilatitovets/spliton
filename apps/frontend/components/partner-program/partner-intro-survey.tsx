@@ -190,7 +190,7 @@ export function PartnerIntroSurvey({
                 <span
                   className={cn(
                     "flex size-5 shrink-0 items-center justify-center rounded-full ring-2 transition-colors",
-                    on ? "bg-[#B7F500] ring-[#B7F500]" : "ring-zinc-600",
+                    on ? "bg-white ring-white" : "ring-zinc-600",
                   )}
                   aria-hidden
                 >

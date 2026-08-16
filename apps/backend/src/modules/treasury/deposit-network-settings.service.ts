@@ -91,6 +91,8 @@ export class DepositNetworkSettingsService implements OnModuleInit {
       'wallet',
     )!;
 
+    const tokenFromEnv = tron.usdtContract?.trim() || null;
+
     await this.prisma.depositNetworkSettings.upsert({
       where: { id: 'usdt-trc20' },
       create: {
@@ -99,10 +101,10 @@ export class DepositNetworkSettingsService implements OnModuleInit {
         network: wallet.defaultNetwork,
         networkDisplayName: `${wallet.defaultAssetCode} · ${wallet.defaultNetwork}`,
         chain: 'TRON',
-        tokenContractAddress: tron.usdtContract || null,
+        tokenContractAddress: tokenFromEnv,
         tokenDecimals: 6,
         minDepositAmount: new Prisma.Decimal('0.01'),
-        minConfirmations: tron.confirmations,
+        minConfirmations: Number(tron.confirmations) || 20,
         estimatedCreditTimeMinutes: 1,
         withdrawAvailableAfterMinutes: 2,
         depositEnabled: true,
@@ -121,8 +123,24 @@ export class DepositNetworkSettingsService implements OnModuleInit {
         instructionsEn:
           'Copy the address or scan the QR code and send USDT (TRC20) from an external wallet.',
       },
-      update: {},
+      // Keep explorers filled; token is backfilled below only when blank.
+      update: {
+        explorerTxUrlTemplate: 'https://tronscan.org/#/transaction/{txid}',
+        explorerAddressUrlTemplate: 'https://tronscan.org/#/address/{address}',
+        explorerTokenUrlTemplate: 'https://tronscan.org/#/token20/{contract}',
+      },
     });
+
+    // Fill blank contract from env without clobbering an admin-set address.
+    if (tokenFromEnv) {
+      await this.prisma.depositNetworkSettings.updateMany({
+        where: {
+          id: 'usdt-trc20',
+          OR: [{ tokenContractAddress: null }, { tokenContractAddress: '' }],
+        },
+        data: { tokenContractAddress: tokenFromEnv },
+      });
+    }
   }
 
   isUserVisible(settings: DepositNetworkSettingsDto): boolean {

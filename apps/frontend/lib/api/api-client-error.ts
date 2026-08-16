@@ -5,6 +5,7 @@ export class ApiClientError extends Error {
     readonly code?: string,
     readonly status?: number,
     readonly requestId?: string,
+    readonly details?: unknown,
   ) {
     super(message);
     this.name = "ApiClientError";
@@ -12,10 +13,15 @@ export class ApiClientError extends Error {
 }
 
 type ErrorBody = {
-  error?: { code?: string; message?: string | string[] };
+  error?: {
+    code?: string;
+    message?: string | string[];
+    details?: { blockingCode?: string; [key: string]: unknown };
+  };
   code?: string;
   message?: string | string[] | Record<string, unknown>;
   requestId?: string;
+  details?: { blockingCode?: string; [key: string]: unknown };
 };
 
 function extractMessage(raw: ErrorBody["message"]): string | undefined {
@@ -36,13 +42,18 @@ function extractMessage(raw: ErrorBody["message"]): string | undefined {
 export async function parseApiClientError(res: Response): Promise<ApiClientError> {
   try {
     const body = (await res.json()) as ErrorBody;
-    const code = body.error?.code ?? body.code;
+    const details = body.error?.details ?? body.details;
+    const blocking =
+      details && typeof details === "object" && typeof details.blockingCode === "string"
+        ? details.blockingCode
+        : undefined;
+    const code = blocking ?? body.error?.code ?? body.code;
     const rawMessage = body.error?.message ?? body.message;
     const message =
       extractMessage(rawMessage) ??
       (typeof rawMessage === "string" ? rawMessage : undefined) ??
       res.statusText;
-    return new ApiClientError(message, code, res.status, body.requestId);
+    return new ApiClientError(message, code, res.status, body.requestId, details);
   } catch {
     return new ApiClientError(res.statusText, undefined, res.status);
   }

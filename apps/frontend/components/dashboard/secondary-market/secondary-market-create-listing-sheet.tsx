@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { CheckCircle2, ChevronRight, Search, X } from "@/lib/lucide";
@@ -29,6 +30,9 @@ import { useLegalConsentGate } from "@/hooks/use-legal-consent-gate";
 import { LegalConsentModal } from "@/components/compliance/legal-consent-modal";
 import { LegalConsentGateAlert } from "@/components/compliance/legal-consent-gate-alert";
 import { EligibilityNotice } from "@/components/compliance/eligibility-notice";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
+
+const CREATE_LISTING_EMPTY_ICON = "/images/secondary-market/create-listing-empty.webp";
 
 type SecondaryMarketCreateListingSheetProps = {
   open: boolean;
@@ -36,6 +40,8 @@ type SecondaryMarketCreateListingSheetProps = {
   holdings: UserHoldingItem[];
   onSubmit: (body: { releaseId: string; units: number; pricePerUnit: number }) => Promise<void>;
 };
+
+const HEADER_VIDEO = "/videos/position-holding-bg.mp4";
 
 function formatUsdt(n: number) {
   return n.toLocaleString("ru-RU", {
@@ -52,7 +58,7 @@ function ReleaseThumb({ symbol }: { symbol: string }) {
   const hue = symbol.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
   return (
     <div
-      className="size-11 shrink-0 rounded-xl ring-1 ring-white/10"
+      className="size-11 shrink-0 rounded-full"
       style={{
         background: `linear-gradient(145deg, hsl(${hue}, 42%, 28%) 0%, hsl(${(hue + 48) % 360}, 28%, 12%) 100%)`,
       }}
@@ -245,37 +251,45 @@ export function SecondaryMarketCreateListingSheet({
         <Dialog.Popup
           className={cn(
             "fixed z-[128] flex flex-col bg-[#0a0a0a] text-white",
-            "shadow-[0_-24px_80px_rgba(0,0,0,0.55)] md:shadow-[24px_0_80px_rgba(0,0,0,0.55)]",
+            "shadow-[-24px_0_80px_rgba(0,0,0,0.55)]",
             "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[24px]",
-            "max-md:data-starting-style:translate-y-full max-md:data-ending-style:translate-y-full",
-            "md:inset-y-0 md:left-0 md:right-auto md:max-h-dvh md:w-[min(100vw-1rem,440px)] md:translate-y-0 md:rounded-none md:rounded-r-2xl",
-            "md:data-starting-style:-translate-x-full md:data-ending-style:-translate-x-full",
+            "inset-y-0 right-0 max-h-dvh w-[min(100vw,440px)] rounded-none rounded-l-2xl",
+            "data-starting-style:translate-x-full data-ending-style:translate-x-full",
           )}
         >
-          <div className="flex shrink-0 flex-col items-center pt-2.5 md:hidden">
-            <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
-          </div>
-
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-white/6 px-5 pb-4 pt-3 md:px-6 md:pt-5">
-            <div className="min-w-0">
-              <Dialog.Title className="text-[17px] font-semibold tracking-tight text-white md:text-lg">
-                {t("secondaryMarket.forms.createListingTitle")}
-              </Dialog.Title>
-              <Dialog.Description className="mt-1 text-[12px] leading-relaxed text-zinc-500 md:text-[13px]">
-                {t("secondaryMarket.forms.createListingDesc")}
-              </Dialog.Description>
+          <div className="relative isolate shrink-0 overflow-hidden">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <video
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-55 blur-[10px] motion-reduce:hidden"
+                src={HEADER_VIDEO}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/72 to-[#0a0a0a]" />
             </div>
-            <Dialog.Close
-              aria-label={t("secondaryMarket.aria.close")}
-              disabled={isSubmitting}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
-            >
-              <X className="size-4" />
-            </Dialog.Close>
+            <div className="relative z-10 flex items-start justify-between gap-3 px-5 pb-4 pt-5 md:px-6">
+              <div className="min-w-0">
+                <Dialog.Title className="text-[17px] font-semibold tracking-tight text-white md:text-lg">
+                  {t("secondaryMarket.forms.createListingTitle")}
+                </Dialog.Title>
+                <Dialog.Description className="mt-1 text-[12px] leading-relaxed text-white/55 md:text-[13px]">
+                  {t("secondaryMarket.forms.createListingDesc")}
+                </Dialog.Description>
+              </div>
+              <Dialog.Close
+                aria-label={t("secondaryMarket.aria.close")}
+                disabled={isSubmitting}
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/35 text-zinc-300 backdrop-blur-sm transition hover:border-white/25 hover:bg-black/50 hover:text-white disabled:opacity-40"
+              >
+                <X className="size-4" strokeWidth={1.75} />
+              </Dialog.Close>
+            </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 md:px-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 md:px-6">
             {isSubmitting ? (
               <div className="flex flex-col items-center py-12 text-center">
                 <SplitonLoader size="md" variant="dark" />
@@ -286,8 +300,8 @@ export function SecondaryMarketCreateListingSheet({
               </div>
             ) : isSuccess ? (
               <div className="flex flex-col items-center py-8 text-center">
-                <div className="flex size-16 items-center justify-center rounded-2xl bg-[#B7F500]/12 ring-1 ring-[#B7F500]/25">
-                  <CheckCircle2 className="size-8 text-[#B7F500]" strokeWidth={1.75} />
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-white/12 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]">
+                  <CheckCircle2 className="size-8 text-white" strokeWidth={1.75} />
                 </div>
                 <h3 className="mt-5 text-lg font-semibold text-white">{t("secondaryMarket.forms.listingCreatedTitle")}</h3>
                 <p className="mt-2 max-w-xs text-sm leading-relaxed text-zinc-500">
@@ -319,14 +333,14 @@ export function SecondaryMarketCreateListingSheet({
                   </div>
                   <div className="flex justify-between gap-3 border-t border-white/6 pt-2">
                     <dt className="text-zinc-300">{t("sell.successNet")}</dt>
-                    <dd className="font-semibold text-[#B7F500]">{formatUsdt(netUsdt)} USDT</dd>
+                    <dd className="font-semibold text-white">{formatUsdt(netUsdt)} USDT</dd>
                   </div>
                 </dl>
                 <div className="mt-8 flex w-full max-w-xs flex-col gap-2">
                   <Link
                     href={secondaryMarketHref("orders")}
                     onClick={() => onOpenChange(false)}
-                    className="inline-flex h-11 items-center justify-center rounded-full bg-[#B7F500] px-6 text-[13px] font-semibold text-black transition hover:bg-[#c8ff3d]"
+                    className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-[13px] font-semibold text-black transition hover:bg-[#e8e8e8]"
                   >
                     {t("secondaryMarket.forms.openMyOrders")}
                   </Link>
@@ -350,24 +364,33 @@ export function SecondaryMarketCreateListingSheet({
               </div>
             ) : holdings.length === 0 ? (
               <div className="flex flex-col items-center py-6 text-center">
-                <div className="flex size-16 items-center justify-center rounded-2xl bg-[#161616] ring-1 ring-white/8">
-                  <span className="font-mono text-2xl text-zinc-600">∅</span>
+                <div className="relative size-[7.5rem] shrink-0 sm:size-36">
+                  <Image
+                    src={CREATE_LISTING_EMPTY_ICON}
+                    alt=""
+                    fill
+                    sizes="144px"
+                    className="object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                    unoptimized
+                    aria-hidden
+                  />
                 </div>
                 <h3 className="mt-5 text-base font-semibold text-white">{t("secondaryMarket.forms.noReleasesTitle")}</h3>
                 <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
                   {t("secondaryMarket.forms.noReleasesDesc")}
                 </p>
                 <div className="mt-6 flex w-full max-w-xs flex-col gap-2">
-                  <Link
+                  <SplitonCtaPill
                     href={ROUTES.catalogMarketOverview}
-                    className="inline-flex h-11 items-center justify-center rounded-full bg-[#B7F500] px-5 text-[13px] font-semibold text-black transition hover:bg-[#c8ff3d]"
-                    onClick={() => onOpenChange(false)}
+                    tone="onDark"
+                    withArrow={false}
+                    className="h-11 w-full text-[14px] font-semibold"
                   >
                     {t("secondaryMarket.actions.goToCatalog")}
-                  </Link>
+                  </SplitonCtaPill>
                   <Link
                     href={ROUTES.myAssetsOverview}
-                    className="inline-flex h-11 items-center justify-center rounded-full bg-white/10 px-5 text-[13px] font-medium text-zinc-200 transition hover:bg-white/14"
+                    className="inline-flex h-11 items-center justify-center rounded-full bg-white/[0.06] px-4 text-[13px] font-medium text-zinc-200 transition hover:bg-white/[0.1]"
                     onClick={() => onOpenChange(false)}
                   >
                     {t("secondaryMarket.actions.myAssets")}
@@ -377,10 +400,12 @@ export function SecondaryMarketCreateListingSheet({
             ) : (
               <div className="space-y-5 pb-2">
                 <section>
-                  <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.forms.stepRelease")}</p>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
+                    {t("secondaryMarket.forms.stepRelease")}
+                  </p>
                   <div className="relative mt-2">
                     <Search
-                      className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-600"
+                      className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-600"
                       aria-hidden
                     />
                     <input
@@ -392,12 +417,12 @@ export function SecondaryMarketCreateListingSheet({
                     />
                   </div>
                   <ul
-                    className="mt-3 max-h-[min(240px,38vh)] space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
+                    className="mt-3 max-h-[min(240px,38vh)] space-y-0 overflow-y-auto overscroll-contain divide-y divide-white/[0.05] [scrollbar-width:thin]"
                     role="listbox"
                     aria-label={t("secondaryMarket.aria.selectRelease")}
                   >
                     {filteredHoldings.length === 0 ? (
-                      <li className="rounded-xl bg-[#111111] px-4 py-6 text-center text-sm text-zinc-500">
+                      <li className="px-1 py-6 text-center text-sm text-zinc-500">
                         {t("secondaryMarket.empty.noResults")}
                       </li>
                     ) : (
@@ -412,16 +437,14 @@ export function SecondaryMarketCreateListingSheet({
                               aria-selected={isActive}
                               onClick={() => handleSelectRelease(h.releaseId)}
                               className={cn(
-                                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition",
-                                isActive
-                                  ? "bg-[#B7F500]/10 ring-1 ring-[#B7F500]/35"
-                                  : "bg-[#111111] ring-1 ring-white/6 hover:bg-[#161616] hover:ring-white/10",
+                                "flex w-full items-center gap-3 px-1 py-3 text-left transition",
+                                isActive ? "bg-white/[0.04]" : "hover:bg-white/[0.02]",
                               )}
                             >
                               <ReleaseThumb symbol={h.symbol} />
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-[14px] font-semibold text-white">{h.trackTitle}</p>
-                                <p className="mt-0.5 font-mono text-[11px] text-zinc-500">
+                                <p className="mt-0.5 text-[11px] text-zinc-500">
                                   {tf(t("secondaryMarket.forms.holdingUnitsFree"), { symbol: h.symbol, avail: String(avail) })}
                                   {Number(h.unitsLocked) > 0 ? (
                                     <span className="text-zinc-600">
@@ -431,7 +454,7 @@ export function SecondaryMarketCreateListingSheet({
                                 </p>
                               </div>
                               <ChevronRight
-                                className={cn("size-4 shrink-0", isActive ? "text-[#B7F500]" : "text-zinc-600")}
+                                className={cn("size-4 shrink-0", isActive ? "text-white" : "text-zinc-600")}
                                 aria-hidden
                               />
                             </button>
@@ -445,10 +468,10 @@ export function SecondaryMarketCreateListingSheet({
                 {selected ? (
                   <>
                     <section>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.forms.stepParams")}</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">{t("secondaryMarket.forms.stepParams")}</p>
                       <div className="mt-3 space-y-3">
-                        <div className="rounded-xl bg-[#111111] p-3.5 ring-1 ring-white/6">
-                          <label className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                        <div className="rounded-2xl bg-white/[0.04] p-3.5">
+                          <label className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
                             {t("secondaryMarket.forms.unitsLabel")}
                           </label>
                           <div className="mt-2 flex items-baseline justify-between gap-2">
@@ -487,8 +510,8 @@ export function SecondaryMarketCreateListingSheet({
                           </p>
                         </div>
 
-                        <div className="rounded-xl bg-[#111111] p-3.5 ring-1 ring-white/6">
-                          <label className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                        <div className="rounded-2xl bg-white/[0.04] p-3.5">
+                          <label className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">
                             {t("secondaryMarket.forms.pricePerUnit")}
                           </label>
                           <div className="mt-2 flex items-baseline justify-between gap-2">
@@ -509,7 +532,7 @@ export function SecondaryMarketCreateListingSheet({
                             <button
                               type="button"
                               onClick={() => setPricePerUnit(String(roundUsdt2(avgEntry * 1.015)))}
-                              className="mt-2 font-mono text-[11px] text-[#B7F500] hover:underline"
+                              className="mt-2 font-mono text-[11px] text-white hover:underline"
                             >
                               {tf(t("secondaryMarket.forms.applyEntryPlus"), {
                                 price: formatUsdt(roundUsdt2(avgEntry * 1.015)),
@@ -520,8 +543,8 @@ export function SecondaryMarketCreateListingSheet({
                       </div>
                     </section>
 
-                    <section className="rounded-xl bg-[#111111] p-4 ring-1 ring-white/6">
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-600">{t("secondaryMarket.forms.summaryTitle")}</p>
+                    <section className="rounded-2xl bg-white/[0.04] p-4">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-zinc-500">{t("secondaryMarket.forms.summaryTitle")}</p>
                       <dl className="mt-3 space-y-2 font-mono text-[12px]">
                         <div className="flex justify-between gap-3 text-zinc-400">
                           <dt>{t("secondaryMarket.forms.grossLabel")}</dt>
@@ -536,7 +559,7 @@ export function SecondaryMarketCreateListingSheet({
                         </div>
                         <div className="flex justify-between gap-3 border-t border-white/6 pt-2">
                           <dt className="font-semibold text-zinc-300">{t("secondaryMarket.forms.receiveNetLabel")}</dt>
-                          <dd className="text-base font-semibold tabular-nums text-[#B7F500]">
+                          <dd className="text-base font-semibold tabular-nums text-white">
                             {formatUsdt(netUsdt)} USDT
                           </dd>
                         </div>

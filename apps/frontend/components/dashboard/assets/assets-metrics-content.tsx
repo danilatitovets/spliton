@@ -1,22 +1,20 @@
 "use client";
 
 import { MetricsAssetDynamicsChart, MetricsResultsChart } from "@/components/dashboard/assets/metrics-charts";
+import { MetricsDailyBreakdownCard } from "@/components/dashboard/assets/metrics-daily-breakdown-card";
 import { MetricsEmptyState } from "@/components/dashboard/assets/metrics-empty-state";
+import { MetricsHero } from "@/components/dashboard/assets/metrics-hero";
 import { MetricsIncomeChart } from "@/components/dashboard/assets/metrics-income-chart";
 import { MetricsPageSkeleton } from "@/components/dashboard/assets/metrics-page-skeleton";
 import { MetricsPerformanceCard } from "@/components/dashboard/assets/metrics-performance-card";
-import { MetricsDailyBreakdownCard } from "@/components/dashboard/assets/metrics-daily-breakdown-card";
-import { MetricsKpiGrid } from "@/components/dashboard/assets/metrics-kpi-grid";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
 import { usePortfolioMetricsPage } from "@/hooks/use-portfolio-metrics-page";
 import { usePortfolioValueChartLive } from "@/hooks/use-portfolio-charts";
 import { useWalletCashflowTotals } from "@/hooks/use-wallet-cashflow-totals";
-import { isLivePortfolioEnabled } from "@/lib/public-env";
 
 export function AssetsMetricsContent() {
   const { t } = useI18n();
-  const live = isLivePortfolioEnabled();
   const page = usePortfolioMetricsPage({ page: 1, limit: 1, sort: "value", sortDir: "desc" });
   const portfolioChart = usePortfolioValueChartLive();
   const cashflow = useWalletCashflowTotals();
@@ -46,12 +44,11 @@ export function AssetsMetricsContent() {
         </p>
       ) : null}
 
-      <MetricsKpiGrid
+      <MetricsHero
         live={page.live}
         overview={page.metrics?.overview}
         wallet={page.walletSummary}
         loading={page.loading || page.walletLoading}
-        error={Boolean(page.error && page.walletError && !page.metrics && !page.walletSummary)}
       />
 
       {isEmptyPortfolio ? <MetricsEmptyState /> : null}
@@ -63,7 +60,7 @@ export function AssetsMetricsContent() {
           <MetricsResultsChart />
         )}
         <MetricsAssetDynamicsChart
-          compact
+          tone="light"
           isLiveMode={portfolioChart.live}
           liveSeries={portfolioChart.live ? portfolioChart.series : null}
           liveLoading={portfolioChart.live && portfolioChart.loading}
@@ -80,9 +77,8 @@ export function AssetsMetricsContent() {
       <section className="grid gap-4 lg:grid-cols-2 lg:gap-5">
         {page.live ? (
           <MetricsIncomeChart live rows={page.metrics?.incomeByPeriod} loading={page.loading} />
-        ) : (
-          <MetricsDailyBreakdownCard />
-        )}
+        ) : null}
+        <MetricsDailyBreakdownCard />
       </section>
     </div>
   );

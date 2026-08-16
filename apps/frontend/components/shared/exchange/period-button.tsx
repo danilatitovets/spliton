@@ -20,12 +20,12 @@ export function PeriodButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-lg px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide transition-colors",
+        "rounded-full px-2.5 py-1 text-[12px] font-semibold transition-colors",
         active
           ? tone === "neutral"
-            ? "bg-white/8 text-zinc-100 ring-1 ring-white/12"
+            ? "bg-white/10 text-zinc-100"
             : "bg-[#B7F500]/14 text-[#d4f570]"
-          : "bg-[#111111] text-zinc-400 hover:bg-[#161616] hover:text-zinc-200",
+          : "bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200",
       )}
     >
       {children}

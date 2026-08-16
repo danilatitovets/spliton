@@ -25,8 +25,12 @@ export const COMPLIANCE_USER_ERRORS = {
 export class ComplianceEnforcementService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async assertUserCanTransact(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
+  async assertUserCanTransact(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const db = tx ?? this.prisma;
+    const user = await db.user.findUnique({
       where: { id: userId },
       select: { status: true, deletedAt: true },
     });
@@ -45,7 +49,7 @@ export class ComplianceEnforcementService {
       );
     }
 
-    const blockedWallet = await this.prisma.wallet.findFirst({
+    const blockedWallet = await db.wallet.findFirst({
       where: { userId, status: WalletStatus.BLOCKED },
       select: { id: true },
     });
@@ -57,7 +61,7 @@ export class ComplianceEnforcementService {
       );
     }
 
-    const activeWalletFreeze = await this.activeWalletFreezeForUser(userId);
+    const activeWalletFreeze = await this.activeWalletFreezeForUser(userId, tx);
     if (activeWalletFreeze) {
       throwAdminError(
         'WALLET_FROZEN',
@@ -66,7 +70,7 @@ export class ComplianceEnforcementService {
       );
     }
 
-    const blockingFlag = await this.prisma.riskFlag.findFirst({
+    const blockingFlag = await db.riskFlag.findFirst({
       where: {
         userId,
         isActive: true,
@@ -133,8 +137,12 @@ export class ComplianceEnforcementService {
     await this.assertWithdrawalCanProceed(withdrawalId, tx);
   }
 
-  async assertListingCanBeBought(listingId: string): Promise<void> {
-    const listing = await this.prisma.marketListing.findFirst({
+  async assertListingCanBeBought(
+    listingId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const db = tx ?? this.prisma;
+    const listing = await db.marketListing.findFirst({
       where: { id: listingId, deletedAt: null },
       select: { status: true, sellerUserId: true },
     });
@@ -146,7 +154,7 @@ export class ComplianceEnforcementService {
       );
     }
 
-    const listingFreeze = await this.prisma.complianceFreeze.findFirst({
+    const listingFreeze = await db.complianceFreeze.findFirst({
       where: {
         operationType: 'listing',
         operationId: listingId,
@@ -161,7 +169,7 @@ export class ComplianceEnforcementService {
       );
     }
 
-    await this.assertUserCanTransact(listing.sellerUserId);
+    await this.assertUserCanTransact(listing.sellerUserId, tx);
   }
 
   async assertBuyerCanTrade(
@@ -183,10 +191,14 @@ export class ComplianceEnforcementService {
     }
   }
 
-  private async activeWalletFreezeForUser(userId: string) {
-    const ids = await this.walletIds(userId);
+  private async activeWalletFreezeForUser(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const db = tx ?? this.prisma;
+    const ids = await this.walletIds(userId, tx);
     if (ids.length === 0) return null;
-    return this.prisma.complianceFreeze.findFirst({
+    return db.complianceFreeze.findFirst({
       where: {
         operationType: 'wallet',
         isActive: true,
@@ -195,8 +207,12 @@ export class ComplianceEnforcementService {
     });
   }
 
-  private async walletIds(userId: string): Promise<string[]> {
-    const rows = await this.prisma.wallet.findMany({
+  private async walletIds(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string[]> {
+    const db = tx ?? this.prisma;
+    const rows = await db.wallet.findMany({
       where: { userId },
       select: { id: true },
     });

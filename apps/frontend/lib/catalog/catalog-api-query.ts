@@ -12,6 +12,9 @@ export type CatalogListQueryParams = {
   minProgress?: string;
   minYield?: string;
   minLiquidity?: string;
+  /** Restrict results to these release UUIDs (favorites). */
+  releaseIds?: string[];
+  favoritesOnly?: boolean;
   page?: number;
   pageSize?: number;
 };
@@ -99,6 +102,10 @@ export function buildCatalogListQuery(params: CatalogListQueryParams): Record<st
   if (minProgress != null) q.minProgress = String(minProgress);
   if (minLiquidity != null) q.minLiquidity = String(minLiquidity);
 
+  if (params.releaseIds) {
+    q.releaseIds = params.releaseIds.join(",");
+  }
+
   return q;
 }
 
@@ -112,6 +119,7 @@ export const CATALOG_URL_KEYS = [
   "minYield",
   "minProgress",
   "minLiquidity",
+  "favorites",
   "sort",
   "page",
 ] as const;
@@ -145,6 +153,7 @@ export function parseCatalogSearchParams(
 
   const pageRaw = params.get("page");
   const page = pageRaw ? Number.parseInt(pageRaw, 10) : undefined;
+  const favoritesRaw = params.get("favorites");
 
   return {
     search: params.get("search") ?? undefined,
@@ -156,6 +165,7 @@ export function parseCatalogSearchParams(
     minYield: params.get("minYield") ?? undefined,
     minProgress: params.get("minProgress") ?? undefined,
     minLiquidity: params.get("minLiquidity") ?? undefined,
+    favoritesOnly: favoritesRaw === "1" || favoritesRaw === "true",
     sort,
     page: Number.isFinite(page) && page! > 0 ? page : undefined,
   };
@@ -174,6 +184,7 @@ export function buildCatalogUrlSearchParams(
   if (params.minYield?.trim()) sp.set("minYield", params.minYield.trim());
   if (params.minProgress?.trim()) sp.set("minProgress", params.minProgress.trim());
   if (params.minLiquidity?.trim()) sp.set("minLiquidity", params.minLiquidity.trim());
+  if (params.favoritesOnly) sp.set("favorites", "1");
   if (params.sort && params.sort !== "catalog_order") sp.set("sort", params.sort);
   if (params.page && params.page > 1) sp.set("page", String(params.page));
   return sp;

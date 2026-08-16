@@ -4,6 +4,7 @@ import { TtlCacheService } from '../../common/cache/ttl-cache.service';
 import {
   CATALOG_CACHE_KEYS,
   catalogFiltersCacheKey,
+  catalogReleaseDetailCacheKey,
 } from './catalog-cache.constants';
 import {
   ListingStatus,
@@ -15,6 +16,7 @@ import {
 import { MAX_PAGE_SIZE } from '../../common/pagination/pagination.constants';
 import { resolvePagination } from '../../common/pagination/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { createStageTimer } from '../../common/observability/stage-timer';
 import { throwAdminError } from '../admin/common/admin-http.util';
 import { normalizeGenre } from '../market/secondary-market-rich.mapper';
 import type { CatalogFiltersQueryDto, CatalogListQueryDto } from './dto/catalog-list-query.dto';
@@ -161,10 +163,22 @@ export class PublicCatalogService {
       query.minYield == null &&
       query.minProgress == null &&
       query.minLiquidity == null &&
+      query.releaseIds == null &&
       (!query.sort || query.sort === 'catalog_order' || query.sort === 'newest') &&
       (query.page ?? 1) === 1 &&
       (query.pageSize ?? 24) <= 24
     );
+  }
+
+  /** null = no ID filter; [] = force empty result set. */
+  private parseReleaseIds(raw?: string): string[] | null {
+    if (raw == null) return null;
+    const uuidRe =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((id) => uuidRe.test(id));
   }
 
   private resolveKind(query: CatalogListQueryDto): string {
@@ -207,6 +221,8 @@ export class PublicCatalogService {
         ? 'relevance'
         : (query.sort ?? 'newest');
 
+    const releaseIds = this.parseReleaseIds(query.releaseIds);
+
     const rows = await this.prisma.$queryRawUnsafe<CatalogSearchRow[]>(
       `SELECT * FROM catalog_search_releases(
         $1::text,
@@ -224,7 +240,8 @@ export class PublicCatalogService {
         $13::uuid,
         $14::text,
         $15::integer,
-        $16::integer
+        $16::integer,
+        $17::uuid[]
       )`,
       query.search?.trim() ?? null,
       kind,
@@ -242,6 +259,7 @@ export class PublicCatalogService {
       sort,
       page,
       ps,
+      releaseIds,
     ).catch((err) => this.throwCatalogUnavailable('catalog_search_releases', err));
 
     const feePct = await this.defaultPrimaryFeePct();
@@ -270,6 +288,7 @@ export class PublicCatalogService {
         minYield: query.minYield ?? null,
         minProgress: query.minProgress ?? null,
         minLiquidity: query.minLiquidity ?? null,
+        releaseIds: releaseIds,
       },
       updatedAt: new Date().toISOString(),
       total,
@@ -494,21 +513,120 @@ export class PublicCatalogService {
   }
 
   async getRelease(releaseKey: string) {
-    const release = await this.findPublicRelease(releaseKey);
-    const metrics = (await this.loadLatestMetrics([release.id])).get(release.id);
-    const marketCtx = (await this.loadMarketContext([release.id])).get(release.id);
-    const feePct = await this.defaultPrimaryFeePct();
-    const card = this.mapCatalogCard(release, metrics, feePct, marketCtx);
-    const primaryRound = this.mapPrimaryRoundPublic(release, feePct);
+    const trimmed = releaseKey.trim();
+    const cacheKey = catalogReleaseDetailCacheKey(trimmed);
+    const cacheOpts = { staleTtlMs: 300_000 };
 
-    return {
-      ...card,
-      description: release.description,
-      audioPreviewUrl: release.audioPreviewUrl,
-      releaseDate: release.releaseDate?.toISOString().slice(0, 10) ?? null,
-      primaryRound,
-      purchaseState: card.purchaseState,
-    };
+    // Alias hit: slug/symbol/id share one payload after first miss.
+    const aliased = await this.cache.getOrSet(
+      cacheKey,
+      CACHE_TTL_MS.publicCatalog,
+      async () => {
+        const timer = createStageTimer();
+
+        // UUID path: release + market + metrics + fee in one parallel wave (pooler RTT dominated).
+        if (this.isReleaseUuid(trimmed)) {
+          const metricsPromise = this.loadLatestMetrics([trimmed]);
+          const [release, marketTimed, feePct, metricsMap] = await Promise.all([
+            this.findPublicRelease(trimmed),
+            this.loadMarketContextTimed([trimmed], metricsPromise),
+            this.defaultPrimaryFeePct(),
+            metricsPromise,
+          ]);
+          timer.mark('parallelAll');
+
+          const metrics = metricsMap.get(release.id);
+          const ctx = marketTimed.ctx.get(release.id);
+          const card = this.mapCatalogCard(release, metrics, feePct, ctx);
+          const primaryRound = this.mapPrimaryRoundPublic(release, feePct);
+          timer.mark('mapResult');
+
+          const totalMs = timer.total();
+          const stages = { ...timer.stages(), ...marketTimed.stages };
+          if (totalMs >= 500) {
+            this.logger.warn(
+              JSON.stringify({
+                event: 'catalog.getRelease.slow',
+                key: releaseKey.slice(0, 64),
+                releaseId: release.id,
+                totalMs,
+                cache: 'miss',
+                path: 'uuid-parallel',
+                stages,
+              }),
+            );
+          }
+
+          return {
+            payload: {
+              ...card,
+              description: release.description,
+              audioPreviewUrl: release.audioPreviewUrl,
+              releaseDate: release.releaseDate?.toISOString().slice(0, 10) ?? null,
+              primaryRound,
+              purchaseState: card.purchaseState,
+            },
+            aliases: [release.id, release.slug, release.symbol].filter(Boolean) as string[],
+          };
+        }
+
+        const release = await this.findPublicRelease(trimmed);
+        timer.mark('findPublicRelease');
+        const metricsPromise = this.loadLatestMetrics([release.id]);
+        const [metricsMap, marketTimed, feePct] = await Promise.all([
+          metricsPromise,
+          this.loadMarketContextTimed([release.id], metricsPromise),
+          this.defaultPrimaryFeePct(),
+        ]);
+        timer.mark('parallelFanout');
+
+        const metrics = metricsMap.get(release.id);
+        const ctx = marketTimed.ctx.get(release.id);
+        const card = this.mapCatalogCard(release, metrics, feePct, ctx);
+        const primaryRound = this.mapPrimaryRoundPublic(release, feePct);
+        timer.mark('mapResult');
+
+        const totalMs = timer.total();
+        const stages = { ...timer.stages(), ...marketTimed.stages };
+        if (totalMs >= 500) {
+          this.logger.warn(
+            JSON.stringify({
+              event: 'catalog.getRelease.slow',
+              key: releaseKey.slice(0, 64),
+              releaseId: release.id,
+              totalMs,
+              cache: 'miss',
+              path: 'key-serial',
+              stages,
+            }),
+          );
+        }
+
+        return {
+          payload: {
+            ...card,
+            description: release.description,
+            audioPreviewUrl: release.audioPreviewUrl,
+            releaseDate: release.releaseDate?.toISOString().slice(0, 10) ?? null,
+            primaryRound,
+            purchaseState: card.purchaseState,
+          },
+          aliases: [release.id, release.slug, release.symbol].filter(Boolean) as string[],
+        };
+      },
+      cacheOpts,
+    );
+
+    // Populate sibling keys so /slug then /uuid (and buy page) share one cold load.
+    if (aliased.aliases?.length) {
+      for (const alias of aliased.aliases) {
+        const aliasKey = catalogReleaseDetailCacheKey(alias);
+        if (aliasKey === cacheKey) continue;
+        this.cache.set(aliasKey, aliased, CACHE_TTL_MS.publicCatalog, cacheOpts);
+      }
+    }
+
+    return aliased.payload;
   }
 
   async listLegacyReleases() {
@@ -553,7 +671,33 @@ export class PublicCatalogService {
     return { items: rows };
   }
 
-  private async loadMarketContext(releaseIds: string[]) {
+  private async loadMarketContext(
+    releaseIds: string[],
+    metricsPromise?: Promise<
+      Map<
+        string,
+        { yieldPct: Prisma.Decimal | null; liquidityScore: Prisma.Decimal | null }
+      >
+    >,
+  ) {
+    const timed = await this.loadMarketContextTimed(releaseIds, metricsPromise);
+    return timed.ctx;
+  }
+
+  /**
+   * Market aggregates for catalog cards/detail.
+   * Avoids loading full trade rows into Node — uses SQL groupBy + last-price findFirst.
+   */
+  private async loadMarketContextTimed(
+    releaseIds: string[],
+    metricsPromise?: Promise<
+      Map<
+        string,
+        { yieldPct: Prisma.Decimal | null; liquidityScore: Prisma.Decimal | null }
+      >
+    >,
+  ) {
+    const stages: Record<string, number> = {};
     const map = new Map<
       string,
       {
@@ -566,62 +710,165 @@ export class PublicCatalogService {
         liquidityScore: number | null;
       }
     >();
-    if (releaseIds.length === 0) return map;
+    if (releaseIds.length === 0) return { ctx: map, stages };
 
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const [listings, trades24h, trades7d, metrics] = await Promise.all([
-      this.prisma.marketListing.groupBy({
-        by: ['releaseId'],
-        where: {
-          releaseId: { in: releaseIds },
-          deletedAt: null,
-          status: ListingStatus.ACTIVE,
-          unitsAvailable: { gt: 0 },
-        },
-        _count: { id: true },
-        _min: { pricePerUnit: true },
-      }),
-      this.prisma.trade.findMany({
-        where: {
-          releaseId: { in: releaseIds },
-          settlementStatus: TradeSettlementStatus.SETTLED,
-          executedAt: { gte: since24h },
-        },
-        select: { releaseId: true, grossAmount: true, price: true, executedAt: true },
-        orderBy: { executedAt: 'desc' },
-      }),
-      this.prisma.trade.groupBy({
-        by: ['releaseId'],
-        where: {
-          releaseId: { in: releaseIds },
-          settlementStatus: TradeSettlementStatus.SETTLED,
-          executedAt: { gte: since7d },
-        },
-        _sum: { grossAmount: true },
-      }),
-      this.loadLatestMetrics(releaseIds),
-    ]);
+    const t0 = performance.now();
 
+    // Detail path (1 id): one round-trip — DB RTT to Supabase pooler is ~600ms+ per query.
+    if (releaseIds.length === 1) {
+      const releaseId = releaseIds[0];
+      const [aggRows, metrics] = await Promise.all([
+        this.prisma.$queryRaw<
+          Array<{
+            listing_count: bigint;
+            best_ask: Prisma.Decimal | null;
+            vol24: Prisma.Decimal | null;
+            vol7: Prisma.Decimal | null;
+            last_price: Prisma.Decimal | null;
+          }>
+        >`
+          SELECT
+            (
+              SELECT COUNT(*)::bigint
+              FROM market_listings ml
+              WHERE ml.release_id = ${releaseId}::uuid
+                AND ml.deleted_at IS NULL
+                AND ml.status = 'ACTIVE'
+                AND ml.units_available > 0
+            ) AS listing_count,
+            (
+              SELECT MIN(ml.price_per_unit)
+              FROM market_listings ml
+              WHERE ml.release_id = ${releaseId}::uuid
+                AND ml.deleted_at IS NULL
+                AND ml.status = 'ACTIVE'
+                AND ml.units_available > 0
+            ) AS best_ask,
+            (
+              SELECT COALESCE(SUM(t.gross_amount), 0)
+              FROM trades t
+              WHERE t.release_id = ${releaseId}::uuid
+                AND t.settlement_status = 'SETTLED'
+                AND t.executed_at >= ${since24h}
+            ) AS vol24,
+            (
+              SELECT COALESCE(SUM(t.gross_amount), 0)
+              FROM trades t
+              WHERE t.release_id = ${releaseId}::uuid
+                AND t.settlement_status = 'SETTLED'
+                AND t.executed_at >= ${since7d}
+            ) AS vol7,
+            (
+              SELECT t.price
+              FROM trades t
+              WHERE t.release_id = ${releaseId}::uuid
+                AND t.settlement_status = 'SETTLED'
+              ORDER BY t.executed_at DESC
+              LIMIT 1
+            ) AS last_price
+        `,
+        metricsPromise ?? this.loadLatestMetrics(releaseIds),
+      ]);
+      stages.marketQueriesMs = Math.round(performance.now() - t0);
+      stages.mode = 1; // single-sql
+      const row = aggRows[0];
+      const listingCount = Number(row?.listing_count ?? 0);
+      map.set(releaseId, {
+        secondaryEnabled: listingCount > 0,
+        activeListingsCount: listingCount,
+        bestAskPrice: row?.best_ask?.toString() ?? null,
+        volume24hUsdt: (row?.vol24 ?? new Prisma.Decimal(0)).toString(),
+        volume7dUsdt: (row?.vol7 ?? new Prisma.Decimal(0)).toString(),
+        lastTradePrice: row?.last_price?.toString() ?? null,
+        liquidityScore: metrics.get(releaseId)?.liquidityScore
+          ? Number(metrics.get(releaseId)!.liquidityScore)
+          : null,
+      });
+      stages.mapMs = 0;
+      return { ctx: map, stages };
+    }
+
+    const listingsP = this.prisma.marketListing.groupBy({
+      by: ['releaseId'],
+      where: {
+        releaseId: { in: releaseIds },
+        deletedAt: null,
+        status: ListingStatus.ACTIVE,
+        unitsAvailable: { gt: 0 },
+      },
+      _count: { id: true },
+      _min: { pricePerUnit: true },
+    });
+
+    const volume24hP = this.prisma.trade.groupBy({
+      by: ['releaseId'],
+      where: {
+        releaseId: { in: releaseIds },
+        settlementStatus: TradeSettlementStatus.SETTLED,
+        executedAt: { gte: since24h },
+      },
+      _sum: { grossAmount: true },
+    });
+
+    const volume7dP = this.prisma.trade.groupBy({
+      by: ['releaseId'],
+      where: {
+        releaseId: { in: releaseIds },
+        settlementStatus: TradeSettlementStatus.SETTLED,
+        executedAt: { gte: since7d },
+      },
+      _sum: { grossAmount: true },
+    });
+
+    const lastPriceP = Promise.all(
+      releaseIds.map(async (id) => {
+        const row = await this.prisma.trade.findFirst({
+          where: {
+            releaseId: id,
+            settlementStatus: TradeSettlementStatus.SETTLED,
+          },
+          orderBy: { executedAt: 'desc' },
+          select: { releaseId: true, price: true },
+        });
+        return row;
+      }),
+    );
+
+    const metricsP = metricsPromise ?? this.loadLatestMetrics(releaseIds);
+
+    const [listings, trades24h, trades7d, lastTrades, metrics] = await Promise.all([
+      listingsP,
+      volume24hP,
+      volume7dP,
+      lastPriceP,
+      metricsP,
+    ]);
+    stages.marketQueriesMs = Math.round(performance.now() - t0);
+    stages.mode = releaseIds.length;
+    stages.listingsRows = listings.length;
+    stages.volume24hRows = trades24h.length;
+    stages.volume7dRows = trades7d.length;
+    stages.lastTradeHits = lastTrades.filter(Boolean).length;
+
+    const tMap = performance.now();
     const listingMap = new Map(
       listings.map((l) => [
         l.releaseId,
         { count: l._count.id, bestAsk: l._min.pricePerUnit?.toString() ?? null },
       ]),
     );
-    const volume24h = new Map<string, Prisma.Decimal>();
-    const lastPrice = new Map<string, string>();
-    for (const t of trades24h) {
-      volume24h.set(
-        t.releaseId,
-        (volume24h.get(t.releaseId) ?? new Prisma.Decimal(0)).plus(t.grossAmount),
-      );
-      if (!lastPrice.has(t.releaseId)) {
-        lastPrice.set(t.releaseId, t.price.toString());
-      }
-    }
+    const volume24h = new Map(
+      trades24h.map((row) => [row.releaseId, row._sum.grossAmount ?? new Prisma.Decimal(0)]),
+    );
     const volume7d = new Map(
-      trades7d.map((t) => [t.releaseId, t._sum.grossAmount ?? new Prisma.Decimal(0)]),
+      trades7d.map((row) => [row.releaseId, row._sum.grossAmount ?? new Prisma.Decimal(0)]),
+    );
+    const lastPrice = new Map(
+      lastTrades
+        .filter((r): r is NonNullable<typeof r> => r != null)
+        .map((r) => [r.releaseId, r.price.toString()]),
     );
 
     for (const id of releaseIds) {
@@ -638,7 +885,8 @@ export class PublicCatalogService {
           : null,
       });
     }
-    return map;
+    stages.mapMs = Math.round(performance.now() - tMap);
+    return { ctx: map, stages };
   }
 
   private isReleaseUuid(key: string): boolean {
@@ -649,24 +897,42 @@ export class PublicCatalogService {
 
   private async findPublicRelease(key: string) {
     const trimmed = key.trim();
-    let row = null;
+    type ReleaseRow = Prisma.ReleaseGetPayload<{ include: typeof releaseInclude }>;
+    let row: ReleaseRow | null = null;
 
     if (this.isReleaseUuid(trimmed)) {
+      // One RTT wall: base row + relations in parallel (UUID known up front).
+      const [byId, releaseArtists, primaryRaiseRounds] = await Promise.all([
+        this.prisma.release.findUnique({ where: { id: trimmed } }),
+        this.prisma.releaseArtist.findMany({
+          where: { releaseId: trimmed },
+          include: { artist: true },
+          orderBy: { createdAt: 'asc' },
+          take: 3,
+        }),
+        this.prisma.primaryRaiseRound.findMany({
+          where: { releaseId: trimmed },
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+        }),
+      ]);
+      if (byId && byId.deletedAt == null) {
+        row = { ...byId, releaseArtists, primaryRaiseRounds };
+      }
+    }
+
+    if (!row) {
+      // Single query for slug OR symbol (parallel dual-include doubled pooler load).
+      const slug = trimmed.toLowerCase();
+      const symbol = trimmed.toUpperCase();
       row = await this.prisma.release.findFirst({
-        where: { id: trimmed, deletedAt: null },
+        where: {
+          deletedAt: null,
+          OR: [{ slug }, { symbol }],
+        },
         include: releaseInclude,
       });
     }
-
-    row ??= await this.prisma.release.findFirst({
-      where: { slug: trimmed.toLowerCase(), deletedAt: null },
-      include: releaseInclude,
-    });
-
-    row ??= await this.prisma.release.findFirst({
-      where: { symbol: trimmed.toUpperCase(), deletedAt: null },
-      include: releaseInclude,
-    });
 
     if (!row || !isCatalogPublicStatus(row.status)) {
       throwAdminError(
@@ -857,10 +1123,27 @@ export class PublicCatalogService {
     >();
     if (releaseIds.length === 0) return map;
 
+    // Single-id path: indexed findFirst — avoids DISTINCT sort over all daily rows.
+    if (releaseIds.length === 1) {
+      const row = await this.prisma.releaseMetricsDaily.findFirst({
+        where: { releaseId: releaseIds[0] },
+        orderBy: { asOfDate: 'desc' },
+        select: { releaseId: true, yieldPct: true, liquidityScore: true },
+      });
+      if (row) {
+        map.set(row.releaseId, {
+          yieldPct: row.yieldPct,
+          liquidityScore: row.liquidityScore,
+        });
+      }
+      return map;
+    }
+
     const rows = await this.prisma.releaseMetricsDaily.findMany({
       where: { releaseId: { in: releaseIds } },
       orderBy: { asOfDate: 'desc' },
       distinct: ['releaseId'],
+      select: { releaseId: true, yieldPct: true, liquidityScore: true },
     });
     for (const row of rows) {
       map.set(row.releaseId, {
@@ -872,10 +1155,17 @@ export class PublicCatalogService {
   }
 
   private async defaultPrimaryFeePct(): Promise<Prisma.Decimal> {
-    const row = await this.prisma.platformFeeSetting.findFirst({
-      where: { isActive: true },
-      orderBy: { effectiveFrom: 'desc' },
-    });
-    return row?.primaryPurchaseFeePct ?? new Prisma.Decimal(2);
+    return this.cache.getOrSet(
+      CATALOG_CACHE_KEYS.primaryFeePct,
+      CACHE_TTL_MS.publicCatalog,
+      async () => {
+        const row = await this.prisma.platformFeeSetting.findFirst({
+          where: { isActive: true },
+          orderBy: { effectiveFrom: 'desc' },
+          select: { primaryPurchaseFeePct: true },
+        });
+        return row?.primaryPurchaseFeePct ?? new Prisma.Decimal(2);
+      },
+    );
   }
 }

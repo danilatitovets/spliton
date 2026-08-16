@@ -8,6 +8,8 @@ import { useState } from "react";
 import { PartnerFaqList } from "@/components/partner-program/partner-faq-list";
 import { PartnerApplyTriggerButton } from "@/components/partner-program/partner-apply-trigger-button";
 import { PartnerHowScene } from "@/components/partner-program/partner-how-scene";
+import { PartnerPromoTiles } from "@/components/partner-program/partner-promo-tiles";
+import { PartnerSurface } from "@/components/partner-program/partner-surface";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { buttonVariants } from "@/components/ui/button";
 import type { PartnerProgramTabId } from "@/constants/dashboard/partner-program";
@@ -26,6 +28,8 @@ import { isLiveServicesEnabled } from "@/lib/public-env";
 import { cn } from "@/lib/utils";
 
 const surfaceCard = "rounded-2xl bg-[#111111]";
+const COMMUNITY_GLASS_ICON = "/images/partner-program/community-glass.png";
+const FAQ_GLASS_ICON = "/images/partner-program/faq-glass.png";
 
 function PartnerVoicesBlock() {
   const { t } = useI18n();
@@ -130,14 +134,14 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
             )}
           >
             <Image
-              src="/images/partner-programtab=about/back.jpg"
+              src="/images/partner-program/waves-smoke.png"
               alt=""
               fill
-              className="object-cover object-center opacity-55"
+              className="object-cover object-center opacity-80"
               sizes="(max-width: 1200px) 100vw, 1200px"
+              priority
             />
-            <div className="pointer-events-none absolute inset-0 bg-black/28" aria-hidden />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_80%_0%,rgba(255,255,255,0.15),transparent_55%)]" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/40" aria-hidden />
 
             <div className="relative grid gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
               <div>
@@ -147,7 +151,7 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
                 <p className="mt-4 max-w-2xl text-base leading-relaxed text-zinc-200">
                   Развивайтесь вместе с платформой revenue share по музыкальным трекам. Партнёрка - для профессионального и
                   медийного сотрудничества;{" "}
-                  <Link href={ROUTES.referralProgram} className="text-[#d4f570] underline-offset-4 hover:underline">
+                  <Link href={ROUTES.referralProgram} className="font-medium text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/60">
                     реферальная программа
                   </Link>{" "}
                   остаётся в кабинете для личных приглашений.
@@ -157,7 +161,7 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
                     <PartnerApplyTriggerButton
                       className={cn(
                         buttonVariants({ size: "lg" }),
-                        "h-11 border-0 bg-[#B7F500] px-6 text-sm font-semibold text-black hover:bg-[#c8ff3d]",
+                        "h-11 border-0 bg-white px-6 text-sm font-semibold text-black hover:bg-[#e8e8e8]",
                       )}
                     />
                   ) : (
@@ -165,7 +169,7 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
                       href={partnerApplyMailto("Заявка: партнёрская программа Spliton")}
                       className={cn(
                         buttonVariants({ size: "lg" }),
-                        "h-11 border-0 bg-[#B7F500] px-6 text-sm font-semibold text-black hover:bg-[#c8ff3d]",
+                        "h-11 border-0 bg-white px-6 text-sm font-semibold text-black hover:bg-[#e8e8e8]",
                       )}
                     >
                       Подать заявку
@@ -285,26 +289,26 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
           {liveMarketing ? (
             <section className={cn("relative overflow-hidden p-6 sm:p-8", surfaceCard)} aria-label="Ключевые показатели">
               <Image
-                src="/images/partner-programtab=about/back.jpg"
+                src="/images/partner-program/waves-contour.png"
                 alt=""
                 fill
-                className="object-cover object-center opacity-20"
+                className="object-cover object-center opacity-50"
                 sizes="(max-width: 1200px) 100vw, 1200px"
               />
-              <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
+              <div className="pointer-events-none absolute inset-0 bg-black/70" aria-hidden />
               <div className="relative grid gap-5 md:grid-cols-3">
                 <div>
-                  <p className="text-sm text-[#d4f570]">Более</p>
+                  <p className="text-sm text-zinc-400">Более</p>
                   <p className="mt-1 text-5xl font-semibold text-white">15 000</p>
                   <p className="text-xl text-zinc-300">партнёров</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[#d4f570]">Более</p>
+                  <p className="text-sm text-zinc-400">Более</p>
                   <p className="mt-1 text-5xl font-semibold text-white">120</p>
                   <p className="text-xl text-zinc-300">сообществ</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[#d4f570]">Более</p>
+                  <p className="text-sm text-zinc-400">Более</p>
                   <p className="mt-1 text-5xl font-semibold text-white">20 000</p>
                   <p className="text-xl text-zinc-300">USDT средний доход</p>
                 </div>
@@ -319,6 +323,8 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
               </p>
             </section>
           )}
+
+                    <PartnerPromoTiles />
 
           <PartnerHowScene />
         </div>
@@ -376,13 +382,13 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
             aria-labelledby="apply-title"
           >
             <Image
-              src="/images/partner-programtab=about/back.jpg"
+              src="/images/partner-program/waves-smoke.png"
               alt=""
               fill
-              className="object-cover object-center opacity-35"
+              className="object-cover object-center opacity-75"
               sizes="(max-width: 1200px) 100vw, 1200px"
             />
-            <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/70 to-black/85" aria-hidden />
             <div className="relative">
               <h2 id="apply-title" className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                 Присоединяйтесь к росту Spliton
@@ -437,25 +443,32 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
       ) : null}
 
       {activeTab === "community" ? (
-        <section className="relative overflow-hidden rounded-3xl px-4 py-12 sm:px-8 sm:py-14" aria-labelledby="voices-title">
-          <Image
-            src="/images/partner-programtab=about/back.jpg"
-            alt=""
-            fill
-            className="object-cover object-center opacity-42"
-            sizes="(max-width: 1200px) 100vw, 1200px"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-black/58" aria-hidden />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_65%_at_18%_8%,rgba(255,255,255,0.13),transparent_60%)]" aria-hidden />
-          <h2 id="voices-title" className="sr-only">
-            {liveMarketing ? "Отзывы партнёров" : "Партнёрское комьюнити"}
-          </h2>
-          <div className="relative">
+        <section aria-labelledby="voices-title">
+          <PartnerSurface
+            className="rounded-3xl"
+            innerClassName="px-4 py-12 sm:px-8 sm:py-14"
+            imageOpacity="opacity-45"
+            overlayClassName="bg-black/62"
+          >
+            <h2 id="voices-title" className="sr-only">
+              {liveMarketing ? "Отзывы партнёров" : "Партнёрское комьюнити"}
+            </h2>
             {liveMarketing ? (
               <PartnerVoicesBlock />
             ) : (
-              <div className="mx-auto max-w-xl rounded-2xl bg-[#141414]/90 px-6 py-8 text-center">
-                <p className="text-lg font-semibold text-white">Партнёрское комьюнити</p>
+              <div className="mx-auto flex max-w-xl flex-col items-center text-center">
+                <div className="relative mx-auto aspect-square w-[min(52vw,168px)]">
+                  <Image
+                    src={COMMUNITY_GLASS_ICON}
+                    alt=""
+                    fill
+                    sizes="168px"
+                    className="object-contain"
+                    unoptimized
+                    aria-hidden
+                  />
+                </div>
+                <p className="mt-5 text-lg font-semibold text-white sm:text-xl">Партнёрское комьюнити</p>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-300">
                   Мы готовим материалы и кейсы для партнёров. Пока доступны условия программы, FAQ и форма заявки — без
                   демонстрационных отзывов и статистики.
@@ -465,31 +478,43 @@ export function PartnerProgramPageContent({ activeTab }: PartnerProgramPageConte
                 </p>
               </div>
             )}
-          </div>
+          </PartnerSurface>
         </section>
       ) : null}
 
       {activeTab === "faq" ? (
-        <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8" aria-labelledby="faq-title">
-          <Image
-            src="/images/partner-programtab=about/back.jpg"
-            alt=""
-            fill
-            className="object-cover object-center opacity-36"
-            sizes="(max-width: 1200px) 100vw, 1200px"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(88%_62%_at_14%_8%,rgba(255,255,255,0.12),transparent_60%)]" aria-hidden />
-
-          <div className="relative">
-            <h2 id="faq-title" className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Вопросы и ответы
-            </h2>
-            <p className="mt-2 text-sm text-zinc-300 sm:text-base">Партнёрский контур и отличия от реферальной программы.</p>
-            <div className="mt-6 rounded-2xl bg-[#131313]/85 p-2 backdrop-blur-[2px] sm:p-3">
+        <section aria-labelledby="faq-title">
+          <PartnerSurface
+            className="rounded-3xl"
+            innerClassName="px-5 py-8 sm:px-8 sm:py-10"
+            imageOpacity="opacity-45"
+            overlayClassName="bg-black/62"
+          >
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
+              <div className="relative size-20 shrink-0 sm:size-24">
+                <Image
+                  src={FAQ_GLASS_ICON}
+                  alt=""
+                  fill
+                  sizes="96px"
+                  className="object-contain"
+                  unoptimized
+                  aria-hidden
+                />
+              </div>
+              <div className="min-w-0">
+                <h2 id="faq-title" className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  Вопросы и ответы
+                </h2>
+                <p className="mt-2 text-sm text-zinc-300 sm:text-base">
+                  Партнёрский контур и отличия от реферальной программы.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 sm:mt-8">
               <PartnerFaqList items={partnerFaqItems} defaultOpenId={partnerFaqItems[0]?.id ?? null} />
             </div>
-          </div>
+          </PartnerSurface>
         </section>
       ) : null}
     </div>

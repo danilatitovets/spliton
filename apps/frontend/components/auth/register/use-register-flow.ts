@@ -15,6 +15,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { formatApiError } from "@/lib/i18n/format-api-error";
 import { ApiError } from "@/services/auth.service";
 
 export type UseRegisterFlowOptions = {
@@ -24,7 +25,7 @@ export type UseRegisterFlowOptions = {
 export function useRegisterFlow(options?: UseRegisterFlowOptions) {
   const onStepChange = options?.onStepChange;
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { register, resendEmail } = useAuth();
   const passwordRef = React.useRef<HTMLInputElement>(null);
   const emailFieldRef = React.useRef<HTMLDivElement>(null);
@@ -227,7 +228,7 @@ export function useRegisterFlow(options?: UseRegisterFlowOptions) {
         }
         setErrors((prev) => ({
           ...prev,
-          submit: "Не удалось создать аккаунт. Попробуйте ещё раз.",
+          submit: formatApiError(error, locale),
         }));
       } finally {
         setIsSubmitting(false);
@@ -241,6 +242,7 @@ export function useRegisterFlow(options?: UseRegisterFlowOptions) {
       termsAccepted,
       register,
       router,
+      locale,
     ]
   );
 

@@ -4,9 +4,23 @@ import NextImage from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 
+import { useClientMounted } from "@/hooks/use-client-mounted";
 import { cn } from "@/lib/utils";
 
 const JOURNEY_READY_BG = "/images/landing/journey-ready-headphones.png";
+
+function JourneyReadyBackgroundImage() {
+  return (
+    <NextImage
+      src={JOURNEY_READY_BG}
+      alt=""
+      fill
+      className="object-cover object-[center_42%]"
+      sizes="(max-width: 1200px) 100vw, 1200px"
+      priority={false}
+    />
+  );
+}
 
 export function DashboardJourneyReadyPanel({
   children,
@@ -16,7 +30,9 @@ export function DashboardJourneyReadyPanel({
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mounted = useClientMounted();
   const reduceMotion = useReducedMotion();
+  const animateParallax = mounted && !reduceMotion;
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -33,20 +49,19 @@ export function DashboardJourneyReadyPanel({
         className,
       )}
     >
-      <motion.div
-        className="absolute inset-0 origin-center will-change-transform"
-        style={{ scale: reduceMotion ? 1 : scale }}
-        aria-hidden
-      >
-        <NextImage
-          src={JOURNEY_READY_BG}
-          alt=""
-          fill
-          className="object-cover object-[center_42%]"
-          sizes="(max-width: 1200px) 100vw, 1200px"
-          priority={false}
-        />
-      </motion.div>
+      {animateParallax ? (
+        <motion.div
+          className="absolute inset-0 origin-center will-change-transform"
+          style={{ scale }}
+          aria-hidden
+        >
+          <JourneyReadyBackgroundImage />
+        </motion.div>
+      ) : (
+        <div className="absolute inset-0 origin-center will-change-transform" aria-hidden>
+          <JourneyReadyBackgroundImage />
+        </div>
+      )}
 
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/92 via-black/78 to-black/55"

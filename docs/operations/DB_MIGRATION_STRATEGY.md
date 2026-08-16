@@ -28,9 +28,9 @@ This database has tables but **no** `_prisma_migrations` → Prisma refuses to a
 
 1. Create a **new** Supabase project (or empty Postgres).
 2. Set in `.env` (or CI secrets):
-   - `DATABASE_URL` — pooler `:6543?pgbouncer=true`
+   - `DATABASE_URL` — session pooler `:5432` (**no** `pgbouncer=true`)
    - `DIRECT_URL` — `db.<project-ref>.supabase.co:5432` (not the pooler host)
-   - `TEST_DATABASE_URL` / `TEST_DIRECT_URL` — same project or a second isolated project
+   - `TEST_DATABASE_URL` / `TEST_DIRECT_URL` — local `docker-compose.test.yml` on `127.0.0.1:5433`, or session `:5432` on a dedicated e2e project
 3. `npx prisma migrate deploy --schema=prisma/schema.prisma`
 4. `npm run prisma:seed` (legal policies, deposit pool, etc.)
 5. Point e2e at `TEST_DATABASE_URL` via `apps/backend/test/jest-e2e.setup.ts`

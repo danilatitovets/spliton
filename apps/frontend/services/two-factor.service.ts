@@ -1,3 +1,4 @@
+import { parseApiClientError } from "@/lib/api/api-client-error";
 import { resolveApiUrl } from "@/lib/public-env";
 
 type AuthorizedFetch = (input: string, init?: RequestInit) => Promise<Response>;
@@ -12,22 +13,11 @@ export type TwoFactorVerifySetupResult = {
   backupCodes: string[];
 };
 
-async function parseError(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { message?: string | { message?: string } };
-    if (typeof body.message === "string") return body.message;
-    if (body.message && typeof body.message.message === "string") return body.message.message;
-  } catch {
-    /* ignore */
-  }
-  return "Не удалось выполнить операцию";
-}
-
 export async function setupTwoFactor(
   fetcher: AuthorizedFetch,
 ): Promise<TwoFactorSetupResult> {
   const res = await fetcher(resolveApiUrl("/auth/2fa/setup"), { method: "POST" });
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) throw await parseApiClientError(res);
   return res.json() as Promise<TwoFactorSetupResult>;
 }
 
@@ -40,7 +30,7 @@ export async function verifyTwoFactorSetup(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code }),
   });
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) throw await parseApiClientError(res);
   return res.json() as Promise<TwoFactorVerifySetupResult>;
 }
 
@@ -53,7 +43,7 @@ export async function disableTwoFactor(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
   });
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) throw await parseApiClientError(res);
 }
 
 export function extractTotpSecret(otpauthUrl: string): string | null {

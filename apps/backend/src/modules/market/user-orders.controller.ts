@@ -43,7 +43,7 @@ export class UserOrdersController {
     @CurrentUser() user: AuthUser,
     @Body() dto: PrimaryOrderPreviewDto,
   ) {
-    return this.primaryOrders.preview(user.id, dto.roundId, dto.units);
+    return this.primaryOrders.preview(user.id, dto.roundId, String(dto.units));
   }
 
   @Post()

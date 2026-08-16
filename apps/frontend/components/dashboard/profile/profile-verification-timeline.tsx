@@ -3,6 +3,7 @@
 import { Check } from "@/lib/lucide";
 
 import type { VerificationUiStatus } from "@/constants/dashboard/profile-verification";
+import { profileLineIcon } from "@/components/dashboard/profile/profile-shared";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,8 @@ const STEPS: TimelineStepId[] = [
   "manual_review",
   "decision",
 ];
+
+const STEP_ICONS = ["verification", "id", "send", "support", "legal"] as const;
 
 function stepState(
   status: VerificationUiStatus,
@@ -44,10 +47,10 @@ export function ProfileVerificationTimeline({ status }: { status: VerificationUi
   const { t } = useI18n();
 
   return (
-    <ol className="mt-4 space-y-0">
+    <ol className="divide-y divide-white/[0.06]">
       {STEPS.map((step, index) => {
         const visual = stepState(status, step);
-        const isLast = index === STEPS.length - 1;
+        const icon = STEP_ICONS[index];
         const labelKey =
           step === "decision"
             ? status === "rejected"
@@ -58,29 +61,28 @@ export function ProfileVerificationTimeline({ status }: { status: VerificationUi
             : `verification.timeline.${step}`;
 
         return (
-          <li key={step} className="relative flex gap-4 pb-6 last:pb-0">
-            {!isLast ? (
-              <span
-                className={cn(
-                  "absolute left-[15px] top-8 h-[calc(100%-0.5rem)] w-px",
-                  visual === "done" ? "bg-lime-300/90" : "bg-neutral-200",
-                )}
-                aria-hidden
-              />
-            ) : null}
+          <li key={step} className="flex items-start gap-3 py-4 first:pt-3 last:pb-4">
             <div
-              className={cn(
-                "relative z-1 grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold",
-                visual === "done" && "bg-lime-400 text-neutral-950",
-                visual === "current" && "bg-neutral-900 text-white",
-                visual === "upcoming" && "bg-neutral-100 text-neutral-400",
-              )}
+              className={cn("relative shrink-0", visual === "upcoming" && "opacity-35")}
+              aria-hidden
             >
-              {visual === "done" ? <Check className="size-4" aria-hidden /> : index + 1}
+              {profileLineIcon(icon)}
+              {visual === "done" ? (
+                <span className="absolute -right-0.5 -top-0.5 grid size-5 place-items-center rounded-full bg-[#B7F500] text-black">
+                  <Check className="size-3" strokeWidth={3} aria-hidden />
+                </span>
+              ) : null}
             </div>
-            <div className="min-w-0 pt-0.5">
-              <p className="text-sm font-semibold text-neutral-900">{t(labelKey)}</p>
-              <p className="mt-0.5 text-xs text-neutral-500">{t(`${labelKey}Hint`)}</p>
+            <div className="min-w-0 pt-1">
+              <p className="text-[15px] font-semibold text-white">{t(labelKey)}</p>
+              <p
+                className={cn(
+                  "mt-0.5 text-[13px] leading-relaxed",
+                  visual === "upcoming" ? "text-white/35" : "text-zinc-500",
+                )}
+              >
+                {t(`${labelKey}Hint`)}
+              </p>
             </div>
           </li>
         );

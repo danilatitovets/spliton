@@ -24,7 +24,11 @@ export class DepositIngestionWorker implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     if (process.env.DEPOSIT_INGESTION_ENABLED !== 'true') return;
-    const pollMs = Number(process.env.TRON_POLL_INTERVAL ?? 15000);
+    const pollMs = Number(
+      process.env.DEPOSIT_SCAN_INTERVAL_MS ??
+        process.env.TRON_POLL_INTERVAL ??
+        15000,
+    );
     this.timer = setInterval(
       () => void this.tick(),
       pollMs >= 5000 ? pollMs : 15000,

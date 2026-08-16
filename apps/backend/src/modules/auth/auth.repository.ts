@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { UserRoleCode, UserStatus } from '@prisma/client';
+import {
+  TwoFactorMethodStatus,
+  TwoFactorMethodType,
+  UserRoleCode,
+  UserStatus,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -15,6 +20,14 @@ export class AuthRepository {
           include: {
             role: true,
           },
+        },
+        twoFactorMethods: {
+          where: {
+            methodType: TwoFactorMethodType.TOTP,
+            status: TwoFactorMethodStatus.ENABLED,
+          },
+          select: { id: true },
+          take: 1,
         },
       },
     });

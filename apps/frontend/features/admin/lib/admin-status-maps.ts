@@ -28,10 +28,15 @@ export const WALLET_STATUS_LABELS: Record<string, string> = {
 
 export const DEPOSIT_STATUS_LABELS: Record<string, string> = {
   pending: "Ожидает",
+  detected: "Обнаружено",
   confirming: "Подтверждается",
-  completed: "Завершено",
+  pending_confirmations: "Ожидает подтверждений",
+  confirmed: "Подтверждено, ожидает зачисления",
+  confirmed_waiting_credit: "Подтверждено, ожидает зачисления",
+  completed: "Зачислено",
   failed: "Ошибка",
   rejected: "Отклонено",
+  ignored: "Игнорировано",
   manual_review: "Ручная проверка",
 };
 
@@ -79,13 +84,18 @@ export function depositStatusTone(status: string): AdminStatusTone {
   switch (status) {
     case "completed":
       return "success";
+    case "confirmed":
+    case "confirmed_waiting_credit":
     case "confirming":
+    case "pending_confirmations":
     case "pending":
+    case "detected":
       return "pending";
     case "manual_review":
       return "warning";
     case "failed":
     case "rejected":
+    case "ignored":
       return "danger";
     default:
       return "neutral";

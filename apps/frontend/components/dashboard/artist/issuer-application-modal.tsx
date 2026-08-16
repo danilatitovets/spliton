@@ -21,6 +21,8 @@ const okxFieldClass =
 const okxTextareaClass =
   "min-h-24 w-full rounded-lg border-0 bg-[#F5F5F5] px-3 py-2.5 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:bg-white focus:shadow-[0_6px_28px_-12px_rgba(0,0,0,0.08)]";
 
+const HEADER_VIDEO = "/videos/position-holding-bg.mp4";
+
 const PROJECT_TYPE_VALUES = ["single", "ep", "album", "catalog"] as const;
 
 function projectTypeLabel(value: string, t: (key: string, fallback?: string) => string) {
@@ -146,29 +148,41 @@ export function IssuerApplicationModal({ open, onOpenChange }: IssuerApplication
             "data-starting-style:scale-[0.98] data-starting-style:opacity-0",
           )}
         >
-          <div className="flex shrink-0 items-start justify-between gap-3 px-5 pb-3 pt-5 sm:px-6 sm:pt-6">
-            <div className="min-w-0 pr-8">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-400">
-                {t("artist.application.eyebrow")}
-              </p>
-              <Dialog.Title className="mt-1 text-lg font-semibold tracking-tight text-neutral-900">
-                {submitted ? t("artist.application.title.submitted") : t("artist.application.title.submit")}
-              </Dialog.Title>
-              <Dialog.Description className="mt-1.5 text-sm leading-relaxed text-neutral-600">
-                {submitted
-                  ? t("artist.application.description.submitted")
-                  : t("artist.application.description.submit")}
-              </Dialog.Description>
+          <div className="relative isolate shrink-0 overflow-hidden border-b border-neutral-100">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <video
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-[4px] motion-reduce:hidden"
+                src={HEADER_VIDEO}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-black/55" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
             </div>
-            <Dialog.Close
-              aria-label={t("artist.application.closeAria")}
-              className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
-            >
-              <X className="size-4" />
-            </Dialog.Close>
+            <div className="relative z-10 flex items-start justify-between gap-3 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
+              <div className="min-w-0 pr-8">
+                <Dialog.Title className="text-lg font-semibold tracking-tight text-white">
+                  {submitted ? t("artist.application.title.submitted") : t("artist.application.title.submit")}
+                </Dialog.Title>
+                <Dialog.Description className="mt-1.5 text-sm leading-relaxed text-white/70">
+                  {submitted
+                    ? t("artist.application.description.submitted")
+                    : t("artist.application.description.submit")}
+                </Dialog.Description>
+              </div>
+              <Dialog.Close
+                aria-label={t("artist.application.closeAria")}
+                className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+              >
+                <X className="size-4" />
+              </Dialog.Close>
+            </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-6">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-4 sm:px-6">
             {!user ? (
               <p className="pb-2 text-sm text-neutral-600">{t("artist.application.signInPrompt")}</p>
             ) : submitted ? (

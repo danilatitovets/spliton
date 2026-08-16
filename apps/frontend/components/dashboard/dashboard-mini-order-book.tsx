@@ -7,7 +7,6 @@ import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-
 import { useAuth } from "@/components/providers/auth-provider";
 import { useClientMounted } from "@/hooks/use-client-mounted";
 import { localizedApiError } from "@/lib/api/localized-error";
-import { intlLocaleFor } from "@/lib/i18n/formatters";
 import type { AppLocale } from "@/lib/i18n/types";
 import { cn } from "@/lib/utils";
 import {
@@ -45,17 +44,19 @@ const DEMO_ASKS: BookLevel[] = ASK_OFFSETS.map((offset, i) => ({
 
 const DEMO_SPREAD_FALLBACK = "0.40";
 
+/** Deterministic number formatting — avoids Node vs browser Intl hydration mismatches. */
 function formatPrice(value: number, locale: AppLocale): string {
   if (!Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat(intlLocaleFor(locale), {
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4,
-  }).format(value);
+  const fixed = value.toFixed(4);
+  return locale === "en" ? fixed : fixed.replace(".", ",");
 }
 
 function formatUnits(value: number, locale: AppLocale): string {
   if (!Number.isFinite(value)) return "—";
-  return value.toLocaleString(intlLocaleFor(locale), { maximumFractionDigits: 0 });
+  const n = Math.round(value);
+  const raw = String(Math.abs(n));
+  const grouped = raw.replace(/\B(?=(\d{3})+(?!\d))/g, locale === "en" ? "," : "\u00a0");
+  return n < 0 ? `-${grouped}` : grouped;
 }
 
 function formatSpreadPct(bestBid: number, bestAsk: number, locale: AppLocale): string {

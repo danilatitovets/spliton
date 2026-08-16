@@ -9,15 +9,10 @@ import { MARKET_OVERVIEW_ROWS } from "@/mocks/market-overview-rows";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/providers/i18n-provider";
 
+import { MarketOverviewDepthDashboard } from "./market-overview-depth-dashboard";
 import { MarketOverviewFiltersToolbar } from "./market-overview-filters-toolbar";
-import { MarketOverviewInsights } from "./market-overview-insights";
-import { MarketOverviewKpiSection } from "./market-overview-kpi-section";
-import { MarketOverviewListingsBlock } from "./market-overview-listings-block";
 import { MarketOverviewOverviewSection } from "./market-overview-overview-section";
-import { MarketOverviewSecondary } from "./market-overview-secondary";
-import { MarketOverviewSegments } from "./market-overview-segments";
 import { MarketOverviewTable } from "./market-overview-table";
-import { MarketOverviewTradesBlock } from "./market-overview-trades-block";
 
 function MarketOverviewTableSkeleton() {
   return (
@@ -78,13 +73,8 @@ export function MarketOverviewScreen() {
     live,
     loading,
     loadError,
-    feedError,
-    feedLoading,
     stats,
     charts,
-    depth,
-    listings,
-    trades,
     page,
     setPage,
     totalCount,
@@ -133,24 +123,6 @@ export function MarketOverviewScreen() {
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-black font-sans tabular-nums" data-mobile-scroll-root>
-      <MarketOverviewOverviewSection
-        period={period}
-        onPeriodChange={setPeriod}
-        lastUpdated={lastUpdated}
-        live={live}
-        stats={stats}
-        charts={charts}
-        loading={live && loading && !stats}
-      />
-
-      <MarketOverviewKpiSection
-        live={live}
-        stats={stats}
-        depth={depth}
-        loading={loading}
-        error={Boolean(loadError)}
-      />
-
       <MarketOverviewFiltersToolbar
         categoryTab={categoryTab}
         onCategoryTab={setCategoryTab}
@@ -158,12 +130,23 @@ export function MarketOverviewScreen() {
         onFilterChange={setFilter}
         search={search}
         onSearchChange={setSearch}
+        period={period}
+        onPeriodChange={setPeriod}
       />
 
-      <div className="mx-auto w-full max-w-[1400px] px-4 pb-6 pt-1 md:px-6 lg:px-8">
+      <MarketOverviewOverviewSection
+        period={period}
+        lastUpdated={lastUpdated}
+        live={live}
+        stats={stats}
+        charts={charts}
+        loading={live && loading && !stats}
+      />
+
+      <div className="mx-auto w-full max-w-[1400px] px-4 pb-6 pt-4 md:px-6 lg:px-8">
         {!live ? (
           <p
-            className="mb-4 rounded-xl border border-amber-500/20 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
+            className="mb-4 rounded-xl ring-1 ring-amber-500/25 bg-amber-950/20 px-4 py-3 text-sm text-amber-100"
             role="status"
           >
             {t("marketOverview.demo.banner")}
@@ -171,10 +154,7 @@ export function MarketOverviewScreen() {
         ) : null}
 
         {loadError ? (
-          <div
-            className="mb-4 rounded-xl border border-rose-500/30 bg-red-950/80 px-4 py-3 text-sm text-red-200"
-            role="alert"
-          >
+          <div className="mb-4 rounded-xl bg-rose-950/40 px-4 py-3 text-sm text-rose-100" role="alert">
             {loadError}
             <button type="button" className="ml-3 underline" onClick={() => void reload()}>
               {t("marketOverview.retry")}
@@ -221,24 +201,15 @@ export function MarketOverviewScreen() {
           </>
         )}
       </div>
-      <div className="hidden space-y-6 py-8 lg:block">
-        <MarketOverviewListingsBlock
+
+      <div className="border-t border-white/[0.06] py-8 md:py-10">
+        <MarketOverviewDepthDashboard
           live={live}
-          items={listings}
-          loading={feedLoading}
-          error={feedError}
-          onRetry={() => void reload()}
+          period={period}
+          stats={stats}
+          charts={charts}
+          loading={live && loading && !stats}
         />
-        <MarketOverviewTradesBlock
-          live={live}
-          items={trades}
-          loading={feedLoading}
-          error={feedError}
-          onRetry={() => void reload()}
-        />
-        <MarketOverviewSegments live={live} stats={stats} />
-        <MarketOverviewSecondary live={live} stats={stats} />
-        <MarketOverviewInsights live={live} stats={stats} period={period} />
       </div>
     </div>
   );

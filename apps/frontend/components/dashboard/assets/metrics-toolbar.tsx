@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { assetsMutedCardClass, assetsSegmentActiveClass, assetsSegmentIdleClass } from "@/components/dashboard/assets/assets-ui";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -34,9 +35,9 @@ export function MetricsToolbar() {
   const currency = useMemo(() => CURRENCIES[currencyIndex % CURRENCIES.length], [currencyIndex]);
 
   return (
-    <section className="rounded-3xl border border-neutral-200 bg-white px-4 py-4 shadow-sm ring-1 ring-neutral-100/80 sm:px-6 sm:py-4">
+    <section className={cn(assetsMutedCardClass, "sm:px-6 sm:py-4")}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap rounded-xl bg-neutral-100 p-1">
+        <div className="flex flex-wrap rounded-xl bg-neutral-100/80 p-1">
           {FILTER_IDS.map((chip) => (
             <button
               key={chip}
@@ -44,7 +45,7 @@ export function MetricsToolbar() {
               onClick={() => setActiveFilter(chip)}
               className={cn(
                 "rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors",
-                activeFilter === chip ? "bg-white text-neutral-900 ring-1 ring-neutral-200/80" : "font-medium text-neutral-500 hover:text-neutral-800",
+                activeFilter === chip ? assetsSegmentActiveClass : assetsSegmentIdleClass,
               )}
             >
               {filterLabels[chip]}
@@ -56,14 +57,14 @@ export function MetricsToolbar() {
           <button
             type="button"
             onClick={() => setModeIndex((i) => i + 1)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-neutral-50/90 px-3.5 font-semibold text-neutral-800 transition hover:bg-neutral-100"
+            className="inline-flex h-10 items-center rounded-xl bg-white/80 px-3.5 font-semibold text-neutral-800 transition hover:bg-white"
           >
             {modeLabels[mode]}
           </button>
           <button
             type="button"
             onClick={() => setFromDate((prev) => (prev === "20.03.2026" ? "01.03.2026" : "20.03.2026"))}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-neutral-50/90 px-3.5 font-semibold text-neutral-800 transition hover:bg-neutral-100"
+            className="inline-flex h-10 items-center rounded-xl bg-white/80 px-3.5 font-semibold text-neutral-800 transition hover:bg-white"
           >
             {fromDate}
           </button>
@@ -71,14 +72,14 @@ export function MetricsToolbar() {
           <button
             type="button"
             onClick={() => setToDate((prev) => (prev === "18.04.2026" ? "30.04.2026" : "18.04.2026"))}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-neutral-50/90 px-3.5 font-semibold text-neutral-800 transition hover:bg-neutral-100"
+            className="inline-flex h-10 items-center rounded-xl bg-white/80 px-3.5 font-semibold text-neutral-800 transition hover:bg-white"
           >
             {toDate}
           </button>
           <button
             type="button"
             onClick={() => setCurrencyIndex((i) => i + 1)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-neutral-50/90 px-3.5 font-semibold text-neutral-800 transition hover:bg-neutral-100"
+            className="inline-flex h-10 items-center rounded-xl bg-white/80 px-3.5 font-semibold text-neutral-800 transition hover:bg-white"
           >
             {currency}
           </button>

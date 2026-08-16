@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Globe, Mail } from "@/lib/lucide";
+import { Globe, Mail } from "@/lib/lucide";
 
 import {
   landingDisplay,
@@ -11,6 +11,7 @@ import {
 import { LanguageSelector } from "@/components/i18n/language-selector";
 import { FooterRegisterQr } from "@/components/layout/footer-register-qr";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { BRAND } from "@/constants/brand";
 import { SUPPORT_HELPDESK_EMAIL } from "@/constants/support-center";
 import { ROUTES } from "@/constants/routes";
@@ -22,9 +23,6 @@ type FooterHref = { label: string; href: string };
 
 const footerGhostPill =
   "inline-flex h-11 items-center justify-center rounded-full px-6 text-[14px] font-[510] tracking-[-0.011em] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] transition hover:bg-white/[0.04] active:scale-[0.98]";
-
-const footerPrimaryPill =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white pl-6 pr-1.5 text-[14px] font-[510] tracking-[-0.011em] text-black transition hover:bg-[#e8e8e8] active:scale-[0.98]";
 
 const footerGhostIcon =
   "flex size-11 items-center justify-center rounded-full text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] transition hover:bg-white/[0.04] active:scale-[0.98]";
@@ -155,15 +153,12 @@ export function SiteFooter({
               .
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Link href={ROUTES.news} className={footerGhostPill}>
+              <SplitonCtaPill href={ROUTES.news} tone="onDark" variant="ghost" withArrow={false}>
                 {t("footer.promo.ctaNews")}
-              </Link>
-              <Link href={ROUTES.dashboard} className={footerPrimaryPill}>
+              </SplitonCtaPill>
+              <SplitonCtaPill href={ROUTES.dashboard} tone="onDark">
                 {t("footer.promo.ctaDashboard")}
-                <span className="inline-flex size-8 items-center justify-center rounded-full bg-black text-white">
-                  <ArrowRight className="size-4" strokeWidth={2} aria-hidden />
-                </span>
-              </Link>
+              </SplitonCtaPill>
             </div>
           </div>
         </div>

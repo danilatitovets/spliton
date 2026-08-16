@@ -60,7 +60,6 @@ export function ReleaseDetailPayoutHistory({
     return (
       <DetailSection
         className={cn(className)}
-        eyebrow={t("analytics.detail.payouts.eyebrow")}
         title={t("analytics.detail.payouts.fullTitle")}
       >
         <div className="overflow-hidden rounded-xl bg-[#111111] ring-1 ring-white/6">
@@ -79,7 +78,6 @@ export function ReleaseDetailPayoutHistory({
     return (
       <DetailSection
         className={cn(className)}
-        eyebrow="Payouts"
         title={t("analytics.detail.payouts.teaserTitle")}
         titleClassName={sectionTitleClassName}
         titleAside={
@@ -106,7 +104,6 @@ export function ReleaseDetailPayoutHistory({
   return (
     <DetailSection
       className={cn(className)}
-      eyebrow={t("analytics.detail.payouts.eyebrow")}
       title={t("analytics.detail.payouts.fullTitle")}
       description={t("analytics.detail.payouts.fullDescription")}
     >

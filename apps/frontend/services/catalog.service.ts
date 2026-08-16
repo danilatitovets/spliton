@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { parseApiClientError } from "@/lib/api/api-client-error";
 import type { CatalogItem } from "@/lib/catalog-mock";
 import { adaptCatalogCardToItem } from "@/lib/catalog/catalog-adapter";
@@ -105,6 +106,12 @@ export type CatalogFiltersApi = {
   updatedAt?: string;
 };
 
+/** Public catalog is backend-cached (~60s); allow Next data cache to match. */
+const PUBLIC_CATALOG_FETCH: RequestInit = {
+  credentials: "omit",
+  next: { revalidate: 60 },
+};
+
 function apiUrl(path: string): string {
   return `${getPublicApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
@@ -119,10 +126,7 @@ export async function fetchCatalogReleases(
 ): Promise<CatalogListResponse> {
   const params = query ? buildCatalogListQuery(query) : { page: "1", pageSize: "24" };
   const qs = new URLSearchParams(params).toString();
-  const res = await fetch(apiUrl(`${CATALOG_API.releases}?${qs}`), {
-    credentials: "omit",
-    cache: "no-store",
-  });
+  const res = await fetch(apiUrl(`${CATALOG_API.releases}?${qs}`), PUBLIC_CATALOG_FETCH);
   return parseJson<CatalogListResponse>(res);
 }
 
@@ -133,37 +137,25 @@ export async function fetchCatalogSearchSuggestions(
   const term = q.trim();
   if (term.length < 2) return { items: [] };
   const qs = new URLSearchParams({ q: term, limit: String(limit) }).toString();
-  const res = await fetch(apiUrl(`${CATALOG_API.suggestions}?${qs}`), {
-    credentials: "omit",
-    cache: "no-store",
-  });
+  const res = await fetch(apiUrl(`${CATALOG_API.suggestions}?${qs}`), PUBLIC_CATALOG_FETCH);
   return parseJson(res);
 }
 
 export async function fetchCatalogFilters(kind?: string): Promise<CatalogFiltersApi> {
   const qs = kind ? `?kind=${encodeURIComponent(kind)}` : "";
-  const res = await fetch(apiUrl(`${CATALOG_API.filters}${qs}`), {
-    credentials: "omit",
-    cache: "no-store",
-  });
+  const res = await fetch(apiUrl(`${CATALOG_API.filters}${qs}`), PUBLIC_CATALOG_FETCH);
   return parseJson(res);
 }
 
 export async function fetchCatalogGenres(): Promise<{ items: string[] }> {
-  const res = await fetch(apiUrl(CATALOG_API.genres), {
-    credentials: "omit",
-    cache: "no-store",
-  });
+  const res = await fetch(apiUrl(CATALOG_API.genres), PUBLIC_CATALOG_FETCH);
   return parseJson(res);
 }
 
 export type CatalogStatsApi = CatalogStats;
 
 export async function fetchCatalogStats(): Promise<CatalogStatsApi> {
-  const res = await fetch(apiUrl(CATALOG_API.stats), {
-    credentials: "omit",
-    cache: "no-store",
-  });
+  const res = await fetch(apiUrl(CATALOG_API.stats), PUBLIC_CATALOG_FETCH);
   return parseJson(res);
 }
 
@@ -171,10 +163,7 @@ export async function fetchCatalogReleaseById(
   id: string,
 ): Promise<CatalogReleaseDetailApi | null> {
   try {
-    const res = await fetch(apiUrl(CATALOG_API.release(id)), {
-      credentials: "omit",
-      cache: "no-store",
-    });
+    const res = await fetch(apiUrl(CATALOG_API.release(id)), PUBLIC_CATALOG_FETCH);
     if (!res.ok) return null;
     return (await res.json()) as CatalogReleaseDetailApi;
   } catch {
@@ -205,9 +194,10 @@ export async function loadLiveCatalogItems(
   };
 }
 
-export async function resolveCatalogReleaseForPage(
+/** Request-scoped memoization for SSR (metadata + page share one fetch). */
+export const resolveCatalogReleaseForPage = cache(async function resolveCatalogReleaseForPage(
   id: string,
 ): Promise<CatalogReleaseDetailApi | null> {
   if (!isLiveCatalogEnabled()) return null;
   return fetchCatalogReleaseById(id);
-}
+});

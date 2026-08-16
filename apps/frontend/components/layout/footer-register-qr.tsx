@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { ROUTES } from "@/constants/routes";
 import { tf } from "@/lib/i18n/financial-messages";
 
@@ -37,12 +37,9 @@ export function FooterRegisterQr() {
         <p className="mt-2 text-sm leading-relaxed text-zinc-500">
           {t("footer.qr.authenticated.description")}
         </p>
-        <Link
-          href={ROUTES.dashboard}
-          className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-black transition hover:bg-zinc-200"
-        >
+        <SplitonCtaPill href={ROUTES.dashboard} tone="onDark" className="mt-6 h-12 w-full">
           {t("footer.qr.authenticated.cta")}
-        </Link>
+        </SplitonCtaPill>
         <div className="mt-8 flex justify-center rounded-xl bg-white p-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- внешний QR */}
           <img
@@ -69,12 +66,9 @@ export function FooterRegisterQr() {
         {t("footer.qr.guest.title")}
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-zinc-500">{t("footer.qr.guest.description")}</p>
-      <Link
-        href={ROUTES.register}
-        className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-black transition hover:bg-zinc-200"
-      >
+      <SplitonCtaPill href={ROUTES.register} tone="onDark" className="mt-6 h-12 w-full">
         {t("footer.qr.guest.cta")}
-      </Link>
+      </SplitonCtaPill>
       <div className="mt-8 flex justify-center rounded-xl bg-white p-3">
         {/* eslint-disable-next-line @next/next/no-img-element -- внешний QR */}
         <img src={qrSrc} alt={t("footer.qr.guest.qrAlt")} width={168} height={168} className="size-[168px]" />

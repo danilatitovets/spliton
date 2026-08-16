@@ -151,6 +151,51 @@
   color: rgb(212 212 216);
 }
 
+/* White OKX article: steps next to dark card */
+.guide-look-on-light .guide-release-card-step-title {
+  color: rgb(17 17 17);
+}
+
+.guide-look-on-light .guide-release-card-step-body {
+  color: rgb(82 82 82);
+}
+
+.guide-look-on-light .guide-release-card-step.is-active .guide-release-card-step-body {
+  color: rgb(39 39 42);
+}
+
+.guide-look-on-light .guide-release-card-step:not(.is-active) {
+  opacity: 0.72;
+}
+
+.guide-look-on-light .guide-release-card-step.is-active {
+  background: rgb(0 0 0 / 0.04);
+}
+
+.guide-look-on-light .guide-release-card-step:hover:not(.is-active) {
+  background: rgb(0 0 0 / 0.03);
+}
+
+.guide-look-on-light .guide-release-card-step-num {
+  background: #111;
+  color: #fff;
+}
+
+.guide-look-on-light .guide-release-card-step.is-active .guide-release-card-step-num {
+  background: #000;
+  color: #fff;
+}
+
+.guide-look-on-light .guide-rc-num {
+  background: #111;
+  color: #fff;
+}
+
+.guide-look-on-light .guide-rc-block.is-active .guide-rc-num {
+  background: #000;
+  color: #fff;
+}
+
 .guide-rc-spark {
   height: 3.5rem;
   width: 100%;

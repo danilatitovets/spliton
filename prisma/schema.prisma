@@ -244,12 +244,14 @@ enum DepositStatus {
   PENDING_CONFIRMATIONS
   CREDITED
   IGNORED
+  REJECTED
 
   @@map("deposit_status")
 }
 
 enum DepositIngestionSource {
   AUTO
+  RECOVERY
   MANUAL
 
   @@map("deposit_ingestion_source")
@@ -1502,6 +1504,7 @@ model WalletTransaction {
   @@index([walletId, txType, status], map: "wallet_transactions_wallet_id_tx_type_status_idx")
   @@index([referenceType, referenceId], map: "wallet_transactions_reference_type_reference_id_idx")
   @@index([operationType, createdAt], map: "wallet_transactions_operation_type_created_at_idx")
+  @@unique([idempotencyKey], map: "wallet_transactions_idempotency_key_uidx")
   @@map("wallet_transactions")
 }
 
@@ -1521,6 +1524,18 @@ model Deposit {
   ignoreReason          String?                @map("ignore_reason")
   receivedAt            DateTime?              @map("received_at")
   creditedAt            DateTime?              @map("credited_at")
+  chain                 String                 @default("TRON")
+  chainNetwork          String                 @default("mainnet") @map("chain_network")
+  assetCode             String                 @default("USDT") @map("asset_code")
+  tokenStandard         String                 @default("TRC20") @map("token_standard")
+  rawAmount             String?                @map("raw_amount")
+  amount                Decimal?               @db.Decimal(20, 8)
+  blockTimestamp        DateTime?              @map("block_timestamp")
+  detectedAt            DateTime?              @map("detected_at")
+  confirmedAt           DateTime?              @map("confirmed_at")
+  provider              String?
+  executionStatus       String?                @map("execution_status")
+  metadata              Json?
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
   walletTx              WalletTransaction      @relation(fields: [walletTxId], references: [id], onDelete: Restrict)
@@ -1528,6 +1543,8 @@ model Deposit {
 
   @@index([status, createdAt], map: "deposits_status_created_at_idx")
   @@index([ingestionSource, createdAt], map: "deposits_ingestion_source_created_at_idx")
+  @@index([toAddress, status], map: "deposits_to_address_status_idx")
+  @@index([chainNetwork, tokenContract], map: "deposits_chain_token_idx")
   @@map("deposits")
 }
 
@@ -1539,11 +1556,76 @@ model DepositWatcherState {
   lastRunAt        DateTime?            @map("last_run_at")
   status           DepositWatcherStatus @default(IDLE)
   lastError        String?              @map("last_error")
+  addressesWatched Int                  @default(0) @map("addresses_watched")
+  lastMetrics      Json?                @map("last_metrics")
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
 
   @@unique([network, assetCode], map: "deposit_watcher_state_network_asset_key")
   @@map("deposit_watcher_states")
+}
+
+model DepositAddressScanCursor {
+  id                 String    @id @default(uuid()) @db.Uuid
+  address            String    @unique
+  lastFingerprint    String?   @map("last_fingerprint")
+  watermarkTimestamp BigInt    @default(0) @map("watermark_timestamp")
+  lastSeenBlock      BigInt    @default(0) @map("last_seen_block")
+  lastScannedAt      DateTime? @map("last_scanned_at")
+  lastError          String?   @map("last_error") @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@map("deposit_address_scan_cursors")
+}
+
+model CryptoWorkerLease {
+  id          String   @id
+  holder      String
+  version     Int      @default(1)
+  expiresAt   DateTime @map("expires_at")
+  heartbeatAt DateTime @map("heartbeat_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("crypto_worker_leases")
+}
+
+enum UnattributedOnchainStatus {
+  OPEN
+  ASSIGNED
+  IGNORED
+
+  @@map("unattributed_onchain_status")
+}
+
+model UnattributedOnchainTransfer {
+  id             String                    @id @default(uuid()) @db.Uuid
+  chain          String                    @default("TRON")
+  chainNetwork   String                    @map("chain_network")
+  assetCode      String                    @map("asset_code")
+  tokenStandard  String                    @default("TRC20") @map("token_standard")
+  tokenContract  String                    @map("token_contract")
+  blockchainTxid String                    @map("blockchain_txid")
+  fromAddress    String                    @map("from_address")
+  toAddress      String                    @map("to_address")
+  rawAmount      String                    @map("raw_amount")
+  amount         Decimal                   @db.Decimal(20, 8)
+  blockNumber    BigInt                    @map("block_number")
+  blockTimestamp DateTime?                 @map("block_timestamp")
+  confirmations  Int                       @default(0)
+  status         UnattributedOnchainStatus @default(OPEN)
+  reason         String
+  provider       String?
+  metadata       Json?
+  assignedDepositId String?                @map("assigned_deposit_id") @db.Uuid
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+
+  @@unique([chainNetwork, blockchainTxid, tokenContract], map: "unattributed_onchain_txid_uidx")
+  @@index([status, createdAt], map: "unattributed_onchain_status_created_at_idx")
+  @@index([toAddress], map: "unattributed_onchain_to_address_idx")
+  @@map("unattributed_onchain_transfers")
 }
 
 model DepositIngestionLog {
@@ -1576,7 +1658,7 @@ model Withdrawal {
   completedAt      DateTime?        @map("completed_at")
   providerRequestId String?         @map("provider_request_id")
   providerStatus   WithdrawalProviderStatus? @map("provider_status")
-  providerTxHash   String?          @map("provider_tx_hash")
+  providerTxHash   String?          @unique @map("provider_tx_hash")
   broadcastAt      DateTime?        @map("broadcast_at")
   confirmedAt      DateTime?        @map("confirmed_at")
   confirmations    Int?             @map("confirmations")
@@ -1730,6 +1812,8 @@ model OwnershipLedger {
   tradeId             String?            @map("trade_id") @db.Uuid
   orderFillId         String?            @map("order_fill_id") @db.Uuid
   walletTransactionId String?            @map("wallet_transaction_id") @db.Uuid
+  sourceEntityType    String?            @map("source_entity_type")
+  sourceEntityId      String?            @map("source_entity_id")
   backfillBatchId     String?            @map("backfill_batch_id")
   happenedAt          DateTime           @map("happened_at")
   createdAt           DateTime           @default(now()) @map("created_at")
@@ -1745,6 +1829,7 @@ model OwnershipLedger {
   @@index([tradeId], map: "ownership_ledger_trade_id_idx")
   @@index([orderFillId], map: "ownership_ledger_order_fill_id_idx")
   @@index([walletTransactionId], map: "ownership_ledger_wallet_transaction_id_idx")
+  @@index([sourceEntityType, sourceEntityId], map: "ownership_ledger_source_entity_idx")
   @@map("ownership_ledger")
 }
 
@@ -2432,6 +2517,7 @@ model LedgerPosting {
   @@index([walletId, ledgerAccount, createdAt], map: "ledger_postings_wallet_account_created_at_idx")
   @@index([sourceEntityType, sourceEntityId], map: "ledger_postings_source_entity_idx")
   @@index([walletTransactionId], map: "ledger_postings_wallet_transaction_id_idx")
+  @@unique([idempotencyKey], map: "ledger_postings_idempotency_key_uidx")
   @@map("ledger_postings")
 }
 
@@ -2905,8 +2991,10 @@ model UserDepositAddress {
   updatedAt DateTime             @updatedAt @map("updated_at")
   wallet    Wallet               @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
+  @@unique([address], map: "user_deposit_addresses_address_uidx")
   @@index([walletId, status], map: "user_deposit_addresses_wallet_status_idx")
-  @@index([address], map: "user_deposit_addresses_address_idx")
+  // Partial UNIQUE (wallet_id) WHERE ACTIVE + UNIQUE (address) WHERE ACTIVE
+  // are enforced in migration 20260815120000_crypto_usdt_trc20_engine.
   @@map("user_deposit_addresses")
 }
 

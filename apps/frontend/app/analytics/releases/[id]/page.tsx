@@ -7,14 +7,15 @@ import {
   analyticsReleasePageMetaAsync,
   analyticsReleasePageMetaTfAsync,
 } from "@/lib/i18n/page-metadata";
-import { fetchReleaseFullDetail } from "@/services/release-analytics.service";
-import { getWalletDataSource } from "@/services/wallet.service";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { resolveCatalogReleaseForPage } from "@/services/catalog.service";
 
 type PageProps = { params: Promise<{ id: string }> };
 type PageSearchParams = Promise<{ from?: string | string[]; view?: string | string[] }>;
 
+/**
+ * Metadata must stay cheap — never call /releases/:id/detail here.
+ * That endpoint is heavy; catalog detail is cached (~200ms warm).
+ */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const mock = getReleaseDetailPageData(id);
@@ -26,20 +27,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     );
   }
 
-  if (getWalletDataSource() === "live" && UUID_RE.test(id)) {
-    try {
-      const detail = await fetchReleaseFullDetail(id, undefined, "ru");
+  try {
+    const catalog = await resolveCatalogReleaseForPage(id);
+    if (catalog) {
       return analyticsReleasePageMetaTfAsync(
         "meta.analyticsRelease.titleWithSymbol",
         "meta.analyticsRelease.descriptionWithRelease",
-        { symbol: detail.identity.symbol, title: detail.identity.title },
+        { symbol: catalog.symbol, title: catalog.title },
       );
-    } catch {
-      // fallback to generic meta below
     }
+  } catch {
+    // fall through
   }
 
-  return analyticsReleasePageMetaAsync("meta.analyticsRelease.title", "meta.analyticsRelease.description");
+  return analyticsReleasePageMetaAsync(
+    "meta.analyticsRelease.title",
+    "meta.analyticsRelease.description",
+  );
 }
 
 export default async function AnalyticsReleaseDetailPage({

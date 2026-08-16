@@ -58,8 +58,8 @@ export class UserWithdrawalsService {
     return this.config.get<{
       defaultAssetCode: string;
       defaultNetwork: string;
-      minWithdrawalUsdt: number;
-      defaultWithdrawalFeeUsdt: number;
+      minWithdrawalUsdt: string;
+      defaultWithdrawalFeeUsdt: string;
     }>('wallet')!;
   }
 
@@ -72,6 +72,32 @@ export class UserWithdrawalsService {
       return active.withdrawalFeeFixed;
     }
     return new Prisma.Decimal(this.walletConfig().defaultWithdrawalFeeUsdt);
+  }
+
+  private async assertSecurityPreferencesAllowWithdrawal(
+    userId: string,
+    toAddress: string,
+  ) {
+    const prefs = await this.prisma.userSecurityPreference.findUnique({
+      where: { userId },
+    });
+    if (!prefs?.withdrawalAddressWhitelistEnabled) return;
+
+    const prior = await this.prisma.withdrawal.findFirst({
+      where: {
+        toAddress,
+        status: { in: [WithdrawalStatus.COMPLETED, WithdrawalStatus.PROCESSING, WithdrawalStatus.APPROVED] },
+        walletTx: { wallet: { userId } },
+      },
+      select: { id: true },
+    });
+    if (prior) return;
+
+    throwAdminError(
+      'WITHDRAWAL_ADDRESS_NOT_TRUSTED',
+      'This address is not on your trusted list. Complete a withdrawal to it once with whitelist off, or turn off address whitelist in Security.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   private async getUserWallet(userId: string) {
@@ -151,6 +177,7 @@ export class UserWithdrawalsService {
 
     await this.eligibility.assertAllowed(userId, ConsentSource.WITHDRAWAL);
     await this.operationalLimits.assertUserWithdrawalWithinLimits(userId, amount);
+    await this.assertSecurityPreferencesAllowWithdrawal(userId, toAddress);
 
     const wallet = await this.getUserWallet(userId);
     if (wallet.balance!.available.lessThan(amount)) {
@@ -166,7 +193,8 @@ export class UserWithdrawalsService {
     const withdrawalId = randomUUID();
     const ledgerIdempotencySuffix = reqIdempotency ?? withdrawalId;
 
-    const created = await this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(
+      async (tx) => {
       await this.ledger.lockFromAvailable(tx, wallet.id, amount, {
         operationType: LedgerOperationType.WITHDRAWAL_LOCK,
         sourceEntityType: 'withdrawal',
@@ -238,7 +266,10 @@ export class UserWithdrawalsService {
         where: { id: withdrawal.id },
         include: this.include(),
       });
-    });
+      },
+      // Multi-step ledger + fee paths routinely exceed Prisma's 5s default under load.
+      { maxWait: 15_000, timeout: 30_000 },
+    );
 
     void this.riskScoring
       .evaluateWithdrawal({
@@ -279,6 +310,25 @@ export class UserWithdrawalsService {
       .catch((err: unknown) => {
         this.logger.warn(
           `Withdrawal notification failed for ${created.id}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      });
+
+    void this.prisma.userSecurityPreference
+      .findUnique({ where: { userId } })
+      .then((prefs) => {
+        if (!prefs?.withdrawalEmailConfirmationEnabled) return;
+        return this.notificationEvents.withdrawalEmailConfirmation({
+          userId,
+          withdrawalId: created.id,
+          amount: amount.toString(),
+          toAddress,
+        });
+      })
+      .catch((err: unknown) => {
+        this.logger.warn(
+          `Withdrawal email confirmation failed for ${created.id}: ${
             err instanceof Error ? err.message : String(err)
           }`,
         );

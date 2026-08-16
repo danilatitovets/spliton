@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { PaginatedQueryDto } from '../../common/pagination/paginated-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -45,6 +46,7 @@ export class UserWalletController {
   }
 
   @Get('deposit-info')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   depositInfo(
     @CurrentUser() user: AuthUser,
     @Query() query: DepositInfoQueryDto,

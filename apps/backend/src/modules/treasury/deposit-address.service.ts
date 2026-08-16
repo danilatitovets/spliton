@@ -6,6 +6,11 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { throwAdminError } from '../admin/common/admin-http.util';
+import {
+  deriveDevTronAddress,
+  isValidTrc20Address,
+  normalizeTrc20Address,
+} from '../wallets/validators/trc20-address.validator';
 
 @Injectable()
 export class DepositAddressService {
@@ -28,10 +33,31 @@ export class DepositAddressService {
     address: string,
     source: DepositAddressSource,
   ) {
+    void userId;
+    const normalized = normalizeTrc20Address(address);
+    if (!isValidTrc20Address(normalized)) {
+      throwAdminError(
+        'INVALID_DEPOSIT_ADDRESS',
+        'Deposit address failed TRON Base58Check validation',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const existing = await this.getActiveAddress(walletId);
-    if (existing === address) return existing;
+    if (existing === normalized) return existing;
 
     await this.prisma.$transaction(async (tx) => {
+      const owned = await tx.userDepositAddress.findUnique({
+        where: { address: normalized },
+      });
+      if (owned && owned.walletId !== walletId) {
+        throwAdminError(
+          'DEPOSIT_ADDRESS_IN_USE',
+          'This TRON address is already assigned to another user',
+          HttpStatus.CONFLICT,
+        );
+      }
+
       await tx.userDepositAddress.updateMany({
         where: { walletId, status: DepositAddressStatus.ACTIVE },
         data: {
@@ -39,21 +65,33 @@ export class DepositAddressService {
           rotatedAt: new Date(),
         },
       });
-      await tx.userDepositAddress.create({
-        data: {
-          walletId,
-          address,
-          status: DepositAddressStatus.ACTIVE,
-          source,
-        },
-      });
+
+      if (owned) {
+        await tx.userDepositAddress.update({
+          where: { id: owned.id },
+          data: {
+            status: DepositAddressStatus.ACTIVE,
+            source,
+            rotatedAt: null,
+          },
+        });
+      } else {
+        await tx.userDepositAddress.create({
+          data: {
+            walletId,
+            address: normalized,
+            status: DepositAddressStatus.ACTIVE,
+            source,
+          },
+        });
+      }
       await tx.wallet.update({
         where: { id: walletId },
-        data: { address },
+        data: { address: normalized },
       });
     });
 
-    return address;
+    return normalized;
   }
 
   resolveDevOrProviderAddress(
@@ -79,7 +117,7 @@ export class DepositAddressService {
       };
     }
 
-    const address = `T_DEV_${userId.replace(/-/g, '').slice(0, 32)}`.slice(0, 34);
+    const address = deriveDevTronAddress(userId);
     return { kind: 'address', address };
   }
 

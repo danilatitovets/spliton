@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Copy, LogOut, X } from "@/lib/lucide";
+import { ChevronDown, LogOut, X } from "@/lib/lucide";
 import * as React from "react";
 
 import { profileDashboardHref } from "@/constants/dashboard/profile-page";
@@ -17,13 +17,6 @@ const menuRowClass =
   "block w-full py-3.5 text-left text-[17px] font-medium leading-snug tracking-[-0.01em] text-white transition-colors hover:text-white/90";
 const subMenuRowClass =
   "block w-full py-2.5 pl-5 text-left text-[17px] font-normal leading-snug tracking-[-0.01em] text-white/90 transition-colors hover:text-white";
-
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!domain) return email;
-  if (local.length <= 2) return `${local[0] ?? ""}***@${domain}`;
-  return `${local.slice(0, 3)}***@${domain}`;
-}
 
 function userInitial(email: string, displayName: string | null | undefined): string {
   const fromName = displayName?.trim()?.[0];
@@ -41,12 +34,10 @@ export function DashboardMobileProfileDrawer({ open, onClose }: DashboardMobileP
   const { user, logout } = useAuth();
   const { t } = useI18n();
   const [assetsOpen, setAssetsOpen] = React.useState(false);
-  const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
     if (!open) {
       setAssetsOpen(false);
-      setCopied(false);
       return;
     }
     const prev = document.body.style.overflow;
@@ -59,7 +50,7 @@ export function DashboardMobileProfileDrawer({ open, onClose }: DashboardMobileP
   if (!open || !user) return null;
 
   const email = user.email;
-  const uid = user.id;
+  const displayName = user.profile?.displayName?.trim() || t("profile.overview.displayNameFallback");
   const initial = userInitial(email, user.profile?.displayName);
 
   const profileLinks = [
@@ -78,16 +69,6 @@ export function DashboardMobileProfileDrawer({ open, onClose }: DashboardMobileP
     { href: ROUTES.myAssetsPayouts, label: t("nav.payouts") },
     { href: ROUTES.myAssetsOperations, label: t("mobileProfile.assetsActivity") },
   ];
-
-  const copyUid = async () => {
-    try {
-      await navigator.clipboard.writeText(uid);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-    }
-  };
 
   const handleLogout = () => {
     void (async () => {
@@ -114,21 +95,7 @@ export function DashboardMobileProfileDrawer({ open, onClose }: DashboardMobileP
               {initial}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-[17px] font-medium text-white">{maskEmail(email)}</p>
-              <div className="mt-1 flex items-center gap-1.5 text-[13px] text-zinc-500">
-                <span className="truncate">
-                  {t("mobileProfile.uid")}: {uid}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void copyUid()}
-                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-white/8 hover:text-white"
-                  aria-label={t("mobileProfile.copyUid")}
-                >
-                  <Copy className="size-3.5" strokeWidth={2} aria-hidden />
-                </button>
-                {copied ? <span className="text-[11px] text-[#B7F500]">{t("mobileProfile.copied")}</span> : null}
-              </div>
+              <p className="text-[17px] font-medium leading-snug text-white">{displayName}</p>
             </div>
           </div>
 

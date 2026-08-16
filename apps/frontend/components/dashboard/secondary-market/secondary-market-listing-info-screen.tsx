@@ -114,7 +114,7 @@ export function SecondaryMarketListingInfoScreen({
           <span
             className={cn(
               "inline-flex rounded-full px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
-              canPurchase ? "bg-[#B7F500]/15 text-[#B7F500]" : "bg-zinc-800 text-zinc-400",
+              canPurchase ? "bg-white/10 text-white" : "bg-zinc-800 text-zinc-400",
             )}
           >
             {listingStatusText}
@@ -192,8 +192,8 @@ export function SecondaryMarketListingInfoScreen({
                       <div
                         className={cn(
                           "h-full rounded-full",
-                          listing.liquidity === "high" ? "w-[88%] bg-[#B7F500]/85" : "",
-                          listing.liquidity === "med" ? "w-[55%] bg-[#B7F500]/55" : "",
+                          listing.liquidity === "high" ? "w-[88%] bg-white/80" : "",
+                          listing.liquidity === "med" ? "w-[55%] bg-white/45" : "",
                           listing.liquidity === "low" ? "w-[28%] bg-zinc-500" : "",
                         )}
                       />
@@ -242,7 +242,7 @@ export function SecondaryMarketListingInfoScreen({
                             <span
                               className={cn(
                                 "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                                trade.side === "buy" ? "bg-[#B7F500]/14 text-[#d4f570]" : "bg-fuchsia-500/12 text-fuchsia-200",
+                                trade.side === "buy" ? "bg-white/10 text-white" : "bg-white/5 text-zinc-400",
                               )}
                             >
                               {trade.side === "buy" ? t("secondaryMarket.side.buy") : t("secondaryMarket.side.sell")}
@@ -253,7 +253,7 @@ export function SecondaryMarketListingInfoScreen({
                               {trend === "up" ? (
                                 <span className="inline-flex shrink-0" title={trendTitle}>
                                   <ArrowUp
-                                    className={cn("size-3.5", trade.side === "buy" ? "text-[#B7F500]" : "text-fuchsia-300")}
+                                    className={cn("size-3.5", trade.side === "buy" ? "text-white" : "text-zinc-400")}
                                     strokeWidth={2.5}
                                     aria-hidden
                                   />
@@ -262,7 +262,7 @@ export function SecondaryMarketListingInfoScreen({
                               {trend === "down" ? (
                                 <span className="inline-flex shrink-0" title={trendTitle}>
                                   <ArrowDown
-                                    className={cn("size-3.5", trade.side === "buy" ? "text-fuchsia-300/90" : "text-zinc-500")}
+                                    className={cn("size-3.5", trade.side === "buy" ? "text-zinc-400/90" : "text-zinc-500")}
                                     strokeWidth={2.5}
                                     aria-hidden
                                   />

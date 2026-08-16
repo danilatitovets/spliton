@@ -27,7 +27,7 @@ describe("SupportChatWidget", () => {
       </I18nProvider>,
     );
 
-    expect(screen.getByText(/Обращения по email/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Поддержка$/i)).toBeInTheDocument();
     expect(screen.queryByText(/Демо-чат/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Начать чат/i })).not.toBeInTheDocument();
   });

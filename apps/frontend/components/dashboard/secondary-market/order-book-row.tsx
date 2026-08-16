@@ -48,7 +48,7 @@ export function OrderBookRow({
       <div
         className={cn(
           "absolute inset-y-0 opacity-[0.16]",
-          isAsk ? "right-0 rounded-l-sm bg-fuchsia-400" : "right-0 rounded-l-sm bg-[#B7F500]",
+          isAsk ? "right-0 rounded-l-sm bg-zinc-500" : "right-0 rounded-l-sm bg-white",
         )}
         style={{ width: `${pct}%` }}
       />
@@ -58,7 +58,7 @@ export function OrderBookRow({
           compact ? "py-px" : "py-0.5 sm:py-1",
         )}
       >
-        <span className={cn(isAsk ? "text-fuchsia-200" : "text-[#c8f06a]")}>{formatOrderBookUsdt(price)}</span>
+        <span className={cn(isAsk ? "text-zinc-400" : "text-[#c8f06a]")}>{formatOrderBookUsdt(price)}</span>
         <span className="text-center text-zinc-400">{units.toLocaleString("ru-RU")}</span>
         <span className="text-right text-zinc-600">{formatOrderBookUsdt(cumulativeUsdt)}</span>
       </div>

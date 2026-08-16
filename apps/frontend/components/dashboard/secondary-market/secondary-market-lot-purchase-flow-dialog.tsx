@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import type { DialogRoot } from "@base-ui/react/dialog";
@@ -11,6 +10,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { LegalConsentModal } from "@/components/compliance/legal-consent-modal";
 import { LegalConsentGateAlert } from "@/components/compliance/legal-consent-gate-alert";
 import { EligibilityNotice } from "@/components/compliance/eligibility-notice";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { useLegalConsentGate } from "@/hooks/use-legal-consent-gate";
 import { secondaryMarketBookHref } from "@/constants/dashboard/secondary-market";
 import { ROUTES } from "@/constants/routes";
@@ -43,6 +43,8 @@ import {
   type AuthorizedFetch,
   type LotPurchaseStep,
 } from "./secondary-market-lot-purchase-flow-utils";
+
+const LOT_ACTIONS_HEADER_VIDEO = "/videos/position-holding-bg.mp4";
 
 export type SecondaryMarketLotPurchaseFlowDialogProps = {
   open: boolean;
@@ -239,50 +241,54 @@ export function SecondaryMarketLotPurchaseFlowDialog({
         <Dialog.Popup
           initialFocus={closeRef}
           className={cn(
-            "fixed z-128 flex max-h-[92dvh] flex-col bg-[#101010] text-white shadow-[0_-24px_80px_rgba(0,0,0,0.78)]",
-            "transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            "inset-x-0 bottom-0 rounded-t-[24px]",
-            "md:inset-auto md:left-1/2 md:top-1/2 md:max-h-[90dvh] md:w-[min(100vw-2rem,520px)] md:-translate-x-1/2 md:-translate-y-1/2 md:overflow-y-auto md:rounded-2xl md:shadow-[0_32px_120px_rgba(0,0,0,0.78)] md:[scrollbar-width:none] md:[-ms-overflow-style:none] md:[&::-webkit-scrollbar]:hidden",
-            "max-md:data-starting-style:translate-y-full max-md:data-ending-style:translate-y-full",
-            "md:data-starting-style:scale-[0.98] md:data-ending-style:scale-[0.98] md:data-starting-style:opacity-0 md:data-ending-style:opacity-0",
+            "fixed z-128 flex flex-col bg-[#0a0a0a] text-white",
+            "shadow-[-24px_0_80px_rgba(0,0,0,0.55)]",
+            "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "inset-y-0 right-0 max-h-dvh w-[min(100vw,420px)] rounded-none rounded-l-2xl",
+            "data-starting-style:translate-x-full data-ending-style:translate-x-full",
           )}
         >
-          <div className="flex shrink-0 flex-col items-center pt-2.5 md:hidden">
-            <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
-          </div>
-
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-white/6 px-5 pb-4 pt-3 md:px-6 md:pt-5">
-            <div className="min-w-0 pr-2">
-              <Dialog.Title className="text-[17px] font-semibold tracking-tight text-white md:text-lg">
-                {stepTitle}
-              </Dialog.Title>
-              {step === "actions" || step === "confirm" ? (
-                <Dialog.Description className="mt-1 text-[12px] leading-relaxed text-zinc-500 md:text-[13px]">
-                  {listing.track} · {listing.artist} · {listing.symbol}
-                </Dialog.Description>
-              ) : null}
+          <div className="relative isolate shrink-0 overflow-hidden border-b border-white/[0.06]">
+            <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <video
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-55 blur-[10px] motion-reduce:hidden"
+                src={LOT_ACTIONS_HEADER_VIDEO}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/72 to-[#0a0a0a]" />
             </div>
-            {step !== "processing" ? (
-              <button
-                ref={closeRef}
-                type="button"
-                aria-label={t("secondaryMarket.aria.close")}
-                onClick={handleClose}
-                className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-white/10 hover:text-white"
-              >
-                <X className="size-4" />
-              </button>
-            ) : (
-              <span className="size-9 shrink-0" aria-hidden />
-            )}
+            <div className="relative z-10 flex items-start justify-between gap-3 px-5 pb-4 pt-5 md:px-6">
+              <div className="min-w-0 pr-2">
+                <Dialog.Title className="text-[17px] font-semibold tracking-tight text-white md:text-lg">
+                  {stepTitle}
+                </Dialog.Title>
+                {step === "actions" || step === "confirm" ? (
+                  <Dialog.Description className="mt-1 truncate text-[12px] text-white/55 md:text-[13px]">
+                    {listing.track} · {listing.symbol}
+                  </Dialog.Description>
+                ) : null}
+              </div>
+              {step !== "processing" ? (
+                <button
+                  ref={closeRef}
+                  type="button"
+                  aria-label={t("secondaryMarket.aria.close")}
+                  onClick={handleClose}
+                  className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/35 text-zinc-300 backdrop-blur-sm transition hover:border-white/25 hover:bg-black/50 hover:text-white"
+                >
+                  <X className="size-4" strokeWidth={1.75} />
+                </button>
+              ) : (
+                <span className="size-9 shrink-0" aria-hidden />
+              )}
+            </div>
           </div>
 
-          <div
-            className={cn(
-              "min-h-0 flex-1 overscroll-contain px-5 py-4 md:flex-none md:overflow-visible md:px-6 md:py-5",
-              "overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-            )}
-          >
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-width:none] [-ms-overflow-style:none] md:px-6 [&::-webkit-scrollbar]:hidden">
             {step === "actions" ? (
               <LotPurchaseActionsScreen
                 t={t}
@@ -299,6 +305,7 @@ export function SecondaryMarketLotPurchaseFlowDialog({
                 onBuyClick={() => setStep("confirm")}
                 onOpenOrderBook={handleOpenOrderBook}
                 onClose={handleClose}
+                hidePrimaryCta
               />
             ) : null}
             {step === "confirm" ? (
@@ -330,102 +337,127 @@ export function SecondaryMarketLotPurchaseFlowDialog({
             ) : null}
           </div>
 
+          {step === "actions" ? (
+            <div className="shrink-0 border-t border-white/[0.06] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
+              {canBuy ? (
+                <SplitonCtaPill
+                  type="button"
+                  tone="onDark"
+                  disabled={previewBlocking || !feePreview}
+                  onClick={() => setStep("confirm")}
+                  className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {t("secondaryMarket.listings.buyLot")}
+                </SplitonCtaPill>
+              ) : (
+                <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-[12px] leading-relaxed text-zinc-500 ring-1 ring-white/[0.06]" role="status">
+                  {t("secondaryMarket.lotPurchase.cannotBuyNote")}
+                </p>
+              )}
+            </div>
+          ) : null}
+
           {step === "confirm" ? (
-            <div className="shrink-0 border-t border-white/6 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
+            <div className="shrink-0 border-t border-white/[0.06] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
               {consentEnabled ? <EligibilityNotice result={consentGate.eligibility} className="mb-3" /> : null}
               {consentEnabled ? <LegalConsentGateAlert gate={consentGate} variant="dark" className="mb-3" /> : null}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  className="h-10 flex-1 rounded-full bg-white/10 px-5 font-mono text-[12px] font-medium text-zinc-200 transition hover:bg-white/14"
+                  className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-white/[0.08] px-4 text-[13px] font-medium text-zinc-200 transition hover:bg-white/[0.12]"
                   onClick={() => setStep("actions")}
                 >
                   {t("secondaryMarket.lotPurchase.backToLot")}
                 </button>
-                <button
+                <SplitonCtaPill
                   type="button"
+                  tone="onDark"
                   disabled={confirmDisabled}
-                  className="h-10 flex-1 rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black transition hover:bg-[#c8ff3d] disabled:opacity-50"
                   onClick={handleConfirmClick}
+                  className="h-11 min-w-0 flex-[1.35] justify-between gap-2 pl-4 pr-1.5 text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {t("secondaryMarket.lotPurchase.confirm")}
-                </button>
+                </SplitonCtaPill>
               </div>
             </div>
           ) : null}
 
           {step === "success" && buyResult ? (
-            <div className="shrink-0 border-t border-white/6 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-                <Link
+            <div className="shrink-0 border-t border-white/[0.06] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
+              <div className="flex flex-col gap-2">
+                <SplitonCtaPill
                   href={ROUTES.dashboardPositions}
-                  onClick={handleClose}
-                  className="inline-flex h-10 items-center justify-center rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black transition hover:bg-[#c8ff3d]"
+                  tone="onDark"
+                  className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[14px] font-semibold"
                 >
                   {t("secondaryMarket.lotPurchase.openInPortfolio")}
-                </Link>
-                <button
-                  type="button"
-                  className="inline-flex h-10 items-center justify-center rounded-full bg-white/10 px-5 font-mono text-[12px] font-medium text-zinc-200 transition hover:bg-white/14"
-                  onClick={handleClose}
-                >
-                  {t("secondaryMarket.lotPurchase.backToMarket")}
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 px-5 font-mono text-[12px] font-medium text-zinc-300 transition hover:bg-white/6"
-                  onClick={async () => {
-                    setReceiptError(null);
-                    try {
-                      const file = await downloadTradeReceipt(authorizedFetch, buyResult.tradeId);
-                      const binary = atob(file.contentBase64);
-                      const bytes = new Uint8Array(binary.length);
-                      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-                      saveBlob(new Blob([bytes], { type: file.mimeType }), file.filename);
-                    } catch {
-                      setReceiptError(t("secondaryMarket.lotPurchase.receiptFailed"));
-                    }
-                  }}
-                >
-                  {t("secondaryMarket.lotPurchase.downloadReceipt")}
-                </button>
+                </SplitonCtaPill>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-white/[0.08] px-4 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.12]"
+                    onClick={handleClose}
+                  >
+                    {t("secondaryMarket.lotPurchase.backToMarket")}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-white/12 px-4 text-[12px] font-medium text-zinc-300 transition hover:bg-white/[0.05]"
+                    onClick={async () => {
+                      setReceiptError(null);
+                      try {
+                        const file = await downloadTradeReceipt(authorizedFetch, buyResult.tradeId);
+                        const binary = atob(file.contentBase64);
+                        const bytes = new Uint8Array(binary.length);
+                        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+                        saveBlob(new Blob([bytes], { type: file.mimeType }), file.filename);
+                      } catch {
+                        setReceiptError(t("secondaryMarket.lotPurchase.receiptFailed"));
+                      }
+                    }}
+                  >
+                    {t("secondaryMarket.lotPurchase.downloadReceipt")}
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
 
           {step === "failed" ? (
-            <div className="shrink-0 border-t border-white/6 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
-              <div className="flex flex-wrap gap-2">
+            <div className="shrink-0 border-t border-white/[0.06] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
+              <div className="flex flex-col gap-2">
                 {failedKind === "insufficient_funds" ? (
-                  <Link
+                  <SplitonCtaPill
                     href={LOT_PURCHASE_DEPOSIT_PATH}
-                    onClick={handleClose}
-                    className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black"
+                    tone="onDark"
+                    className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[14px] font-semibold"
                   >
                     {t("secondaryMarket.lotPurchase.topUpWallet")}
-                  </Link>
+                  </SplitonCtaPill>
                 ) : null}
                 {failedKind === "listing_unavailable" || failedKind === "price_changed" ? (
-                  <button
+                  <SplitonCtaPill
                     type="button"
-                    className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black"
+                    tone="onDark"
                     onClick={() => void handleRefreshLot()}
+                    className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[14px] font-semibold"
                   >
                     {t("secondaryMarket.lotPurchase.refreshLot")}
-                  </button>
+                  </SplitonCtaPill>
                 ) : null}
                 {failedKind === "network" ? (
-                  <button
+                  <SplitonCtaPill
                     type="button"
-                    className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#B7F500] px-5 font-mono text-[12px] font-semibold text-black"
+                    tone="onDark"
                     onClick={() => void handleRetry()}
+                    className="h-11 w-full justify-between gap-3 pl-5 pr-1.5 text-[14px] font-semibold"
                   >
                     {t("secondaryMarket.lotPurchase.retry")}
-                  </button>
+                  </SplitonCtaPill>
                 ) : null}
                 <button
                   type="button"
-                  className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-white/10 px-5 font-mono text-[12px] font-medium text-zinc-200"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-full bg-white/[0.08] px-5 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.12]"
                   onClick={handleClose}
                 >
                   {t("secondaryMarket.lotPurchase.backToMarket")}

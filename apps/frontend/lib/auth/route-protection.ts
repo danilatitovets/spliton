@@ -11,6 +11,10 @@ export function isProtectedPath(pathname: string): boolean {
   if (pathname === "/dashboard/secondary-market" || pathname.startsWith("/dashboard/secondary-market/")) {
     return true;
   }
+  if (pathname === "/dashboard/disputes" || pathname.startsWith("/dashboard/disputes/")) return true;
+  if (pathname === "/dashboard/documents" || pathname.startsWith("/dashboard/documents/")) return true;
+  if (pathname === "/dashboard/statements" || pathname.startsWith("/dashboard/statements/")) return true;
+  if (pathname === "/dashboard/artist" || pathname.startsWith("/dashboard/artist/")) return true;
   return false;
 }
 

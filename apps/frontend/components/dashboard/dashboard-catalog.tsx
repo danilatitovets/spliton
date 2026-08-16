@@ -27,6 +27,9 @@ export function DashboardCatalogSection({ className }: { className?: string }) {
     >
       <div className="mx-auto w-full max-w-[1200px] px-4 pt-12 sm:px-6 sm:pt-16 md:pt-20 lg:px-8">
         <div className="mb-8 max-w-2xl sm:mb-10 lg:mb-12">
+          <p className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-[#8a8f98]">
+            Demo preview
+          </p>
           <h2
             id="dash-catalog-heading"
             className="text-3xl font-medium tracking-[-0.022em] text-white md:text-4xl lg:text-[2.75rem] lg:leading-[1.08] [font-feature-settings:'cv01'_on,'ss03'_on,'zero'_on]"
@@ -41,16 +44,12 @@ export function DashboardCatalogSection({ className }: { className?: string }) {
         <div className="min-w-0">
           <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden">
             {items.map((item) => (
-              <Link
+              <div
                 key={item.id}
-                href={ROUTES.dashboardCatalog}
-                className="block w-[min(88vw,340px)] shrink-0 snap-center rounded-2xl outline-offset-2 transition hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/40 sm:w-auto sm:shrink"
-                aria-label={`${item.title} — ${t("dashboard.catalogPreview.openCta")}`}
+                className="w-[min(88vw,340px)] shrink-0 snap-center sm:w-auto sm:shrink"
               >
-                <div className="pointer-events-none">
-                  <CatalogTrackCard item={item} variant="card" size="default" />
-                </div>
-              </Link>
+                <CatalogTrackCard item={item} variant="card" size="default" />
+              </div>
             ))}
           </div>
 

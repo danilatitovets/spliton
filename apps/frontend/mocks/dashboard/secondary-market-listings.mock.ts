@@ -149,7 +149,7 @@ export const SECONDARY_MARKET_LISTINGS_MOCK: SecondaryMarketListingMock[] = [
     genre: "rock",
     pricePerUnit: 12.5,
     change7dPct: 0,
-    payoutSparkline: [0.5, 0.5, 0.5, 0.5, 0.5],
+    payoutSparkline: [0.48, 0.47, 0.49, 0.46, 0.5, 0.45, 0.47, 0.44, 0.46, 0.43],
     range7dLow: 12.5,
     range7dHigh: 12.5,
     listingValueUsdt: 625,

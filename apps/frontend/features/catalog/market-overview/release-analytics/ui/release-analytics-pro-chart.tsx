@@ -27,10 +27,10 @@ const ACCENT: Record<Accent, { stroke: string; soft: string; dot: string; matrix
     matrix: "0 0 0 0 0.95 0 0 0 0 0.35 0 0 0 0 0.85 0 0 0 0.48 0",
   },
   zinc: {
-    stroke: "#a1a1aa",
-    soft: "rgba(161,161,170,0.12)",
-    dot: "#d4d4d8",
-    matrix: "0 0 0 0 0.75 0 0 0 0 0.75 0 0 0 0 0.78 0 0 0 0.45 0",
+    stroke: "#f4f4f5",
+    soft: "rgba(255,255,255,0.12)",
+    dot: "#ffffff",
+    matrix: "0 0 0 0 0.96 0 0 0 0 0.96 0 0 0 0 0.96 0 0 0 0.55 0",
   },
 };
 

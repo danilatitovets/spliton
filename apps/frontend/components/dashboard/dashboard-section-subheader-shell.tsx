@@ -5,12 +5,13 @@ import { cn } from "@/lib/utils";
 /** @deprecated Sticky перенесён в DashboardCabinetHeaderStack. */
 export const DASHBOARD_SUBHEADER_STICKY_CLASS = "";
 
-type DashboardSectionSubheaderVariant = "white" | "muted";
+type DashboardSectionSubheaderVariant = "white" | "muted" | "dark";
 
 const variantSurfaceClass: Record<DashboardSectionSubheaderVariant, string> = {
   white: "border-b border-neutral-100 bg-white",
   muted:
     "border-b border-neutral-200/90 bg-[#f6f7f9]/92 backdrop-blur-md supports-backdrop-filter:bg-[#f6f7f9]/88",
+  dark: "border-b border-white/[0.06] bg-black",
 };
 
 type DashboardSectionSubheaderShellProps = {

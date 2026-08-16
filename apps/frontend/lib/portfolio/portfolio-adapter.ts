@@ -95,10 +95,16 @@ function formatRelativeTimeByLocale(iso: string, locale: AppLocale): string {
 
 export function adaptPositionRow(row: PortfolioPositionApi, locale: AppLocale): PositionPreviewItem {
   const held = Number.parseFloat(row.unitsTotal);
+  const available = Number.parseFloat(row.unitsAvailable);
   return {
     id: row.id,
-    catalogReleaseId: row.slug,
+    // Prefer release UUID so buy/sell/detail routes hit live APIs (UUID or slug both resolve).
+    catalogReleaseId: row.releaseId || row.slug,
+    coverUrl: row.coverUrl,
     heldUnits: Number.isFinite(held) ? held : undefined,
+    availableUnits: Number.isFinite(available) ? available : undefined,
+    availableToSell: row.availableToSell,
+    canBuyMore: row.canBuyMore,
     release: row.release,
     artist: row.artist,
     genre: normalizeGenre(row.genre),

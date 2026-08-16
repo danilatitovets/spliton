@@ -1,18 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, ChevronRight, ExternalLink, FileText, RefreshCw, Shield } from "@/lib/lucide";
+import { RefreshCw } from "@/lib/lucide";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ProfileSectionSkeleton } from "@/components/dashboard/profile/profile-section-skeleton";
-import { profileCardClass, profilePrimaryButtonClass } from "@/components/dashboard/profile/profile-ui";
+import {
+  ProfileOkxAlert,
+  ProfileOkxBanner,
+  ProfileOkxHeader,
+  ProfileOkxLink,
+  ProfileOkxRecommended,
+  ProfileOkxRow,
+  ProfileOkxSection,
+  ProfileOkxSpotlight,
+  profileOkxGhostClass,
+  profileOkxPillClass,
+  profileOkxPrimaryClass,
+} from "@/components/dashboard/profile/profile-okx";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
+import {
+  PROFILE_GLASS,
+  ProfileGlassIcon,
+  profileLineIcon,
+  type ProfileLineIconName,
+} from "@/components/dashboard/profile/profile-shared";
 import { ROUTES } from "@/constants/routes";
 import { formatDate } from "@/lib/i18n/formatters";
 import { cn } from "@/lib/utils";
 import {
-  acceptLegalConsents,
   buildProfileLegalFallback,
   fetchLegalCenter,
   getAllMissingConsents,
@@ -20,32 +39,31 @@ import {
   policyPublicHref,
   policyTypeLabel,
   type LegalCenterResponse,
+  type LegalPolicyPublic,
   type MissingConsentItem,
 } from "@/services/legal.service";
 
-function PolicyStatusBadge({ accepted, t }: { accepted: boolean; t: (k: string) => string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-        accepted ? "bg-lime-100/90 text-lime-950" : "bg-amber-50 text-amber-900",
-      )}
-    >
-      {accepted ? t("profile.legal.badge.accepted") : t("profile.legal.badge.missing")}
-    </span>
-  );
+function policyIcon(type: string): ProfileLineIconName {
+  switch (type) {
+    case "PRIVACY_POLICY":
+      return "id";
+    case "RISK_DISCLOSURE":
+      return "security";
+    case "FEE_POLICY":
+      return "fee";
+    default:
+      return "legal";
+  }
 }
 
 export function ProfileLegalContent() {
+  const router = useRouter();
   const { authorizedFetch, isAuthenticated } = useAuth();
   const { t, locale } = useI18n();
   const [data, setData] = useState<LegalCenterResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [confirmIds, setConfirmIds] = useState<Record<string, boolean>>({});
-  const [acceptError, setAcceptError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!isAuthenticated) {
@@ -108,40 +126,34 @@ export function ProfileLegalContent() {
     });
   }, [data, t]);
 
-  const acceptOne = useCallback(
-    async (item: MissingConsentItem) => {
-      const policyId = item.policyId;
-      if (!policyId || !confirmIds[policyId] || isFallbackPolicyId(policyId)) return;
-      setAcceptingId(policyId);
-      setAcceptError(null);
-      try {
-        await acceptLegalConsents([policyId], "PROFILE", authorizedFetch);
-        await load();
-        setConfirmIds((prev) => {
-          const next = { ...prev };
-          delete next[policyId];
-          return next;
-        });
-      } catch {
-        setAcceptError(t("profile.legal.acceptError"));
-      } finally {
-        setAcceptingId(null);
-      }
+  const openPolicy = useCallback(
+    (item: MissingConsentItem) => {
+      if (!data || !item.policyId) return;
+      const policy =
+        data.activePolicies.find((p) => p.id === item.policyId) ??
+        data.activePolicies.find((p) => p.type === item.type) ??
+        null;
+      if (!policy) return;
+      router.push(ROUTES.dashboardProfileLegalDoc(policy.id, true));
     },
-    [authorizedFetch, confirmIds, load, t],
+    [data, router],
+  );
+
+  const openPolicyDocument = useCallback(
+    (policy: LegalPolicyPublic, requireConfirm: boolean) => {
+      router.push(ROUTES.dashboardProfileLegalDoc(policy.id, requireConfirm));
+    },
+    [router],
   );
 
   if (!isAuthenticated) {
     return (
-      <section className={cn(profileCardClass, "text-center")}>
-        <p className="text-sm text-neutral-600">{t("profile.legal.signInRequired")}</p>
-        <Link
-          href={ROUTES.login}
-          className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-black px-5 text-sm font-semibold text-white"
-        >
+      <div className="rounded-2xl bg-[#111111] px-4 py-6 text-center">
+        <p className="text-sm text-zinc-400">{t("profile.legal.signInRequired")}</p>
+        <Link href={ROUTES.login} className={cn(profileOkxPrimaryClass, "mt-4")}>
           {t("auth.login.submit")}
         </Link>
-      </section>
+      </div>
     );
   }
 
@@ -150,166 +162,192 @@ export function ProfileLegalContent() {
   }
 
   if (!data) {
-    return <p className="text-sm text-neutral-600">{t("profile.legal.empty")}</p>;
+    return <p className="text-sm text-zinc-400">{t("profile.legal.empty")}</p>;
   }
 
+  const requiredPolicies = displayPolicies.filter(
+    (p) => p.requiresUserConsent && !isFallbackPolicyId(p.id),
+  );
+  const acceptedRequired = requiredPolicies.filter((p) =>
+    acceptedSet.has(`${p.type}:${p.version}`),
+  );
+  const showScore = !offline && requiredPolicies.length > 0;
+  const statusLabel = offline
+    ? t("profile.legal.offlineStatus")
+    : allMissing.length > 0
+      ? t("profile.legal.missingBanner").replace("{count}", String(allMissing.length))
+      : t("profile.legal.allAccepted");
+
   return (
-    <div className="space-y-4">
-      <section className={profileCardClass}>
-        <div className="flex items-start gap-3">
-          <Shield className="mt-0.5 size-5 shrink-0 text-[#3d7a00]" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold text-neutral-950">{t("profile.legal.title")}</h2>
-            <p className="mt-1 text-sm text-neutral-600">{t("profile.legal.description")}</p>
-            <p
-              className={cn(
-                "mt-3 rounded-xl px-3 py-2 text-sm font-medium",
-                offline
-                  ? "bg-neutral-100 text-neutral-800"
-                  : allMissing.length > 0
-                    ? "bg-amber-50 text-amber-950"
-                    : "bg-lime-50 text-lime-950",
-              )}
+    <div className="space-y-4 sm:space-y-5">
+      <ProfileOkxHeader
+        icon={showScore ? undefined : profileLineIcon("legal", "lg")}
+        score={showScore ? acceptedRequired.length : undefined}
+        scoreMax={showScore ? requiredPolicies.length : undefined}
+        scoreLabel={
+          showScore
+            ? t("profile.legal.scoreRing").replace("{max}", String(requiredPolicies.length))
+            : undefined
+        }
+        title={t("profile.legal.title")}
+        subtitle={statusLabel}
+        cta={
+          loadError ? (
+            <button type="button" onClick={() => void load()} className={profileOkxGhostClass}>
+              <RefreshCw className="mr-1.5 size-3.5" aria-hidden />
+              {t("profile.legal.retry")}
+            </button>
+          ) : allMissing.length > 0 ? (
+            <button
+              type="button"
+              className={profileOkxPrimaryClass}
+              onClick={() =>
+                document
+                  .getElementById("legal-accept")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
             >
-              {offline
-                ? t("profile.legal.offlineStatus")
-                : allMissing.length > 0
-                  ? t("profile.legal.missingBanner").replace("{count}", String(allMissing.length))
-                  : t("profile.legal.allAccepted")}
-            </p>
-            {loadError ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <p className="text-xs text-amber-900">{t("profile.legal.offlineHint")}</p>
-                <button
-                  type="button"
-                  onClick={() => void load()}
-                  className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-neutral-800 ring-1 ring-neutral-200"
-                >
-                  <RefreshCw className="size-3" aria-hidden />
-                  {t("profile.legal.retry")}
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </section>
+              {t("profile.okx.setup")}
+            </button>
+          ) : (
+            <ProfileOkxLink href={ROUTES.trust}>{t("profile.okx.use")}</ProfileOkxLink>
+          )
+        }
+      />
 
       {allMissing.length > 0 ? (
-        <section className={profileCardClass}>
-          <h3 className="text-sm font-semibold text-neutral-900">{t("profile.legal.acceptSection.title")}</h3>
-          <p className="mt-1 text-xs text-neutral-500">{t("profile.legal.acceptSection.hint")}</p>
-          <ul className="mt-4 space-y-3">
-            {allMissing.map((item) => (
-              <li key={`${item.type}-${item.activeVersion}`} className="rounded-xl bg-neutral-50 px-4 py-3">
-                <p className="text-sm font-medium text-neutral-900">{item.title}</p>
-                <Link
-                  href={policyPublicHref(item.type)}
-                  target="_blank"
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-neutral-800 hover:underline"
+        <ProfileOkxSpotlight
+          icon={profileLineIcon("legal", "xl")}
+          headline={t("profile.okx.spotlight.legal.headline")}
+          body={t("profile.okx.spotlight.legal.body")}
+          detailsHref={ROUTES.trust}
+          detailsLabel={t("profile.okx.details")}
+          cta={
+            <button
+              type="button"
+              className={profileOkxPillClass}
+              onClick={() =>
+                document
+                  .getElementById("legal-accept")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            >
+              {t("profile.okx.setup")}
+            </button>
+          }
+        />
+      ) : (
+        <ProfileOkxBanner
+          icon={profileLineIcon("support")}
+          title={t("profile.legal.description")}
+          action={<ProfileOkxLink href={ROUTES.trust}>{t("profile.okx.use")}</ProfileOkxLink>}
+        />
+      )}
+
+      {loadError ? (
+        <ProfileOkxAlert title={t("profile.legal.offlineStatus")}>
+          <p>{t("profile.legal.offlineHint")}</p>
+        </ProfileOkxAlert>
+      ) : null}
+
+      {allMissing.length > 0 ? (
+        <ProfileOkxSection id="legal-accept" title={t("profile.legal.acceptSection.title")}>
+          {allMissing.map((item) => (
+            <ProfileOkxRow
+              key={`${item.type}-${item.activeVersion}`}
+              icon={profileLineIcon(policyIcon(item.type))}
+              title={item.title}
+              description={t("profile.legal.readRequiredHint")}
+              action={
+                <SplitonCtaPill
+                  type="button"
+                  tone="onDark"
+                  onClick={() => openPolicy(item)}
+                  className="min-w-[11.5rem] shrink-0"
                 >
                   {t("profile.legal.readDocument")}
-                  <ExternalLink className="size-3" aria-hidden />
-                </Link>
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <label className="flex items-center gap-2 text-xs text-neutral-600">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(confirmIds[item.policyId])}
-                      onChange={(e) =>
-                        setConfirmIds((prev) => ({ ...prev, [item.policyId]: e.target.checked }))
-                      }
-                      className="size-4 rounded border-neutral-300"
-                    />
-                    {t("profile.legal.acceptCheckbox")}
-                  </label>
-                  <button
-                    type="button"
-                    disabled={!confirmIds[item.policyId] || acceptingId === item.policyId}
-                    onClick={() => void acceptOne(item)}
-                    className={cn(profilePrimaryButtonClass, "h-9 text-xs disabled:opacity-60")}
-                  >
-                    {acceptingId === item.policyId ? t("profile.legal.accepting") : t("profile.legal.acceptButton")}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {acceptError ? (
-            <p className="mt-2 text-xs text-red-600" role="alert">
-              {acceptError}
-            </p>
-          ) : null}
-        </section>
+                </SplitonCtaPill>
+              }
+            />
+          ))}
+        </ProfileOkxSection>
       ) : null}
 
-      <section className={profileCardClass}>
-        <h3 className="text-sm font-semibold text-neutral-900">{t("profile.legal.activeTitle")}</h3>
-        <p className="mt-1 text-xs text-neutral-500">{t("profile.legal.documentsHint")}</p>
-        <ul className="mt-3 space-y-2">
-          {displayPolicies.map((p) => {
-            const accepted = acceptedSet.has(`${p.type}:${p.version}`) && !isFallbackPolicyId(p.id);
-            const title = p.title || policyTypeLabel(p.type, t);
-            return (
-              <li key={p.type}>
-                <Link
-                  href={policyPublicHref(p.type)}
-                  target="_blank"
-                  className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 px-4 py-3 transition hover:bg-neutral-100/80"
-                >
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <FileText className="size-4 shrink-0 text-neutral-400" aria-hidden />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-neutral-900">{title}</span>
-                      {!isFallbackPolicyId(p.id) && p.version !== "—" ? (
-                        <span className="text-xs text-neutral-500">v{p.version}</span>
-                      ) : null}
+      <ProfileOkxSection title={t("profile.legal.activeTitle")}>
+        {displayPolicies.map((p) => {
+          const accepted = acceptedSet.has(`${p.type}:${p.version}`) && !isFallbackPolicyId(p.id);
+          const title = p.title || policyTypeLabel(p.type, t);
+          const version =
+            !isFallbackPolicyId(p.id) && p.version !== "—"
+              ? `${t("profile.legal.version")} ${p.version}`
+              : t("profile.legal.documentsHint");
+          const needsReadConfirm =
+            !offline && p.requiresUserConsent && !accepted && !isFallbackPolicyId(p.id);
+          return (
+            <ProfileOkxRow
+              key={p.type}
+              icon={profileLineIcon(policyIcon(p.type))}
+              title={title}
+              description={version}
+              badge={
+                !offline && p.requiresUserConsent ? (
+                  accepted ? (
+                    <ProfileOkxRecommended>{t("profile.legal.badge.accepted")}</ProfileOkxRecommended>
+                  ) : (
+                    <span className="rounded px-1.5 py-0.5 text-[11px] font-semibold text-amber-200 bg-amber-500/15">
+                      {t("profile.legal.badge.missing")}
                     </span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-2">
-                    {!offline && p.requiresUserConsent ? (
-                      <PolicyStatusBadge accepted={accepted} t={t} />
-                    ) : null}
-                    <ChevronRight className="size-4 text-neutral-400" aria-hidden />
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        <Link
-          href={ROUTES.trust}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-neutral-800 hover:underline"
-        >
-          {t("profile.legal.trustLink")}
-          <ChevronRight className="size-3.5" aria-hidden />
-        </Link>
-      </section>
+                  )
+                ) : undefined
+              }
+              action={
+                isFallbackPolicyId(p.id) ? (
+                  <Link href={policyPublicHref(p.type)} target="_blank" className={profileOkxGhostClass}>
+                    {t("profile.okx.manage")}
+                  </Link>
+                ) : (
+                  <SplitonCtaPill
+                    type="button"
+                    tone="onDark"
+                    onClick={() => openPolicyDocument(p, needsReadConfirm)}
+                    className="min-w-[11.5rem] shrink-0"
+                  >
+                    {t("profile.legal.readDocument")}
+                  </SplitonCtaPill>
+                )
+              }
+            />
+          );
+        })}
+      </ProfileOkxSection>
 
-      {data.acceptedConsents.length > 0 ? (
-        <section className={profileCardClass}>
-          <h3 className="text-sm font-semibold text-neutral-900">{t("profile.legal.historyTitle")}</h3>
-          <ul className="mt-3 divide-y divide-neutral-100">
-            {data.acceptedConsents.map((row) => (
-              <li key={`${row.policyType}-${row.policyVersion}-${row.acceptedAt}`} className="py-3 text-sm first:pt-0 last:pb-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-neutral-900">{row.policy?.title ?? policyTypeLabel(row.policyType, t)}</span>
-                  <span className="text-neutral-500">v{row.policyVersion}</span>
-                  <Check className="size-3.5 text-lime-700" aria-hidden />
-                </div>
-                <p className="mt-1 text-xs text-neutral-500">
-                  {formatDate(new Date(row.acceptedAt), locale, {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <ProfileOkxSection title={t("profile.legal.historyTitle")}>
+        {data.acceptedConsents.length > 0 ? (
+          data.acceptedConsents.map((row) => (
+            <ProfileOkxRow
+              key={`${row.policyType}-${row.policyVersion}-${row.acceptedAt}`}
+              icon={profileLineIcon(policyIcon(row.policyType))}
+              title={row.policy?.title ?? policyTypeLabel(row.policyType, t)}
+              description={formatDate(new Date(row.acceptedAt), locale, {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              badge={<ProfileOkxRecommended>{t("profile.legal.badge.accepted")}</ProfileOkxRecommended>}
+            />
+          ))
+        ) : (
+          <div className="flex flex-col items-center px-4 py-10 text-center sm:px-5 sm:py-12">
+            <ProfileGlassIcon src={PROFILE_GLASS.consentHistoryEmpty} size="xl" />
+            <p className="mt-5 text-[15px] font-semibold text-white">{t("profile.legal.historyEmpty")}</p>
+            <p className="mt-2 max-w-[32ch] text-[13px] leading-relaxed text-zinc-500">
+              {t("profile.legal.historyEmptyHint")}
+            </p>
+          </div>
+        )}
+      </ProfileOkxSection>
     </div>
   );
 }

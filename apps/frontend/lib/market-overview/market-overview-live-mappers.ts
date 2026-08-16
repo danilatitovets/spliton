@@ -241,7 +241,7 @@ export function mapSecondaryLiveSnapshot(
   locale: AppLocale = "en",
 ): MarketSecondaryLiveSnapshot {
   const top = stats.topReleases?.byVolume?.[0];
-  const topDemand = top ? `${top.symbol} · ${top.title}` : "—";
+  const topDemand = top ? `${top.symbol} — ${top.title}` : "—";
   const tradesCount = stats.secondaryMarket?.tradesCount ?? 0;
   return {
     resaleVolume: formatVolumeMetric(stats.secondaryMarket?.volumeUsdt),
@@ -291,15 +291,16 @@ export function mapTopReleasesToInsights(
         detail: mo(locale, "marketOverview.insights.live.empty.detail"),
       };
     }
+    const rawVal = Number(row.value);
     const metric =
       block.key === "byYield" || block.key === "byProgress"
-        ? `${row.value}%`
+        ? `${(Number.isFinite(rawVal) ? rawVal : 0).toFixed(block.key === "byProgress" ? 0 : 2).replace(".", ",")}%`
         : formatVolumeMetric(row.value).replace(" USDT", "");
     return {
       id: `live-${block.key}`,
       tag,
       metric,
-      metricCaption: `${row.symbol} · ${mo(locale, block.captionKey)}`,
+      metricCaption: `${row.symbol} — ${mo(locale, block.captionKey)}`,
       body: `${row.title} — ${row.artist}`,
       detail: mo(locale, "marketOverview.insights.live.top.detail", { tag }),
     };

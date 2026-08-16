@@ -34,8 +34,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // lucide-react + @base-ui may break under Turbopack (see package.json dev:webpack fallback).
     staleTimes: {
-      dynamic: 30,
-      static: 180,
+      dynamic: 120,
+      static: 300,
     },
     // Persist Turbopack dev compiler output between restarts (Next 16 defaults to true).
     turbopackFileSystemCacheForDev: true,

@@ -1,7 +1,7 @@
 import type { AppLocale } from "./types";
 
 const RU: Record<string, string> = {
-  "guide.hero.badge": "Гид · Spliton",
+  "guide.hero.badge": "Гид Spliton",
   "guide.hero.title": "Как выбрать релиз в Spliton",
   "guide.hero.subtitle":
     "Разберите карточку релиза, выплаты в USDT TRC20, условия сделки, вторичный рынок и риски — перед покупкой units.",
@@ -13,6 +13,9 @@ const RU: Record<string, string> = {
   "guide.nav.guideTop": "Гид",
   "guide.nav.topics": "Разделы",
   "guide.nav.checklist": "Чеклист",
+  "guide.nav.look": "Смотреть",
+  "guide.nav.video": "Видео",
+  "guide.nav.buy": "Купить",
   "guide.nav.releaseCard": "Карточка",
   "guide.nav.factors": "5 факторов",
   "guide.nav.deal": "Сделка",
@@ -294,7 +297,7 @@ const RU: Record<string, string> = {
 };
 
 const EN: Record<string, string> = {
-  "guide.hero.badge": "Guide · Spliton",
+  "guide.hero.badge": "Guide Spliton",
   "guide.hero.title": "How to choose a release on Spliton",
   "guide.hero.subtitle":
     "Review the release card, USDT TRC20 payouts, deal terms, secondary market, and risks — before buying units.",
@@ -306,6 +309,9 @@ const EN: Record<string, string> = {
   "guide.nav.guideTop": "Guide",
   "guide.nav.topics": "Topics",
   "guide.nav.checklist": "Checklist",
+  "guide.nav.look": "Look",
+  "guide.nav.video": "Video",
+  "guide.nav.buy": "Buy",
   "guide.nav.releaseCard": "Card",
   "guide.nav.factors": "5 factors",
   "guide.nav.deal": "Deal",
@@ -585,7 +591,7 @@ const EN: Record<string, string> = {
 
 const ES: Record<string, string> = {
   ...EN,
-  "guide.hero.badge": "Guía · Spliton",
+  "guide.hero.badge": "Guía Spliton",
   "guide.hero.title": "Cómo elegir un lanzamiento en Spliton",
   "guide.hero.subtitle":
     "Revise la ficha, pagos en USDT TRC20, condiciones, mercado secundario y riesgos — antes de comprar units.",
@@ -602,7 +608,7 @@ const ES: Record<string, string> = {
 
 const PT: Record<string, string> = {
   ...EN,
-  "guide.hero.badge": "Guia · Spliton",
+  "guide.hero.badge": "Guia Spliton",
   "guide.hero.title": "Como escolher um lançamento no Spliton",
   "guide.hero.subtitle":
     "Revise a ficha, pagamentos em USDT TRC20, condições, mercado secundário e riscos — antes de comprar units.",

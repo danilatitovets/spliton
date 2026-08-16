@@ -15,10 +15,13 @@ const CODE_ALIASES: Record<string, string> = {
   DEPOSIT_MISCONFIGURED: "DEPOSIT_DISABLED",
   CONSENT_REQUIRED: "COMPLIANCE_RESTRICTED",
   LEGAL_CONSENT_REQUIRED: "COMPLIANCE_RESTRICTED",
-  KYC_REQUIRED: "WITHDRAWAL_KYC_REQUIRED",
+  // Neutral — do not force withdrawal copy on primary/secondary KYC blocks.
+  KYC_REQUIRED: "COMPLIANCE_RESTRICTED",
+  KYC_IN_REVIEW: "COMPLIANCE_RESTRICTED",
   AML_BLOCKED: "COMPLIANCE_RESTRICTED",
   AML_RESTRICTED: "COMPLIANCE_RESTRICTED",
   COUNTRY_RESTRICTED: "COMPLIANCE_RESTRICTED",
+  COUNTRY_BLOCKED: "COMPLIANCE_RESTRICTED",
   FEATURE_DISABLED: "FEATURE_DISABLED",
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
   UNAUTHORIZED: "AUTH_REQUIRED",
@@ -89,11 +92,20 @@ function extractErrorShape(err: unknown): ApiErrorShape {
       status?: number;
       statusCode?: number;
       requestId?: string;
-      response?: { error?: { code?: string; message?: string | string[] } };
+      details?: { blockingCode?: string };
+      response?: {
+        error?: {
+          code?: string;
+          message?: string | string[];
+          details?: { blockingCode?: string };
+        };
+      };
     };
-    if (e.code || e.message || e.status != null || e.statusCode != null) {
+    const blocking =
+      e.details?.blockingCode ?? e.response?.error?.details?.blockingCode;
+    if (e.code || e.message || e.status != null || e.statusCode != null || blocking) {
       return {
-        code: e.code,
+        code: blocking ?? e.code,
         message: e.message,
         status: e.status ?? e.statusCode,
         requestId: e.requestId,
@@ -101,16 +113,21 @@ function extractErrorShape(err: unknown): ApiErrorShape {
     }
     if (e.response?.error) {
       return {
-        code: e.response.error.code,
+        code: blocking ?? e.response.error.code,
         message: e.response.error.message,
         status: e.status ?? e.statusCode,
       };
     }
   }
   if (err instanceof Error) {
-    const withCode = err as Error & { code?: string; status?: number; requestId?: string };
+    const withCode = err as Error & {
+      code?: string;
+      status?: number;
+      requestId?: string;
+      details?: { blockingCode?: string };
+    };
     return {
-      code: withCode.code,
+      code: withCode.details?.blockingCode ?? withCode.code,
       message: err.message,
       status: withCode.status,
       requestId: withCode.requestId,

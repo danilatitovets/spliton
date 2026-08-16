@@ -7,7 +7,7 @@ PostgreSQL on **Supabase**, accessed exclusively via **NestJS + Prisma** (no cli
 ```
 ┌─────────────┐     JWT      ┌──────────────┐    Prisma     ┌─────────────────┐
 │  Next.js    │ ──────────► │ NestJS API   │ ────────────► │ Supabase Postgres│
-│  (no DB)    │             │              │   pooler 6543 │  public schema   │
+│  (no DB)    │             │              │ session :5432 │  public schema   │
 └─────────────┘             └──────────────┘               └─────────────────┘
 ```
 

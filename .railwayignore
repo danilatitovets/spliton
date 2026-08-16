@@ -1,0 +1,46 @@
+# deps / build
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+build
+.turbo
+coverage
+**/coverage
+test-results
+playwright-report
+blob-report
+*.tsbuildinfo
+
+# local / agent / backups
+.git
+.agents
+.cursor
+.recovery-backup-*
+.recovery-log.json
+.railway-config-pull-*
+logs
+*.log
+tmp-*
+**/tmp-*
+apps/backend/tmp*
+
+# local reports
+PERFORMANCE_*.md
+PERFORMANCE_*.json
+build-errors.txt
+build-error.log
+lint-output.txt
+
+# unused / WIP image dumps
+apps/frontend/public/images/'vbntn
+apps/frontend/public/images/gotov
+apps/frontend/public/images/Select_section
+apps/frontend/public/images/готовначать
+apps/frontend/public/images/ИКОНКИ
+apps/frontend/public/images/новость
+apps/frontend/public/images/Сервисы площадки
+apps/frontend/public/images/ситации
+apps/frontend/public/images/центрдвоерие
