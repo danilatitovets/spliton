@@ -1,25 +1,24 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "@/lib/lucide";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { useAuthUi } from "@/hooks/use-auth-ui";
+import { ProfileSignInRequired } from "@/components/dashboard/profile/profile-sign-in-required";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ProfileSectionSkeleton } from "@/components/dashboard/profile/profile-section-skeleton";
 import {
   ProfileOkxAlert,
   ProfileOkxBanner,
-  ProfileOkxHeader,
   ProfileOkxLink,
   ProfileOkxRecommended,
   ProfileOkxRow,
   ProfileOkxSection,
+  ProfileOkxSetupLink,
   ProfileOkxSpotlight,
   profileOkxGhostClass,
-  profileOkxPillClass,
-  profileOkxPrimaryClass,
 } from "@/components/dashboard/profile/profile-okx";
 import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import {
@@ -28,20 +27,21 @@ import {
   profileLineIcon,
   type ProfileLineIconName,
 } from "@/components/dashboard/profile/profile-shared";
+import { SplitonDarkSurface } from "@/components/dashboard/assets/spliton-dark-surface";
 import { ROUTES } from "@/constants/routes";
 import { formatDate } from "@/lib/i18n/formatters";
 import { cn } from "@/lib/utils";
 import {
-  buildProfileLegalFallback,
   fetchLegalCenter,
   getAllMissingConsents,
-  isFallbackPolicyId,
-  policyPublicHref,
   policyTypeLabel,
   type LegalCenterResponse,
   type LegalPolicyPublic,
   type MissingConsentItem,
 } from "@/services/legal.service";
+import { sortLegalPoliciesByType } from "@/constants/legal/policy-type-order";
+
+const LEGAL_HERO_VIDEO = "/videos/documents-hero.mp4";
 
 function policyIcon(type: string): ProfileLineIconName {
   switch (type) {
@@ -58,7 +58,7 @@ function policyIcon(type: string): ProfileLineIconName {
 
 export function ProfileLegalContent() {
   const router = useRouter();
-  const { authorizedFetch, isAuthenticated } = useAuth();
+  const { authorizedFetch, authenticated, pending } = useAuthUi();
   const { t, locale } = useI18n();
   const [data, setData] = useState<LegalCenterResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -66,7 +66,8 @@ export function ProfileLegalContent() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (pending) return;
+    if (!authenticated) {
       setLoading(false);
       return;
     }
@@ -74,21 +75,16 @@ export function ProfileLegalContent() {
     setLoadError(null);
     try {
       const center = await fetchLegalCenter(authorizedFetch);
-      if (center.activePolicies.length === 0) {
-        setData(buildProfileLegalFallback(t));
-        setOffline(true);
-      } else {
-        setData(center);
-        setOffline(false);
-      }
+      setData(center);
+      setOffline(false);
     } catch {
-      setData(buildProfileLegalFallback(t));
+      setData(null);
       setOffline(true);
       setLoadError(t("profile.legal.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [authorizedFetch, isAuthenticated, t]);
+  }, [authorizedFetch, authenticated, pending, t]);
 
   useEffect(() => {
     void load();
@@ -98,8 +94,7 @@ export function ProfileLegalContent() {
     () =>
       data && !offline
         ? getAllMissingConsents(data).filter(
-            (item): item is MissingConsentItem & { policyId: string } =>
-              Boolean(item.policyId && !isFallbackPolicyId(item.policyId)),
+            (item): item is MissingConsentItem & { policyId: string } => Boolean(item.policyId),
           )
         : [],
     [data, offline],
@@ -113,18 +108,13 @@ export function ProfileLegalContent() {
   const displayPolicies = useMemo(() => {
     if (!data) return [];
     const seen = new Set<string>();
-    const items = [...data.activePolicies];
-    for (const fallback of buildProfileLegalFallback(t).activePolicies) {
-      if (!items.some((p) => p.type === fallback.type)) {
-        items.push(fallback);
-      }
-    }
-    return items.filter((p) => {
+    const unique = data.activePolicies.filter((p) => {
       if (seen.has(p.type)) return false;
       seen.add(p.type);
       return true;
     });
-  }, [data, t]);
+    return sortLegalPoliciesByType(unique);
+  }, [data]);
 
   const openPolicy = useCallback(
     (item: MissingConsentItem) => {
@@ -146,94 +136,93 @@ export function ProfileLegalContent() {
     [router],
   );
 
-  if (!isAuthenticated) {
-    return (
-      <div className="rounded-2xl bg-[#111111] px-4 py-6 text-center">
-        <p className="text-sm text-zinc-400">{t("profile.legal.signInRequired")}</p>
-        <Link href={ROUTES.login} className={cn(profileOkxPrimaryClass, "mt-4")}>
-          {t("auth.login.submit")}
-        </Link>
-      </div>
-    );
+  if (pending || (authenticated && loading && !data && !loadError)) {
+    return <ProfileSectionSkeleton variant="list" rows={3} />;
+  }
+
+  if (!authenticated) {
+    return <ProfileSignInRequired titleKey="profile.legal.signInRequired" />;
   }
 
   if (loading) {
     return <ProfileSectionSkeleton variant="list" rows={3} />;
   }
 
-  if (!data) {
-    return <p className="text-sm text-zinc-400">{t("profile.legal.empty")}</p>;
+  if (loadError || !data) {
+    return (
+      <div className="rounded-2xl bg-[#111111] px-4 py-8 text-center">
+        <p className="text-sm text-zinc-300">{t("profile.legal.loadError")}</p>
+        <p className="mt-2 text-sm text-zinc-500">{t("profile.legal.offlineHint")}</p>
+        <button type="button" onClick={() => void load()} className={cn(profileOkxGhostClass, "mt-4")}>
+          <RefreshCw className="mr-1.5 size-3.5" aria-hidden />
+          {t("profile.legal.retry")}
+        </button>
+      </div>
+    );
   }
 
-  const requiredPolicies = displayPolicies.filter(
-    (p) => p.requiresUserConsent && !isFallbackPolicyId(p.id),
-  );
-  const acceptedRequired = requiredPolicies.filter((p) =>
-    acceptedSet.has(`${p.type}:${p.version}`),
-  );
-  const showScore = !offline && requiredPolicies.length > 0;
   const statusLabel = offline
     ? t("profile.legal.offlineStatus")
     : allMissing.length > 0
       ? t("profile.legal.missingBanner").replace("{count}", String(allMissing.length))
       : t("profile.legal.allAccepted");
 
+  const scrollToAccept = () => {
+    document.getElementById("legal-accept")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="space-y-4 sm:space-y-5">
-      <ProfileOkxHeader
-        icon={showScore ? undefined : profileLineIcon("legal", "lg")}
-        score={showScore ? acceptedRequired.length : undefined}
-        scoreMax={showScore ? requiredPolicies.length : undefined}
-        scoreLabel={
-          showScore
-            ? t("profile.legal.scoreRing").replace("{max}", String(requiredPolicies.length))
-            : undefined
+      <SplitonDarkSurface
+        className="relative min-h-0 px-5 py-12 shadow-none sm:px-8 sm:py-14"
+        contentClassName="relative z-[1] flex min-h-[5.5rem] flex-col justify-end sm:min-h-[6.5rem]"
+        overlay={
+          <div className="pointer-events-auto absolute top-4 right-5 sm:top-5 sm:right-6">
+            {loadError ? (
+              <button type="button" onClick={() => void load()} className={profileOkxGhostClass}>
+                <RefreshCw className="mr-1.5 size-3.5" aria-hidden />
+                {t("profile.legal.retry")}
+              </button>
+            ) : allMissing.length > 0 ? (
+              <ProfileOkxSetupLink onClick={scrollToAccept}>{t("profile.okx.setup")}</ProfileOkxSetupLink>
+            ) : (
+              <ProfileOkxSetupLink href={ROUTES.trust}>{t("profile.okx.use")}</ProfileOkxSetupLink>
+            )}
+          </div>
         }
-        title={t("profile.legal.title")}
-        subtitle={statusLabel}
-        cta={
-          loadError ? (
-            <button type="button" onClick={() => void load()} className={profileOkxGhostClass}>
-              <RefreshCw className="mr-1.5 size-3.5" aria-hidden />
-              {t("profile.legal.retry")}
-            </button>
-          ) : allMissing.length > 0 ? (
-            <button
-              type="button"
-              className={profileOkxPrimaryClass}
-              onClick={() =>
-                document
-                  .getElementById("legal-accept")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
-            >
-              {t("profile.okx.setup")}
-            </button>
-          ) : (
-            <ProfileOkxLink href={ROUTES.trust}>{t("profile.okx.use")}</ProfileOkxLink>
-          )
-        }
-      />
+        watermarkCentered
+        watermarkSolid
+        watermarkText={t("profile.legal.title")}
+        backgroundVideo={LEGAL_HERO_VIDEO}
+        videoClarity="crisp"
+        aria-label={t("profile.legal.title")}
+      >
+        <h1 className="sr-only">{t("profile.legal.title")}</h1>
+        <p className="text-center text-[13px] leading-relaxed text-white sm:text-[14px]">{statusLabel}</p>
+      </SplitonDarkSurface>
 
       {allMissing.length > 0 ? (
         <ProfileOkxSpotlight
-          icon={profileLineIcon("legal", "xl")}
+          icon={
+            <div className="relative mx-auto size-32 sm:size-40" aria-hidden>
+              <Image
+                src={PROFILE_GLASS.legal}
+                alt=""
+                fill
+                sizes="160px"
+                className="object-contain mix-blend-screen"
+                unoptimized
+              />
+            </div>
+          }
           headline={t("profile.okx.spotlight.legal.headline")}
           body={t("profile.okx.spotlight.legal.body")}
           detailsHref={ROUTES.trust}
           detailsLabel={t("profile.okx.details")}
           cta={
-            <button
-              type="button"
-              className={profileOkxPillClass}
-              onClick={() =>
-                document
-                  .getElementById("legal-accept")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
-            >
-              {t("profile.okx.setup")}
-            </button>
+            <div className="flex justify-center">
+              <ProfileOkxSetupLink onClick={scrollToAccept}>{t("profile.okx.setup")}</ProfileOkxSetupLink>
+            </div>
           }
         />
       ) : (
@@ -274,21 +263,29 @@ export function ProfileLegalContent() {
       ) : null}
 
       <ProfileOkxSection title={t("profile.legal.activeTitle")}>
-        {displayPolicies.map((p) => {
-          const accepted = acceptedSet.has(`${p.type}:${p.version}`) && !isFallbackPolicyId(p.id);
+        {displayPolicies.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-zinc-500">{t("profile.legal.empty")}</p>
+        ) : (
+          displayPolicies.map((p) => {
+          const accepted = acceptedSet.has(`${p.type}:${p.version}`);
           const title = p.title || policyTypeLabel(p.type, t);
-          const version =
-            !isFallbackPolicyId(p.id) && p.version !== "—"
-              ? `${t("profile.legal.version")} ${p.version}`
-              : t("profile.legal.documentsHint");
-          const needsReadConfirm =
-            !offline && p.requiresUserConsent && !accepted && !isFallbackPolicyId(p.id);
+          const version = `${t("profile.legal.version")} ${p.version}`;
+          const updatedAt = p.publishedAt ?? p.effectiveAt;
+          const updatedLine = updatedAt
+            ? `${t("profile.legal.updated")} ${formatDate(new Date(updatedAt), locale, {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}`
+            : null;
+          const description = updatedLine ? `${version} · ${updatedLine}` : version;
+          const needsReadConfirm = !offline && p.requiresUserConsent && !accepted;
           return (
             <ProfileOkxRow
               key={p.type}
               icon={profileLineIcon(policyIcon(p.type))}
               title={title}
-              description={version}
+              description={description}
               badge={
                 !offline && p.requiresUserConsent ? (
                   accepted ? (
@@ -301,24 +298,19 @@ export function ProfileLegalContent() {
                 ) : undefined
               }
               action={
-                isFallbackPolicyId(p.id) ? (
-                  <Link href={policyPublicHref(p.type)} target="_blank" className={profileOkxGhostClass}>
-                    {t("profile.okx.manage")}
-                  </Link>
-                ) : (
-                  <SplitonCtaPill
-                    type="button"
-                    tone="onDark"
-                    onClick={() => openPolicyDocument(p, needsReadConfirm)}
-                    className="min-w-[11.5rem] shrink-0"
-                  >
-                    {t("profile.legal.readDocument")}
-                  </SplitonCtaPill>
-                )
+                <SplitonCtaPill
+                  type="button"
+                  tone="onDark"
+                  onClick={() => openPolicyDocument(p, needsReadConfirm)}
+                  className="min-w-[11.5rem] shrink-0"
+                >
+                  {t("profile.legal.readDocument")}
+                </SplitonCtaPill>
               }
             />
           );
-        })}
+        })
+        )}
       </ProfileOkxSection>
 
       <ProfileOkxSection title={t("profile.legal.historyTitle")}>

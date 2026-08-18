@@ -20,10 +20,11 @@ export function AssetsSectionNav() {
   const tabs = getAssetsTabs(t);
 
   return (
-    <DashboardSectionSubheaderShell>
+    <DashboardSectionSubheaderShell variant={pathname.replace(/\/$/, "") === ROUTES.dashboardOverview ? "dark" : "white"}>
       <DashboardSectionUnderlineNav
         ariaLabel={t("overview.navAria")}
         className="sm:gap-8"
+        tone={pathname.replace(/\/$/, "") === ROUTES.dashboardOverview ? "dark" : "light"}
         items={tabs.map((tab) => ({
           href: tab.href,
           label: tab.label,

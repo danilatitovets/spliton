@@ -52,6 +52,13 @@ export const USER_DOCUMENT_LIMITS = {
     'image/webp',
     'application/pdf',
   ]),
+  extensions: new Set(['jpg', 'jpeg', 'png', 'webp', 'pdf']),
+} as const;
+
+export const KYC_SELFIE_LIMITS = {
+  maxBytes: 20 * 1024 * 1024,
+  mimeTypes: new Set(['image/jpeg', 'image/png', 'image/webp']),
+  extensions: new Set(['jpg', 'jpeg', 'png', 'webp']),
 } as const;
 
 /** Private audio preview keys stored in `audio_preview_url` without http prefix. */
@@ -79,4 +86,13 @@ export function reportStoragePath(
   ext = 'csv',
 ): string {
   return `reports/${type}/${jobId}.${ext}`;
+}
+
+export function kycDocumentPath(
+  userId: string,
+  verificationId: string,
+  docType: string,
+  ext: string,
+): string {
+  return `kyc/${userId}/${verificationId}/${docType}.${ext}`;
 }

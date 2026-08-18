@@ -11,7 +11,7 @@ import {
 } from "@/components/dashboard/profile/profile-security-modal";
 import { profileOkxPillClass } from "@/components/dashboard/profile/profile-okx";
 import { PROFILE_GLASS } from "@/components/dashboard/profile/profile-shared";
-import { profileModalInputClass } from "@/components/dashboard/profile/profile-ui";
+import { profileModalBareInputClass } from "@/components/dashboard/profile/profile-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ROUTES } from "@/constants/routes";
@@ -132,35 +132,35 @@ export function ProfilePasswordChangePanel({ open, onOpenChange, onSuccess }: Pr
         </div>
       }
     >
-      <ProfileSecurityModalFieldList>
-        <ProfileSecurityModalField label={t("profile.security.password.current")} htmlFor="pwd-current">
+      <ProfileSecurityModalFieldList bare>
+        <ProfileSecurityModalField bare label={t("profile.security.password.current")} htmlFor="pwd-current">
           <input
             id="pwd-current"
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             autoComplete="current-password"
-            className={profileModalInputClass}
+            className={profileModalBareInputClass}
           />
         </ProfileSecurityModalField>
-        <ProfileSecurityModalField label={t("profile.security.password.new")} htmlFor="pwd-new">
+        <ProfileSecurityModalField bare label={t("profile.security.password.new")} htmlFor="pwd-new">
           <input
             id="pwd-new"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             autoComplete="new-password"
-            className={profileModalInputClass}
+            className={profileModalBareInputClass}
           />
         </ProfileSecurityModalField>
-        <ProfileSecurityModalField label={t("profile.security.password.confirm")} htmlFor="pwd-confirm">
+        <ProfileSecurityModalField bare label={t("profile.security.password.confirm")} htmlFor="pwd-confirm">
           <input
             id="pwd-confirm"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             autoComplete="new-password"
-            className={profileModalInputClass}
+            className={profileModalBareInputClass}
           />
         </ProfileSecurityModalField>
       </ProfileSecurityModalFieldList>

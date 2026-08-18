@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from "react";
 
 import { ArrowRight } from "@/lib/lucide";
 import { cn } from "@/lib/utils";
@@ -18,32 +23,37 @@ type SplitonCtaPillProps = {
   href?: string;
 } & Omit<ComponentPropsWithoutRef<"button">, "children" | "className">;
 
-const primaryFill: Record<SplitonCtaTone, string> = {
-  onDark: "bg-white text-black hover:bg-[#e8e8e8]",
-  onLight: "bg-black text-white hover:bg-neutral-800",
+const primaryShell: Record<SplitonCtaTone, string> = {
+  onDark:
+    "bg-white text-black hover:bg-[#0a0a0a] focus-visible:bg-[#0a0a0a]",
+  onLight:
+    "bg-[#0a0a0a] text-white hover:bg-white focus-visible:bg-white",
 };
+
+const accentShell =
+  "bg-[#B7F500] text-black hover:bg-[#0a0a0a] focus-visible:bg-[#0a0a0a]";
 
 const arrowFill: Record<SplitonCtaTone, string> = {
   onDark: "bg-black text-white",
   onLight: "bg-white text-black",
 };
 
-const accentFill = "bg-[#B7F500] text-black hover:bg-[#c6ff33]";
 const accentArrow = "bg-black text-[#B7F500]";
 
 const ghostFill: Record<SplitonCtaTone, string> = {
   onDark: "bg-white/[0.06] text-white hover:bg-white/[0.1]",
   onLight: "bg-black/[0.04] text-neutral-900 hover:bg-black/[0.07]",
-}
+};
 
 const base =
-  "inline-flex h-11 items-center rounded-full text-[14px] font-[510] tracking-[-0.011em] transition active:scale-[0.98]";
+  "group relative isolate inline-flex h-11 items-center overflow-hidden rounded-full text-[14px] font-[510] tracking-[-0.011em] outline-none transition-[background-color,color,transform] duration-500 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white/25";
+
+const labelEase = "transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1)";
 
 /**
  * High-contrast Spliton CTA (footer "В кабинет" look).
- * Dark pages: white pill + black arrow circle.
- * Light pages: black pill + white arrow circle.
- * Full-width primary: label left, arrow circle flush right.
+ * Hover fill is a single background-color on the pill shell — no overlay layers,
+ * so rounded caps never show white fringes.
  */
 export function SplitonCtaPill({
   children,
@@ -57,29 +67,102 @@ export function SplitonCtaPill({
 }: SplitonCtaPillProps) {
   const showArrow = withArrow ?? (variant === "primary" || variant === "accent");
   const padding = showArrow ? "pl-6 pr-1.5" : "px-6";
-  const fill =
+  const animated = variant !== "ghost";
+
+  const restText =
+    variant === "ghost"
+      ? undefined
+      : variant === "accent"
+        ? "text-black"
+        : tone === "onDark"
+          ? "text-black"
+          : "text-white";
+
+  const hoverText =
+    variant === "ghost"
+      ? undefined
+      : variant === "accent" || tone === "onDark"
+        ? "text-white"
+        : "text-black";
+
+  const arrow =
     variant === "accent"
-      ? accentFill
+      ? accentArrow
       : variant === "primary"
-        ? primaryFill[tone]
+        ? tone === "onDark"
+          ? arrowFill.onDark
+          : arrowFill.onLight
+        : "";
+
+  const hoverArrow =
+    variant === "ghost"
+      ? undefined
+      : variant === "accent" || tone === "onDark"
+        ? "group-hover:bg-white group-hover:text-black group-focus-visible:bg-white group-focus-visible:text-black"
+        : "group-hover:bg-black group-hover:text-white group-focus-visible:bg-black group-focus-visible:text-white";
+
+  const shellFill =
+    variant === "accent"
+      ? accentShell
+      : variant === "primary"
+        ? primaryShell[tone]
         : ghostFill[tone];
-  const arrow = variant === "accent" ? accentArrow : arrowFill[tone];
+
   const classes = cn(
     base,
     showArrow ? "justify-between gap-3" : "justify-center",
     padding,
-    fill,
+    shellFill,
+    animated &&
+      "hover:[--cta-label-y:-160%] focus-visible:[--cta-label-y:-160%] hover:[--cta-label-hover-y:0%] focus-visible:[--cta-label-hover-y:0%]",
     className,
+  );
+
+  const label = (
+    <span className={cn("relative z-[1] grid min-w-0 overflow-hidden", !animated && "relative z-10")}>
+      <span
+        className={cn(
+          "col-start-1 row-start-1 truncate will-change-transform motion-reduce:transition-none",
+          restText,
+        )}
+        style={
+          animated
+            ? {
+                transform: "translateY(var(--cta-label-y, 0%))",
+                transition: labelEase,
+              }
+            : undefined
+        }
+      >
+        {children}
+      </span>
+      {animated && hoverText ? (
+        <span
+          aria-hidden
+          className={cn(
+            "col-start-1 row-start-1 truncate will-change-transform motion-reduce:transition-none",
+            hoverText,
+          )}
+          style={{
+            transform: "translateY(var(--cta-label-hover-y, 160%))",
+            transition: labelEase,
+          }}
+        >
+          {children}
+        </span>
+      ) : null}
+    </span>
   );
 
   const content = (
     <>
-      <span className={cn(showArrow && "min-w-0")}>{children}</span>
+      {label}
       {showArrow ? (
         <span
           className={cn(
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-full",
+            "relative z-[1] inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-500",
             arrow,
+            hoverArrow,
           )}
         >
           <ArrowRight className="size-4" strokeWidth={2} aria-hidden />

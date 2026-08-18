@@ -444,16 +444,14 @@ export function DashboardMarketScale({ className }: { className?: string }) {
         if (cancelled) return;
 
         const volume24h = formatUsdt(overview.aggregate.totalVolume24hUsdt);
-        const available = wallet
-          ? formatUsdt(wallet.availableBalance)
-          : demoFallback[0]!.walletAvailable!;
+        const available = wallet ? formatUsdt(wallet.availableBalance) : null;
 
         setMetrics([
           {
             id: "wallet",
             value: volume24h,
             href: ROUTES.dashboardOverview,
-            walletAvailable: available,
+            walletAvailable: available ?? undefined,
             volume24h,
           },
           {
@@ -474,7 +472,7 @@ export function DashboardMarketScale({ className }: { className?: string }) {
         ]);
       } catch (err) {
         if (!cancelled) {
-          setMetrics(demoFallback);
+          setMetrics([]);
           setFetchError(err);
         }
       } finally {
@@ -535,7 +533,7 @@ export function DashboardMarketScale({ className }: { className?: string }) {
                       <div className="h-full animate-pulse bg-white/[0.03]" />
                     ) : card.id === "wallet" ? (
                       <WalletScene
-                        available={metric.walletAvailable ?? metric.value}
+                        available={metric.walletAvailable ?? "—"}
                         volume24h={metric.volume24h ?? metric.value}
                       />
                     ) : card.id === "listings" ? (

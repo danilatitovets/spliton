@@ -10,7 +10,7 @@ import {
   subscribeCabinetDemoDataPreference,
 } from "@/lib/demo/cabinet-demo-preview";
 
-const serverSnapshot = () => true;
+const serverSnapshot = () => false;
 
 /** True when eligible user turned demo data ON (header toggle). */
 export function useCabinetDemoPreview(): boolean {

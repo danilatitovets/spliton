@@ -1,5 +1,6 @@
 import { KycStatus } from '@prisma/client';
 import type {
+  AccountCenterSummary,
   AccountCompletenessLevel,
   SecurityLevel,
   SecurityRecommendation,
@@ -186,5 +187,72 @@ export function buildSecuritySummary(params: {
     passwordChangedAt: params.passwordChangedAt?.toISOString() ?? null,
     activeSessionsCount: params.activeSessionsCount,
     lastLoginAt: params.lastLoginAt?.toISOString() ?? null,
+  };
+}
+
+/**
+ * Identity-only summary for GET /users/me. Avoids the account-center fan-out
+ * (legal, eligibility, tickets, withdrawals, audit) that can exhaust the DB pool.
+ */
+export function buildLightweightAccountCenter(params: {
+  displayName?: string | null;
+  timezone?: string | null;
+  emailVerified: boolean;
+  twoFaEnabled: boolean;
+  passwordSet: boolean;
+  passwordChangedAt: Date | null;
+  activeSessionsCount: number;
+  kycStatus: KycStatus;
+  kycLevel?: string | null;
+  withdrawalEmailConfirmationEnabled?: boolean;
+  emailSecurityNotificationsEnabled?: boolean;
+}): AccountCenterSummary {
+  const securityPreferences = {
+    withdrawalEmailConfirmationEnabled: params.withdrawalEmailConfirmationEnabled ?? false,
+    withdrawalAddressWhitelistEnabled: false,
+    suspiciousLoginAlertsEnabled: true,
+    emailSecurityNotificationsEnabled: params.emailSecurityNotificationsEnabled ?? true,
+    enforcementReady: false,
+  };
+  const accountCompleteness = buildAccountCompleteness({
+    displayName: params.displayName,
+    timezone: params.timezone,
+    emailVerified: params.emailVerified,
+    kycStatus: params.kycStatus,
+    registerLegalComplete: true,
+    twoFaEnabled: params.twoFaEnabled,
+    hasWalletActivity: false,
+  });
+  const security = buildSecuritySummary({
+    emailVerified: params.emailVerified,
+    twoFaEnabled: params.twoFaEnabled,
+    passwordSet: params.passwordSet,
+    passwordChangedAt: params.passwordChangedAt,
+    activeSessionsCount: params.activeSessionsCount,
+    lastLoginAt: null,
+    kycStatus: params.kycStatus,
+    registerLegalComplete: true,
+    securityPreferences: {
+      withdrawalEmailConfirmationEnabled:
+        securityPreferences.withdrawalEmailConfirmationEnabled,
+      emailSecurityNotificationsEnabled:
+        securityPreferences.emailSecurityNotificationsEnabled,
+    },
+  });
+
+  return {
+    accountCompleteness,
+    security,
+    verification: {
+      status: params.kycStatus,
+      level: params.kycLevel ?? null,
+    },
+    legal: {
+      missingRequiredConsentsCount: 0,
+      hasAcceptedCurrentRequiredPolicies: true,
+    },
+    activity: {},
+    securityPreferences,
+    recentSecurityEvents: [],
   };
 }

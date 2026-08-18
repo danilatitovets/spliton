@@ -346,6 +346,7 @@ export class AdminUsersService {
           reviewedBy: true,
           rejectReason: true,
           provider: true,
+          documents: { select: { docType: true, fileUrl: true } },
         },
       }),
       this.legalConsents.getMissingConsents(userId, ConsentSource.REGISTER),
@@ -411,7 +412,11 @@ export class AdminUsersService {
             reviewedByUserId: kyc.reviewedBy,
             rejectionReason: kyc.rejectReason,
             provider: kyc.provider,
-            documentViewerAvailable: false,
+            documentViewerAvailable: kyc.documents.some(
+              (d) =>
+                ['identity', 'address', 'selfie'].includes(d.docType) &&
+                !d.fileUrl.startsWith('meta:'),
+            ),
           }
         : { status: KycStatus.NOT_STARTED, documentViewerAvailable: false },
       legal: {

@@ -2,23 +2,22 @@
 
 import { useEffect, useState } from "react";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { useAuthUi } from "@/hooks/use-auth-ui";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { ROUTES } from "@/constants/routes";
 import { tf } from "@/lib/i18n/financial-messages";
 
 export function FooterRegisterQr() {
-  const { isAuthenticated, user } = useAuth();
+  const { authenticated, pending, user } = useAuthUi();
   const { t } = useI18n();
-  const [qrTargetUrl, setQrTargetUrl] = useState<string>(
-    isAuthenticated ? ROUTES.dashboard : ROUTES.register,
-  );
+  const [qrTargetUrl, setQrTargetUrl] = useState<string>(ROUTES.register);
 
   useEffect(() => {
-    const path = isAuthenticated ? ROUTES.dashboard : ROUTES.register;
+    if (pending) return;
+    const path = authenticated ? ROUTES.dashboard : ROUTES.register;
     setQrTargetUrl(`${window.location.origin}${path}`);
-  }, [isAuthenticated]);
+  }, [authenticated, pending]);
 
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrTargetUrl)}`;
 
@@ -27,7 +26,18 @@ export function FooterRegisterQr() {
     ? tf(t("footer.qr.authenticated.greetingNamed"), { name: displayName })
     : t("footer.qr.authenticated.greeting");
 
-  if (isAuthenticated) {
+  if (pending) {
+    return (
+      <div className="flex min-h-[22rem] flex-col items-stretch rounded-2xl bg-[#0a0a0a] p-6 sm:p-8 lg:max-w-[320px] lg:justify-self-end" aria-busy="true">
+        <div className="h-3 w-20 animate-pulse rounded bg-white/10" />
+        <div className="mt-4 h-8 w-48 animate-pulse rounded bg-white/10" />
+        <div className="mt-3 h-12 w-full animate-pulse rounded bg-white/10" />
+        <div className="mt-6 h-12 w-full animate-pulse rounded-full bg-white/10" />
+      </div>
+    );
+  }
+
+  if (authenticated) {
     return (
       <div className="flex flex-col items-stretch rounded-2xl bg-[#0a0a0a] p-6 sm:p-8 lg:max-w-[320px] lg:justify-self-end">
         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">

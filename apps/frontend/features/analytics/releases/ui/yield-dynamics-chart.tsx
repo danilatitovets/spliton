@@ -94,8 +94,7 @@ export function YieldDynamicsChart({
     [yieldDynamics],
   );
 
-  const rawSpan = rawValues.length ? Math.max(...rawValues) - Math.min(...rawValues) : 0;
-  const useSynthetic = mockMode || rawValues.length < 2 || rawSpan < 0.25;
+  const useSynthetic = mockMode;
 
   const activeSeries = React.useMemo(() => {
     if (useSynthetic) {

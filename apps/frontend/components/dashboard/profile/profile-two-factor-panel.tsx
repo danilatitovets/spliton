@@ -15,7 +15,7 @@ import {
   profileOkxPillClass,
 } from "@/components/dashboard/profile/profile-okx";
 import { PROFILE_GLASS } from "@/components/dashboard/profile/profile-shared";
-import { profileModalInputClass } from "@/components/dashboard/profile/profile-ui";
+import { profileModalBareInputClass } from "@/components/dashboard/profile/profile-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { ROUTES } from "@/constants/routes";
@@ -199,8 +199,8 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
             {t("profile.security.twoFa.openOtpauth")}
           </a>
         ) : null}
-        <ProfileSecurityModalFieldList>
-          <ProfileSecurityModalField label={t("profile.security.twoFa.codeLabel")} htmlFor="twofa-setup-code">
+        <ProfileSecurityModalFieldList bare>
+          <ProfileSecurityModalField bare label={t("profile.security.twoFa.codeLabel")} htmlFor="twofa-setup-code">
             <input
               id="twofa-setup-code"
               type="text"
@@ -210,7 +210,7 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="000000"
-              className={cn(profileModalInputClass, "font-mono tracking-widest")}
+              className={cn(profileModalBareInputClass, "font-mono tracking-widest")}
               autoComplete="one-time-code"
             />
           </ProfileSecurityModalField>
@@ -280,18 +280,18 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
           </div>
         }
       >
-        <ProfileSecurityModalFieldList>
-          <ProfileSecurityModalField label={t("profile.security.password.current")} htmlFor="twofa-disable-pwd">
+        <ProfileSecurityModalFieldList bare>
+          <ProfileSecurityModalField bare label={t("profile.security.password.current")} htmlFor="twofa-disable-pwd">
             <input
               id="twofa-disable-pwd"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className={profileModalInputClass}
+              className={profileModalBareInputClass}
             />
           </ProfileSecurityModalField>
-          <ProfileSecurityModalField label={t("profile.security.twoFa.codeLabel")} htmlFor="twofa-disable-code">
+          <ProfileSecurityModalField bare label={t("profile.security.twoFa.codeLabel")} htmlFor="twofa-disable-code">
             <input
               id="twofa-disable-code"
               type="text"
@@ -300,7 +300,7 @@ export function ProfileTwoFactorPanel({ enabled, onEnabledChange }: Props) {
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="000000"
-              className={cn(profileModalInputClass, "font-mono tracking-widest")}
+              className={cn(profileModalBareInputClass, "font-mono tracking-widest")}
               autoComplete="one-time-code"
             />
           </ProfileSecurityModalField>

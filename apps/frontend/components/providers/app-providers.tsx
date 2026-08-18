@@ -13,6 +13,7 @@ import { I18nProvider } from "@/components/providers/i18n-provider";
 import { BackendAvailabilityProvider } from "@/components/providers/backend-availability-provider";
 import { LiveDataPolicyGuard } from "@/components/providers/live-data-policy-guard";
 import { PublicEnvDevBanner } from "@/components/providers/public-env-dev-banner";
+import { RouteScrollPolicy } from "@/components/layout/route-scroll-policy";
 
 import { SystemAnnouncementBanners } from "@/components/system-announcements/system-announcement-banners";
 
@@ -96,17 +97,20 @@ function ConditionalPublicEnvDevBanner() {
 export function AppProviders({
   children,
   initialLocale,
+  initialSessionHint = false,
 }: {
   children: ReactNode;
   initialLocale?: AppLocale;
+  initialSessionHint?: boolean;
 }) {
 
   const showEnvBanner = getAppRuntimeMode() === "development";
 
   return (
-    <AuthProvider>
+    <AuthProvider initialSessionHint={initialSessionHint}>
       <LocaleBridge initialLocale={initialLocale}>
         <BackendAvailabilityProvider>
+          <RouteScrollPolicy />
           <LiveDataPolicyGuard />
           {showEnvBanner ? <ConditionalPublicEnvDevBanner /> : null}
 

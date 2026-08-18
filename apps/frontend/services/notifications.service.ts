@@ -1,3 +1,4 @@
+import { parseApiClientError } from "@/lib/api/api-client-error";
 import { resolveAdminApiUrl, resolveApiUrl } from "@/lib/public-env";
 
 export type NotificationItem = {
@@ -105,6 +106,6 @@ export async function patchNotificationPreferences(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),
   });
-  if (!res.ok) throw new Error("Failed to save preferences");
+  if (!res.ok) throw await parseApiClientError(res);
   return res.json() as Promise<NotificationPreferences>;
 }

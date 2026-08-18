@@ -1,8 +1,9 @@
 import { INestApplication } from '@nestjs/common';
-import { PriceBucket, Prisma, PrismaClient, ReleaseStatus } from '@prisma/client';
+import { PriceBucket, Prisma, ReleaseStatus } from '@prisma/client';
 import request from 'supertest';
 import { createE2eApp } from './helpers/create-e2e-app';
 import { e2eSlug, e2eSymbol } from './helpers/e2e-unique';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 describe('Market charts (e2e)', () => {
   let app: INestApplication;
@@ -10,7 +11,7 @@ describe('Market charts (e2e)', () => {
 
   beforeEach(async () => {
     app = await createE2eApp();
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: e2eSlug('chart-rel'),
@@ -37,7 +38,6 @@ describe('Market charts (e2e)', () => {
         volumeNotional: 1000,
       },
     });
-    await prisma.$disconnect();
   });
 
   afterEach(async () => {

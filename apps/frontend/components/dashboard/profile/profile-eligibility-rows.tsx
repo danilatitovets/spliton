@@ -24,6 +24,8 @@ function statusTone(status: EligibilityAccessRow["status"]): string {
       return "text-[#B7F500]";
     case "limited":
     case "kyc_required":
+    case "in_review":
+    case "action_required":
     case "legal_required":
     case "email_required":
       return "text-amber-200";

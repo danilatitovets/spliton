@@ -221,9 +221,21 @@ export function ProfileSecurityModal({
   );
 }
 
-export function ProfileSecurityModalFieldList({ children }: { children: ReactNode }) {
+export function ProfileSecurityModalFieldList({
+  children,
+  bare = false,
+}: {
+  children: ReactNode;
+  bare?: boolean;
+}) {
   return (
-    <ul className="mt-1 space-y-0 overflow-hidden rounded-2xl bg-white/[0.03] px-4 py-1 sm:px-5">
+    <ul
+      className={
+        bare
+          ? "mt-1 space-y-5"
+          : "mt-1 space-y-0 overflow-hidden rounded-2xl bg-white/[0.03] px-4 py-1 sm:px-5"
+      }
+    >
       {children}
     </ul>
   );
@@ -233,14 +245,22 @@ export function ProfileSecurityModalField({
   label,
   htmlFor,
   children,
+  bare = false,
 }: {
   label: string;
   htmlFor?: string;
   children: ReactNode;
+  bare?: boolean;
 }) {
   return (
-    <li className="border-b border-white/[0.08] py-3.5 last:border-b-0">
-      <label htmlFor={htmlFor} className="mb-2 block text-[12px] font-medium uppercase tracking-[0.06em] text-zinc-400">
+    <li className={bare ? "py-0" : "border-b border-white/[0.08] py-3.5 last:border-b-0"}>
+      <label
+        htmlFor={htmlFor}
+        className={cn(
+          "mb-1.5 block text-[13px] font-medium",
+          bare ? "text-white" : "text-[12px] uppercase tracking-[0.06em] text-zinc-400",
+        )}
+      >
         {label}
       </label>
       {children}

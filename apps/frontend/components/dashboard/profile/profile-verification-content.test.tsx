@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { ProfileVerificationContent } from "@/components/dashboard/profile/profile-verification-content";
@@ -23,6 +23,7 @@ const mockIsPrototype = vi.fn();
 vi.mock("@/lib/public-env", () => ({
   isLiveAccountEnabled: () => mockIsLive(),
   isAccountCenterPrototypeAllowed: () => mockIsPrototype(),
+  isStrictDeployMode: () => false,
 }));
 
 const t = (key: string) => key;
@@ -69,5 +70,21 @@ describe("ProfileVerificationContent gates", () => {
       "utf8",
     );
     expect(liveSource).not.toContain("Иванов");
+  });
+
+  it("demo mode keeps every setup step unfinished and clickable", () => {
+    mockIsLive.mockReturnValue(false);
+    mockIsPrototype.mockReturnValue(true);
+    mockUseAuth.mockReturnValue({ isAuthenticated: false });
+
+    render(<ProfileVerificationContent />);
+    const setupButtons = screen.getAllByRole("button", { name: "profile.okx.setup" });
+    expect(setupButtons).toHaveLength(3);
+    expect(screen.queryByText("verification.step.done")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "verification.manualFormOpen" }).length).toBeGreaterThan(0);
+
+    fireEvent.click(setupButtons[2]);
+    expect(screen.getByLabelText("verification.selfie.file")).toBeInTheDocument();
+    expect(screen.getByText("verification.doc.save")).toBeInTheDocument();
   });
 });

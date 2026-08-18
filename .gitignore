@@ -29,6 +29,9 @@ apps/backend/coverage/
 *.tsbuildinfo
 # Local credentials / secrets
 spliton_pass.txt
+tmp-runtime-db-url.txt
+tmp-verify.cjs
+apps/backend/tmp-verify.cjs
 *pass*.txt
 *password*.txt
 *secret*.txt

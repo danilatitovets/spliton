@@ -1,15 +1,16 @@
 import request from 'supertest';
-import { Prisma, PrismaClient, ReleaseStatus } from '@prisma/client';
+import { Prisma, ReleaseStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
 }
 
 async function seedUserPosition(userId: string) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const release = await prisma.release.create({
     data: {
       slug: `iso-${Date.now()}-${Math.random()}`,
@@ -33,7 +34,6 @@ async function seedUserPosition(userId: string) {
       avgEntryPrice: new Prisma.Decimal('1.00'),
     },
   });
-  await prisma.$disconnect();
   return release;
 }
 

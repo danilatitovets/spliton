@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Bell } from "@/lib/lucide";
+import { ArrowRight } from "@/lib/lucide";
 import { useRouter } from "next/navigation";
+
+import { HeaderChromeIcon } from "@/components/dashboard/megamenu-item-icons";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -227,8 +229,8 @@ export function NotificationBell({
 
   if (!isAuthenticated) {
     return (
-      <button type="button" className={className} aria-label={t("notifications.ariaLabel")} disabled>
-        <Bell className={iconClassName ?? "size-[18px]"} strokeWidth={1.75} />
+      <button type="button" className={cn("group", className)} aria-label={t("notifications.ariaLabel")} disabled>
+        <HeaderChromeIcon kind="bell" className={iconClassName} />
       </button>
     );
   }
@@ -242,7 +244,7 @@ export function NotificationBell({
     >
       <summary
         className={cn(
-          "list-none cursor-pointer outline-none [&::-webkit-details-marker]:hidden",
+          "group list-none cursor-pointer outline-none [&::-webkit-details-marker]:hidden",
           open && isDark && "[&>span]:bg-zinc-800/80 [&>span]:text-zinc-100",
         )}
       >
@@ -250,7 +252,7 @@ export function NotificationBell({
           className={cn("relative inline-flex", className)}
           aria-label={t("notifications.ariaLabel")}
         >
-          <Bell className={iconClassName ?? "size-[18px]"} strokeWidth={1.75} aria-hidden />
+          <HeaderChromeIcon kind="bell" className={iconClassName} />
           {unread > 0 ? (
             <span
               className={cn(

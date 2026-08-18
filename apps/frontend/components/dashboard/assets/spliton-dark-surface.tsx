@@ -5,35 +5,23 @@ import { cn } from "@/lib/utils";
 
 /** Same fill as footer / overview — light marble on black so the wordmark reads. */
 const SPLITON_TEXTURE = "/images/landing/footer-spliton-texture-fill-bw.png";
-const FILL_TILE = { w: 340, h: 72 } as const;
-
-function escapeXml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-/** Repeating phrase used as the wordmark fill instead of the marble photo. */
-function watermarkPhraseFill(phrase: string) {
-  const text = escapeXml(phrase);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FILL_TILE.w}" height="${FILL_TILE.h}" viewBox="0 0 ${FILL_TILE.w} ${FILL_TILE.h}"><g fill="#e8e8e8" font-family="ui-sans-serif,system-ui,sans-serif" font-size="17" font-weight="600" letter-spacing="0.04em"><text x="0" y="28">${text}</text><text x="-96" y="62">${text}</text></g></svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-}
 
 type SplitonDarkSurfaceProps = {
   children: ReactNode;
   className?: string;
   contentClassName?: string;
+  /** Layer pinned to the rounded shell (ignores content padding). */
+  overlay?: ReactNode;
   /** Show giant brand wordmark behind content. */
   watermark?: boolean;
   /** Smaller wordmark that fits fully in narrow cards. */
   watermarkCompact?: boolean;
   /** Large wordmark centered (default docks to the right on desktop). */
   watermarkCentered?: boolean;
-  /** Clip this phrase into the giant wordmark as a tiled fill. */
-  watermarkFillText?: string;
+  /** Centered / watermark label (defaults to brand name). */
+  watermarkText?: string;
+  /** Solid white title instead of textured fill — readable on busy video. */
+  watermarkSolid?: boolean;
   /** Optional ambient video under the shell (e.g. position-holding-bg). */
   backgroundVideo?: string;
   /**
@@ -52,17 +40,19 @@ export function SplitonDarkSurface({
   children,
   className,
   contentClassName,
+  overlay,
   watermark = true,
   watermarkCompact = false,
   watermarkCentered = false,
-  watermarkFillText,
+  watermarkText = BRAND.name,
+  watermarkSolid = false,
   backgroundVideo,
   videoClarity = "ambient",
   "aria-label": ariaLabel,
 }: SplitonDarkSurfaceProps) {
   const largeCentered = watermarkCentered && !watermarkCompact;
   const crisp = videoClarity === "crisp";
-  const phraseFill = watermarkFillText ? watermarkPhraseFill(watermarkFillText) : null;
+  const longMark = watermarkText.length > BRAND.name.length + 2;
 
   return (
     <section
@@ -102,42 +92,51 @@ export function SplitonDarkSurface({
             watermarkCompact
               ? "items-end justify-center pb-2"
               : largeCentered
-                ? "items-center justify-center"
+                ? "items-center justify-center px-4"
                 : "items-center justify-center sm:justify-end",
           )}
           aria-hidden
         >
           <p
             className={cn(
-              "select-none whitespace-nowrap bg-clip-text font-bold text-transparent",
+              "select-none font-bold",
+              watermarkSolid
+                ? "text-white"
+                : "bg-clip-text text-transparent",
               watermarkCompact
-                ? "leading-none tracking-[-0.04em]"
+                ? "whitespace-nowrap leading-none tracking-[-0.04em]"
                 : largeCentered
-                  ? "leading-[0.78] tracking-[-0.06em]"
-                  : "leading-[0.78] tracking-[-0.06em] max-sm:translate-y-[-4%] sm:absolute sm:inset-y-0 sm:right-[-8%] sm:left-[14%] sm:flex sm:translate-y-0 sm:items-center sm:justify-end",
+                  ? cn(
+                      "whitespace-nowrap text-center leading-[0.92]",
+                      longMark ? "tracking-[-0.035em]" : "tracking-[-0.06em]",
+                    )
+                  : "whitespace-nowrap leading-[0.78] tracking-[-0.06em] max-sm:translate-y-[-4%] sm:absolute sm:inset-y-0 sm:right-[-8%] sm:left-[14%] sm:flex sm:translate-y-0 sm:items-center sm:justify-end",
             )}
             style={{
               fontSize: watermarkCompact
                 ? "clamp(1.5rem, 9vw, 2.35rem)"
                 : largeCentered
-                  ? "clamp(3.6rem, 18vw, 9.5rem)"
+                  ? longMark
+                    ? "clamp(1.35rem, 5.2vw, 3.1rem)"
+                    : "clamp(3.6rem, 18vw, 9.5rem)"
                   : "clamp(3.2rem, 20vw, 14rem)",
-              backgroundImage: phraseFill ?? `url('${SPLITON_TEXTURE}')`,
-              backgroundSize: phraseFill
-                ? `${FILL_TILE.w}px ${FILL_TILE.h}px`
-                : watermarkCompact
-                  ? "160% auto"
-                  : "145% auto",
-              backgroundPosition: phraseFill ? "center" : "48% 40%",
-              backgroundRepeat: phraseFill ? "repeat" : "no-repeat",
-              WebkitTextStroke: watermarkCompact
-                ? "0.4px rgba(255,255,255,0.18)"
-                : "0.6px rgba(255,255,255,0.12)",
+              ...(watermarkSolid
+                ? {
+                    textShadow: "0 1px 18px rgba(0,0,0,0.75)",
+                  }
+                : {
+                    backgroundImage: `url('${SPLITON_TEXTURE}')`,
+                    backgroundSize: watermarkCompact ? "160% auto" : longMark ? "120% auto" : "145% auto",
+                    backgroundPosition: "48% 40%",
+                    backgroundRepeat: "no-repeat",
+                    WebkitTextStroke: watermarkCompact
+                      ? "0.4px rgba(255,255,255,0.18)"
+                      : "0.6px rgba(255,255,255,0.12)",
+                  }),
               maxWidth: watermarkCompact || largeCentered ? "100%" : undefined,
-              textAlign: watermarkCompact || largeCentered ? "center" : undefined,
             }}
           >
-            {BRAND.name}
+            {watermarkText}
           </p>
         </div>
       ) : null}
@@ -160,6 +159,8 @@ export function SplitonDarkSurface({
         )}
         aria-hidden
       />
+
+      {overlay ? <div className="pointer-events-none absolute inset-0 z-20">{overlay}</div> : null}
 
       <div className={cn("relative z-10", contentClassName)}>{children}</div>
     </section>

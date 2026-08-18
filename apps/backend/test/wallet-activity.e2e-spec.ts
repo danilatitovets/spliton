@@ -1,7 +1,6 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   ReleaseStatus,
   WalletTxDirection,
   WalletTxStatus,
@@ -10,6 +9,7 @@ import {
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -35,7 +35,7 @@ describe('Wallet activity (e2e)', () => {
     const email = uniqueEmail('wa-page');
     const { token, userId } = await registerAndLogin(app!, email);
     const wallet = await seedWalletWithLedger(userId, '0');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const base = new Date('2026-05-01T12:00:00Z');
     for (let i = 0; i < 5; i++) {
       await prisma.walletTransaction.create({
@@ -52,7 +52,6 @@ describe('Wallet activity (e2e)', () => {
         },
       });
     }
-    await prisma.$disconnect();
 
     const p1 = await request(app!.getHttpServer())
       .get('/api/v1/wallet/activity?page=1&pageSize=2')
@@ -87,7 +86,7 @@ describe('Wallet activity (e2e)', () => {
     const email = uniqueEmail('wa-dep');
     const { token, userId } = await registerAndLogin(app!, email);
     const wallet = await seedWalletWithLedger(userId, '0');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.walletTransaction.create({
       data: {
         walletId: wallet.id,
@@ -114,7 +113,6 @@ describe('Wallet activity (e2e)', () => {
         happenedAt: new Date(),
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/wallet/activity?type=deposit')
@@ -129,7 +127,7 @@ describe('Wallet activity (e2e)', () => {
     const email = uniqueEmail('wa-mix');
     const { token, userId } = await registerAndLogin(app!, email);
     const wallet = await seedWalletWithLedger(userId, '500');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `wa-${Date.now()}`,
@@ -200,7 +198,6 @@ describe('Wallet activity (e2e)', () => {
         happenedAt: new Date('2026-06-03T10:00:00Z'),
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/wallet/activity?pageSize=50')
@@ -239,7 +236,7 @@ describe('Wallet activity (e2e)', () => {
     const email = uniqueEmail('wa-period');
     const { token, userId } = await registerAndLogin(app!, email);
     const wallet = await seedWalletWithLedger(userId, '0');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.walletTransaction.create({
       data: {
         walletId: wallet.id,
@@ -266,7 +263,6 @@ describe('Wallet activity (e2e)', () => {
         happenedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/wallet/activity?period=7d')
@@ -280,7 +276,7 @@ describe('Wallet activity (e2e)', () => {
     const email = uniqueEmail('wa-dir');
     const { token, userId } = await registerAndLogin(app!, email);
     const wallet = await seedWalletWithLedger(userId, '0');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.walletTransaction.create({
       data: {
         walletId: wallet.id,
@@ -307,7 +303,6 @@ describe('Wallet activity (e2e)', () => {
         happenedAt: new Date(),
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/wallet/activity?direction=in')

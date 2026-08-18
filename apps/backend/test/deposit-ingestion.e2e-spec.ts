@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { PrismaClient, UserRoleCode } from '@prisma/client';
+import { UserRoleCode } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
@@ -10,6 +10,7 @@ import { canonicalTestTxHash } from './helpers/canonical-tx-hash';
 import { assignUserDepositAddress } from './helpers/assign-user-deposit-address';
 import { mockUsdtTransfer } from './helpers/mock-usdt-transfer';
 import { DepositIngestionSource } from '@prisma/client';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -23,7 +24,7 @@ async function registerUser(app: E2eApp, email: string) {
 async function staffToken(app: E2eApp) {
   const email = uniqueEmail('deposit-staff');
   const { userId, password } = await registerUser(app, email);
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const role = await prisma.role.findUnique({
     where: { code: UserRoleCode.ACCOUNTANT },
   });
@@ -34,7 +35,6 @@ async function staffToken(app: E2eApp) {
       update: {},
     });
   }
-  await prisma.$disconnect();
   const login = await request(app.getHttpServer())
     .post('/auth/login')
     .send({ email, password });
@@ -80,7 +80,7 @@ describe('Deposit ingestion (e2e)', () => {
     const out = await ingestion.tick();
     expect(out.credited).toBe(1);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const balance = await prisma2.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });
@@ -111,7 +111,7 @@ describe('Deposit ingestion (e2e)', () => {
     );
     await ingestion.tick();
 
-    const p1 = new PrismaClient();
+    const p1 = createIsolatedE2ePrisma();
     const b1 = await p1.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });
@@ -122,7 +122,7 @@ describe('Deposit ingestion (e2e)', () => {
     await ingestion.tick();
     await ingestion.tick();
 
-    const p2 = new PrismaClient();
+    const p2 = createIsolatedE2ePrisma();
     const b2 = await p2.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });

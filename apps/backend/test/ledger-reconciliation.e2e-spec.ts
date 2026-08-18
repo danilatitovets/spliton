@@ -1,9 +1,10 @@
 import request from 'supertest';
-import { LedgerOperationType, PrismaClient, UserRoleCode } from '@prisma/client';
+import { LedgerOperationType, UserRoleCode } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
 import { uniqueTrc20Address } from './helpers/e2e-trc20-address';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -15,7 +16,7 @@ async function registerUser(app: E2eApp, email: string) {
 }
 
 async function assignRole(userId: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (role) {
     await prisma.userRole.upsert({
@@ -24,7 +25,6 @@ async function assignRole(userId: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 async function staffToken(app: E2eApp): Promise<string> {
@@ -73,12 +73,11 @@ describe('Ledger & reconciliation (e2e)', () => {
     const { userId } = await registerUser(app!, userEmail);
     const wallet = await seedWalletWithLedger(userId, '50.00');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.walletBalance.update({
       where: { walletId: wallet.id },
       data: { available: { increment: 25 } },
     });
-    await prisma.$disconnect();
 
     const dryRes = await request(app!.getHttpServer())
       .post('/api/admin/v1/ledger/reconciliation/runs')
@@ -106,7 +105,7 @@ describe('Ledger & reconciliation (e2e)', () => {
       });
     expect(createRes.status).toBe(201);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const postings = await prisma.ledgerPosting.findMany({
       where: {
         walletId: wallet.id,
@@ -114,7 +113,6 @@ describe('Ledger & reconciliation (e2e)', () => {
       },
     });
     expect(postings.length).toBeGreaterThanOrEqual(2);
-    await prisma.$disconnect();
   });
 
   it('persisted reconciliation run and CSV report', async () => {

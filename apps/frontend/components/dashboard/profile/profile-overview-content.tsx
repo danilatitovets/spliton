@@ -7,20 +7,23 @@ import { Eye, EyeOff } from "@/lib/lucide";
 import { ProductDemoBanner } from "@/components/shared/product-demo-banner";
 import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
 import { ACCOUNT_CENTER_RELATED_ROUTES } from "@/constants/dashboard/account-center";
+import { PAYOUTS_OVERVIEW_ICONS } from "@/constants/assets/payouts-overview-icons";
 import { ROUTES } from "@/constants/routes";
 import { ProfileHoldingsEmpty, ProfileHoldingsList } from "@/components/dashboard/profile/profile-holdings-list";
 import { ProfileOverviewIdentity } from "@/components/dashboard/profile/profile-overview-identity";
+import { ProfileValuationWalletCard } from "@/components/dashboard/profile/profile-valuation-wallet-card";
 import { ProfileOverviewRates } from "@/components/dashboard/profile/profile-overview-rates";
 import { ProfileOverviewSidebar } from "@/components/dashboard/profile/profile-overview-sidebar";
 import { ProfileSectionSkeleton } from "@/components/dashboard/profile/profile-section-skeleton";
 import {
   ProfileOkxSection,
   profileOkxGhostClass,
+  profileOkxPrimaryClass,
 } from "@/components/dashboard/profile/profile-okx";
-import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
-import { PAYOUTS_OVERVIEW_ICONS } from "@/constants/assets/payouts-overview-icons";
-import { useAuth } from "@/components/providers/auth-provider";
+import { useAuthUi } from "@/hooks/use-auth-ui";
+import { ProfileSignInRequired } from "@/components/dashboard/profile/profile-sign-in-required";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { cn } from "@/lib/utils";
 import { formatUsdtRu } from "@/lib/wallet/format-money";
 import {
   fetchUserMe,
@@ -59,15 +62,15 @@ function OverviewSkeleton() {
 }
 
 export function ProfileOverviewContent() {
-  const { user, authorizedFetch, isAuthenticated } = useAuth();
+  const { user, authorizedFetch, authenticated, pending, errored, retrySession } = useAuthUi();
   const { t, locale } = useI18n();
   const preferDemo = useCabinetDemoPreview();
-  const live = isLiveAccountEnabled() && isAuthenticated && !preferDemo;
+  const live = isLiveAccountEnabled() && authenticated && !preferDemo;
   const demo = isAccountCenterDemoMode() || preferDemo;
 
   const [meProfile, setMeProfile] = useState<UserMeProfile | null>(null);
   const [accountCenter, setAccountCenter] = useState<AccountCenterSummary | null>(null);
-  const [profileLoading, setProfileLoading] = useState(live);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<unknown>(null);
 
   const [balanceHidden, setBalanceHidden] = useState(false);
@@ -77,8 +80,8 @@ export function ProfileOverviewContent() {
   const [walletLoadError, setWalletLoadError] = useState<unknown>(null);
 
   useEffect(() => {
-    if (!live) {
-      setProfileLoading(false);
+    if (pending || !live) {
+      if (!pending && !live) setProfileLoading(false);
       return;
     }
     setProfileLoading(true);
@@ -89,15 +92,26 @@ export function ProfileOverviewContent() {
         setAccountCenter(me.accountCenter ?? null);
       })
       .catch((e) => {
+        if (user) {
+          setMeProfile({
+            id: user.id,
+            email: user.email,
+            profile: user.profile,
+            accountCenter: null,
+          });
+          setAccountCenter(null);
+          setProfileError(null);
+          return;
+        }
         setMeProfile(null);
         setAccountCenter(null);
         setProfileError(e);
       })
       .finally(() => setProfileLoading(false));
-  }, [authorizedFetch, live, t]);
+  }, [authorizedFetch, live, pending, user]);
 
   useEffect(() => {
-    if (!live) return;
+    if (pending || !live) return;
     setWalletLoadError(null);
     setHoldingsLoading(true);
     void Promise.all([
@@ -114,10 +128,30 @@ export function ProfileOverviewContent() {
         setWalletLoadError(e);
       })
       .finally(() => setHoldingsLoading(false));
-  }, [authorizedFetch, live, t]);
+  }, [authorizedFetch, live, pending]);
 
-  if (live && profileLoading) {
+  if (pending || (live && profileLoading && !profileError) || (live && !meProfile && !profileError)) {
     return <OverviewSkeleton />;
+  }
+
+  if (errored) {
+    return (
+      <ReadOnlySectionError
+        sectionId="profile-overview-auth"
+        error={new Error(t("profile.overview.loadProfileError"))}
+        title={t("errors.section.unavailable.title")}
+        description={t("profile.overview.loadProfileError")}
+        variant="dark"
+        retryLabel={t("actions.retry")}
+        onRetry={() => {
+          void retrySession();
+        }}
+      />
+    );
+  }
+
+  if (!authenticated && !demo) {
+    return <ProfileSignInRequired titleKey="profile.legal.signInRequired" />;
   }
 
   const displayName =
@@ -135,6 +169,10 @@ export function ProfileOverviewContent() {
           ? stripUsdtSuffix(PROFILE_DEMO_BALANCE)
           : "—";
   const showUsdt = balanceDisplay !== "—";
+  const walletHolder =
+    displayName?.trim() ||
+    email?.split("@")[0]?.trim() ||
+    t("profile.overview.displayNameFallback");
 
   return (
     <div className="flex min-w-0 flex-col gap-3 sm:gap-4 [--profile-sticky-offset:7rem]">
@@ -144,15 +182,30 @@ export function ProfileOverviewContent() {
         <ReadOnlySectionError
           sectionId="profile-overview"
           error={profileError}
+          title={t("errors.section.unavailable.title")}
+          description={t("profile.overview.loadProfileError")}
+          variant="dark"
+          retryLabel={t("actions.retry")}
           onRetry={() => {
             setProfileLoading(true);
-            setProfileError(null);
             void fetchUserMe(authorizedFetch)
               .then((me) => {
                 setMeProfile(me);
                 setAccountCenter(me.accountCenter ?? null);
+                setProfileError(null);
               })
               .catch((e) => {
+                if (user) {
+                  setMeProfile({
+                    id: user.id,
+                    email: user.email,
+                    profile: user.profile,
+                    accountCenter: null,
+                  });
+                  setAccountCenter(null);
+                  setProfileError(null);
+                  return;
+                }
                 setMeProfile(null);
                 setAccountCenter(null);
                 setProfileError(e);
@@ -162,7 +215,7 @@ export function ProfileOverviewContent() {
         />
       ) : null}
 
-      {live && !accountCenter && !profileError ? (
+      {live && !accountCenter && !profileError && meProfile ? (
         <p className="rounded-2xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200" role="status">
           {t("profile.overview.accountSummaryUnavailable")}
         </p>
@@ -175,7 +228,6 @@ export function ProfileOverviewContent() {
             email={email}
             userId={userId}
             kycStatus={accountCenter?.verification.status ?? (demo ? "APPROVED" : null)}
-            securityLevel={accountCenter?.security.level ?? (demo ? "MEDIUM" : null)}
             fallbackName={t("profile.overview.displayNameFallback")}
           />
 
@@ -193,112 +245,116 @@ export function ProfileOverviewContent() {
               }}
               aria-hidden
             />
-            <div className="pointer-events-none absolute inset-0 bg-black/60" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-black/55" aria-hidden />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-black/85 via-black/35 to-transparent"
+              aria-hidden
+            />
 
-            <div className="relative z-10">
-              <div className="flex items-center gap-2">
-                <p className="text-[13px] font-medium text-white/55">
-                  {t("profile.overview.valuationLabel")}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setBalanceHidden((v) => !v)}
-                  className="inline-flex size-7 items-center justify-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white"
-                  aria-label={balanceHidden ? t("profile.overview.showBalance") : t("profile.overview.hideBalance")}
-                >
-                  {balanceHidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              <p className="mt-2 font-mono text-[2rem] font-semibold leading-none tracking-tight text-white sm:text-[2.5rem]">
-                {balanceDisplay}
-                {showUsdt ? (
-                  <span className="ml-2 text-[1rem] font-medium text-white/45 sm:text-[1.15rem]">USDT</span>
-                ) : null}
-              </p>
-              {walletLoadError ? (
-                <div className="mt-3">
-                  <ReadOnlySectionError
-                    sectionId="profile-overview-wallet"
-                    error={walletLoadError}
-                    onRetry={() => {
-                      setWalletLoadError(null);
-                      setHoldingsLoading(true);
-                      void Promise.all([
-                        fetchWalletSummary(authorizedFetch),
-                        listUserHoldings(authorizedFetch),
-                      ])
-                        .then(([s, h]) => {
-                          setAvailableBalance(s.availableBalance);
-                          setHoldings(h.items);
-                        })
-                        .catch((e) => {
-                          setAvailableBalance(null);
-                          setHoldings([]);
-                          setWalletLoadError(e);
-                        })
-                        .finally(() => setHoldingsLoading(false));
-                    }}
-                    compact
+            <div className="relative z-10 space-y-5">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-medium text-white/70">
+                      {t("profile.overview.valuationLabel")}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setBalanceHidden((v) => !v)}
+                      className="inline-flex size-8 items-center justify-center rounded-full bg-white/[0.08] text-white/55 transition hover:bg-white/[0.12] hover:text-white"
+                      aria-label={
+                        balanceHidden ? t("profile.overview.showBalance") : t("profile.overview.hideBalance")
+                      }
+                    >
+                      {balanceHidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  <ProfileValuationWalletCard
+                    holderName={walletHolder}
+                    holderEmail={email}
+                    holderId={userId}
+                    balanceLabel={t("profile.overview.valuationLabel")}
+                    balanceValue={showUsdt ? `${balanceDisplay} USDT` : balanceDisplay}
+                    balanceHidden={balanceHidden}
                   />
                 </div>
-              ) : null}
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <SplitonCtaPill
-                  href={`${ROUTES.dashboardPayouts}/deposit`}
-                  tone="onDark"
-                  variant="accent"
-                  withArrow={false}
-                  className="h-10 min-w-0 px-4 text-[13px]"
-                >
-                  {t("profile.overview.quickActions.deposit")}
-                </SplitonCtaPill>
-                <SplitonCtaPill
-                  href={ROUTES.dashboardPayoutsHistory}
-                  tone="onDark"
-                  variant="ghost"
-                  withArrow={false}
-                  className="h-10 min-w-0 px-4 text-[13px]"
-                >
-                  {t("profile.overview.withdraw")}
-                </SplitonCtaPill>
-                <SplitonCtaPill
-                  href={ROUTES.dashboardCatalog}
-                  tone="onDark"
-                  variant="ghost"
-                  withArrow={false}
-                  className="h-10 min-w-0 px-4 text-[13px]"
-                >
-                  {t("profile.overview.quickActions.buy")}
-                </SplitonCtaPill>
+                <p className="mt-3 text-[clamp(1.65rem,7vw,2.45rem)] font-semibold tabular-nums leading-none tracking-[-0.02em] text-white">
+                  {balanceDisplay}
+                  {showUsdt ? (
+                    <span className="ml-2 text-[1rem] font-medium text-white/45 sm:text-[1.1rem]">USDT</span>
+                  ) : null}
+                </p>
+                {walletLoadError ? (
+                  <div className="mt-3">
+                    <ReadOnlySectionError
+                      sectionId="profile-overview-wallet"
+                      error={walletLoadError}
+                      onRetry={() => {
+                        setWalletLoadError(null);
+                        setHoldingsLoading(true);
+                        void Promise.all([
+                          fetchWalletSummary(authorizedFetch),
+                          listUserHoldings(authorizedFetch),
+                        ])
+                          .then(([s, h]) => {
+                            setAvailableBalance(s.availableBalance);
+                            setHoldings(h.items);
+                          })
+                          .catch((e) => {
+                            setAvailableBalance(null);
+                            setHoldings([]);
+                            setWalletLoadError(e);
+                          })
+                          .finally(() => setHoldingsLoading(false));
+                      }}
+                      compact
+                      variant="dark"
+                    />
+                  </div>
+                ) : null}
               </div>
 
-              <div className="mt-6 flex flex-col gap-4 border-t border-white/[0.08] pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+                <Link
+                  href={`${ROUTES.dashboardPayouts}/deposit`}
+                  className={cn(profileOkxPrimaryClass, "h-10 w-full px-5 text-[13px] sm:w-auto")}
+                >
+                  {t("profile.overview.quickActions.deposit")}
+                </Link>
+                <Link
+                  href={ROUTES.dashboardPayoutsHistory}
+                  className={cn(profileOkxGhostClass, "h-10 w-full rounded-full px-5 sm:w-auto")}
+                >
+                  {t("profile.overview.withdraw")}
+                </Link>
+                <Link
+                  href={ROUTES.dashboardCatalog}
+                  className={cn(profileOkxGhostClass, "h-10 w-full rounded-full px-5 sm:w-auto")}
+                >
+                  {t("profile.overview.quickActions.buy")}
+                </Link>
+              </div>
+
+              <div className="flex flex-col gap-4 border-t border-white/[0.08] pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 max-w-md">
                   <p className="text-[15px] font-semibold text-white">{t("profile.overview.assetsOverviewLink")}</p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-white/45">
+                  <p className="mt-1 text-[13px] leading-relaxed text-white/55">
                     {t("profile.overview.chartComingSoonHint")}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <SplitonCtaPill
+                <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                  <Link
                     href={ACCOUNT_CENTER_RELATED_ROUTES.walletOverview}
-                    tone="onDark"
-                    variant="primary"
-                    withArrow={false}
-                    className="h-10 min-w-0 px-4 text-[13px]"
+                    className={cn(profileOkxPrimaryClass, "h-10 w-full px-5 text-[13px] sm:w-auto")}
                   >
                     {t("profile.overview.assetsOverviewLink")}
-                  </SplitonCtaPill>
-                  <SplitonCtaPill
+                  </Link>
+                  <Link
                     href={ROUTES.dashboardPositions}
-                    tone="onDark"
-                    variant="ghost"
-                    withArrow={false}
-                    className="h-10 min-w-0 px-4 text-[13px]"
+                    className={cn(profileOkxGhostClass, "h-10 w-full rounded-full px-5 sm:w-auto")}
                   >
                     {t("profile.overview.holdingsViewAll")}
-                  </SplitonCtaPill>
+                  </Link>
                 </div>
               </div>
             </div>

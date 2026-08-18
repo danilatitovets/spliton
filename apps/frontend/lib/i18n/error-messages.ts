@@ -265,7 +265,7 @@ const EN: Record<string, string> = {
   PROVIDER_UNAVAILABLE: "External service is temporarily unavailable.",
   STORAGE_UNAVAILABLE: "Storage is temporarily unavailable.",
   FEATURE_DISABLED: "This operation is temporarily unavailable.",
-  INTERNAL_ERROR: "Something went wrong. Try again or contact support.",
+  INTERNAL_ERROR: "Something went wrong. Try again later or contact support.",
   ADMIN_FORBIDDEN: "You do not have permission for this admin action.",
   EMAIL_ALREADY_EXISTS: "An account with this email already exists.",
 };
@@ -354,7 +354,7 @@ const ES: Record<string, string> = {
   PROVIDER_UNAVAILABLE: "Servicio externo no disponible.",
   STORAGE_UNAVAILABLE: "Almacenamiento no disponible.",
   FEATURE_DISABLED: "Esta operación no está disponible temporalmente.",
-  INTERNAL_ERROR: "Algo salió mal. Inténtalo de nuevo o contacta soporte.",
+  INTERNAL_ERROR: "Algo salió mal. Inténtalo más tarde o contacta con soporte.",
   ADMIN_FORBIDDEN: "No tienes permiso para esta acción de administrador.",
   EMAIL_ALREADY_EXISTS: "Ya existe una cuenta con este correo.",
 };
@@ -443,7 +443,7 @@ const PT: Record<string, string> = {
   PROVIDER_UNAVAILABLE: "Serviço externo indisponível.",
   STORAGE_UNAVAILABLE: "Armazenamento indisponível.",
   FEATURE_DISABLED: "Operação temporariamente indisponível.",
-  INTERNAL_ERROR: "Algo correu mal. Tente novamente ou contacte o suporte.",
+  INTERNAL_ERROR: "Algo correu mal. Tente novamente mais tarde ou contacte o suporte.",
   ADMIN_FORBIDDEN: "Sem permissão para esta ação de administrador.",
   EMAIL_ALREADY_EXISTS: "Já existe uma conta com este e-mail.",
 };

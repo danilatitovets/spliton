@@ -1,9 +1,9 @@
 import request from 'supertest';
 import {
   HelpArticleStatus,
-  PrismaClient,
 } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 describe('Public help center API (e2e)', () => {
   let app: E2eApp | undefined;
@@ -17,7 +17,7 @@ describe('Public help center API (e2e)', () => {
   });
 
   it('lists only published categories', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
 
     await prisma.helpCategory.create({
@@ -37,7 +37,6 @@ describe('Public help center API (e2e)', () => {
         sortOrder: 1,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/help/categories')
@@ -57,7 +56,7 @@ describe('Public help center API (e2e)', () => {
   });
 
   it('returns category with published articles only', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
     expect(author).toBeTruthy();
@@ -94,7 +93,6 @@ describe('Public help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       `/api/v1/help/categories/${category.slug}`,
@@ -107,7 +105,7 @@ describe('Public help center API (e2e)', () => {
   });
 
   it('filters published articles by flags', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
 
@@ -135,7 +133,6 @@ describe('Public help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/help/articles')
@@ -151,7 +148,7 @@ describe('Public help center API (e2e)', () => {
   });
 
   it('returns article by slug with breadcrumbs and increments viewCount', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
 
@@ -186,7 +183,6 @@ describe('Public help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       `/api/v1/help/articles/${slug}`,
@@ -201,7 +197,7 @@ describe('Public help center API (e2e)', () => {
     ]);
     expect(res.body.viewCount).toBe(4);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const updated = await prisma2.helpArticle.findUnique({
       where: { id: article.id },
     });
@@ -210,7 +206,7 @@ describe('Public help center API (e2e)', () => {
   });
 
   it('returns 404 for archived article', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
     const slug = `archived-only-${suffix}`;
@@ -225,7 +221,6 @@ describe('Public help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       `/api/v1/help/articles/${slug}`,
@@ -234,7 +229,7 @@ describe('Public help center API (e2e)', () => {
   });
 
   it('returns 404 for draft article', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
     const slug = `draft-only-${suffix}`;
@@ -248,7 +243,6 @@ describe('Public help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       `/api/v1/help/articles/${slug}`,

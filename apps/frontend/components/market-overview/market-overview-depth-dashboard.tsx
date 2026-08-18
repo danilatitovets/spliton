@@ -1,15 +1,16 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 
 import { useI18n } from "@/components/providers/i18n-provider";
 import { MarketOverviewProChart } from "@/components/market-overview/ui/market-overview-pro-chart";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import {
   MARKET_SECONDARY_SNAPSHOT,
   MARKET_TOP_CARD_METRICS,
 } from "@/constants/market-overview/page";
 import { ROUTES } from "@/constants/routes";
+import { isNoiseCatalogGenre } from "@/lib/catalog/is-noise-catalog-item";
 import { resolveChartSeries } from "@/lib/market-overview/chart-series";
 import { formatUsdtCompact } from "@/lib/market-overview/format";
 import { mapSecondaryLiveSnapshot } from "@/lib/market-overview/market-overview-live-mappers";
@@ -127,7 +128,7 @@ export function MarketOverviewDepthDashboard({
   }, [charts, liquiditySeries, demo.deepCatalogShare]);
 
   const genreHist = React.useMemo(() => {
-    const genres = stats?.distributions?.genres ?? [];
+    const genres = (stats?.distributions?.genres ?? []).filter((g) => !isNoiseCatalogGenre(g.name));
     if (genres.length) {
       return {
         values: genres.slice(0, 8).map((g) => g.count || Number(g.volumeUsdt) || 0),
@@ -293,10 +294,7 @@ export function MarketOverviewDepthDashboard({
       </div>
 
       {/* Secondary CTA — full video, no blur, no border */}
-      <Link
-        href={ROUTES.dashboardSecondaryMarket}
-        className="group relative isolate flex min-h-[9.5rem] flex-wrap items-end justify-between gap-4 overflow-hidden rounded-[1.35rem] px-5 py-6 sm:min-h-[11rem] sm:px-8 sm:py-8"
-      >
+      <div className="relative isolate flex min-h-[9.5rem] flex-wrap items-end justify-between gap-4 overflow-hidden rounded-[1.35rem] px-5 py-6 sm:min-h-[11rem] sm:px-8 sm:py-8">
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
           <video
             className="absolute inset-0 h-full w-full scale-105 object-cover opacity-55 motion-reduce:hidden"
@@ -314,15 +312,13 @@ export function MarketOverviewDepthDashboard({
             {t("marketOverview.secondary.title")}
           </p>
           <p className="mt-1.5 max-w-[42ch] text-[14px] leading-relaxed text-white/70">
-            {secondarySnap.topDemand !== "—"
-              ? secondarySnap.topDemand
-              : t("marketOverview.secondary.subtitle")}
+            {t("marketOverview.secondary.subtitle")}
           </p>
         </div>
-        <span className="relative z-10 shrink-0 text-[14px] font-semibold text-white transition group-hover:text-zinc-100">
-          {t("marketOverview.insights.more")} →
-        </span>
-      </Link>
+        <SplitonCtaPill href={ROUTES.dashboardSecondaryMarket} tone="onDark" className="relative z-10 shrink-0">
+          {t("marketOverview.insights.more")}
+        </SplitonCtaPill>
+      </div>
 
     </section>
   );

@@ -18,6 +18,8 @@ export type SecuritySessionRow = {
   location: string;
   ip: string;
   lastActive: string;
+  lastActiveAt?: string;
+  createdAt?: string;
   current: boolean;
 };
 
@@ -28,6 +30,8 @@ export const MOCK_SECURITY_SESSIONS: SecuritySessionRow[] = [
     location: "Москва, Россия",
     ip: "185.•••.••12",
     lastActive: "Сейчас",
+    lastActiveAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     current: true,
   },
   {
@@ -36,6 +40,8 @@ export const MOCK_SECURITY_SESSIONS: SecuritySessionRow[] = [
     location: "Санкт-Петербург, Россия",
     ip: "178.•••.••88",
     lastActive: "2 дня назад",
+    lastActiveAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
     current: false,
   },
   {
@@ -44,6 +50,8 @@ export const MOCK_SECURITY_SESSIONS: SecuritySessionRow[] = [
     location: "Неизвестно",
     ip: "91.•••.••40",
     lastActive: "14 дней назад",
+    lastActiveAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
     current: false,
   },
 ];

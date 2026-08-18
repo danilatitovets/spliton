@@ -63,8 +63,7 @@ export function ProfileSecurityEventsList({
 
   return (
     <>
-      <ul className="divide-y divide-white/[0.06]">
-        {visible.map((ev) => {
+      {visible.map((ev) => {
           const tone = securityEventTone(ev.action);
           const hint = securityEventHint(ev.action, locale);
           const ip = formatSecurityEventIp(ev.ip, locale);
@@ -75,7 +74,7 @@ export function ProfileSecurityEventsList({
             .join(" · ");
 
           return (
-            <li
+            <div
               key={ev.id}
               className="flex items-start gap-3.5 px-5 py-[1.15rem] sm:gap-4 sm:px-6"
             >
@@ -95,10 +94,9 @@ export function ProfileSecurityEventsList({
                 ) : null}
                 <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{meta}</p>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
 
       <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
         {canExpand ? (

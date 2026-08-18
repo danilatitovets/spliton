@@ -1,10 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { NotificationAudienceType } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import { createE2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { e2eEmail } from './helpers/e2e-unique';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 async function registerAndLogin(app: INestApplication) {
   const email = e2eEmail('notify');
@@ -25,7 +25,7 @@ describe('Notifications (e2e)', () => {
 
   it('lists user notifications and unread count', async () => {
     const { token, userId } = await registerAndLogin(app);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.inAppNotification.create({
       data: {
         audience: NotificationAudienceType.USER,
@@ -36,7 +36,6 @@ describe('Notifications (e2e)', () => {
         message: 'Hello',
       },
     });
-    await prisma.$disconnect();
 
     const list = await request(app.getHttpServer())
       .get('/api/v1/notifications')

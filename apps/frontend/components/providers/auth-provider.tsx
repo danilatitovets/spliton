@@ -27,11 +27,23 @@ import {
   verifyTwoFactor,
 } from "@/services/auth.service";
 
+import { clearSessionHintCookie, hasClientSessionHint, setSessionHintCookie } from "@/lib/auth/session-cookie";
+import {
+  broadcastLogout,
+  broadcastSession,
+  coordinatedRefresh,
+  subscribeAuthTabSync,
+} from "@/lib/auth/auth-tab-sync";
+import { deriveAuthStatus, type AuthStatus } from "@/lib/auth/auth-status";
+import { resolveApiUrl } from "@/lib/public-env";
+
 type AuthContextValue = {
   user: SafeUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  status: AuthStatus;
+  retrySession: () => Promise<string | null>;
   requiresEmailVerification: boolean;
   pendingTwoFactorChallenge: PendingTwoFactorChallenge | null;
   register: (payload: EmailSignUpPayload) => Promise<{ requiresEmailVerification: true }>;
@@ -48,23 +60,21 @@ type AuthContextValue = {
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
-import { clearSessionHintCookie, hasClientSessionHint, setSessionHintCookie } from "@/lib/auth/session-cookie";
-import {
-  broadcastLogout,
-  broadcastSession,
-  coordinatedRefresh,
-  subscribeAuthTabSync,
-} from "@/lib/auth/auth-tab-sync";
-import { resolveApiUrl } from "@/lib/public-env";
-
 function resolveUrl(path: string): string {
   return resolveApiUrl(path);
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+  initialSessionHint = false,
+}: {
+  children: React.ReactNode;
+  initialSessionHint?: boolean;
+}) {
   const [user, setUser] = React.useState<SafeUser | null>(null);
   const [accessToken, setAccessToken] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(initialSessionHint);
+  const [sessionError, setSessionError] = React.useState(false);
   const [requiresEmailVerification, setRequiresEmailVerification] =
     React.useState(false);
   const [pendingTwoFactorChallenge, setPendingTwoFactorChallenge] =
@@ -83,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Private portfolio/wallet/activity caches must not survive user switch.
     invalidateClientCache();
     clearSessionHintCookie();
+    setSessionError(false);
     setUser(null);
     setAccessToken(null);
     setPendingTwoFactorChallenge(null);
@@ -121,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const nextToken = response.tokens.accessToken;
             rekeyAdminAccessVerified(previousToken, nextToken);
             setSessionHintCookie();
+            setSessionError(false);
             return {
               user: response.user,
               accessToken: nextToken,
@@ -186,6 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(nextUser);
     setPendingTwoFactorChallenge(null);
     setRequiresEmailVerification(false);
+    setSessionError(false);
+    setIsLoading(false);
     setSessionHintCookie();
     broadcastSession({ user: nextUser, accessToken: token, ts: Date.now() });
   }, []);
@@ -293,6 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(payload.user);
         setPendingTwoFactorChallenge(null);
         setRequiresEmailVerification(false);
+        setSessionError(false);
         setSessionHintCookie();
         setIsLoading(false);
       },
@@ -303,28 +318,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [clearAuth]);
 
+  const finishBootstrap = React.useCallback((token: string | null) => {
+    if (token) {
+      setSessionError(false);
+      setIsLoading(false);
+      return;
+    }
+    setSessionError(hasClientSessionHint());
+    setIsLoading(false);
+  }, []);
+
+  const retrySession = React.useCallback(async (): Promise<string | null> => {
+    setSessionError(false);
+    setIsLoading(true);
+    const token = await refreshSession();
+    finishBootstrap(token);
+    return token;
+  }, [finishBootstrap, refreshSession]);
+
   React.useEffect(() => {
     let active = true;
     (async () => {
+      const hinted = initialSessionHint || hasClientSessionHint();
       // Guests: skip refresh round-trip (avoids 401 → clearAuth flicker on login).
-      if (!hasClientSessionHint()) {
-        if (active) setIsLoading(false);
+      if (!hinted) {
+        if (active) {
+          setSessionError(false);
+          setIsLoading(false);
+        }
         return;
       }
-      await refreshSession();
-      if (active) setIsLoading(false);
+      if (active) setIsLoading(true);
+      const token = await refreshSession();
+      if (active) finishBootstrap(token);
     })();
     return () => {
       active = false;
     };
-  }, [refreshSession]);
+  }, [finishBootstrap, initialSessionHint, refreshSession]);
+
+  const isAuthenticated = Boolean(user && accessToken);
+  const status = deriveAuthStatus({
+    isLoading,
+    isAuthenticated,
+    sessionError,
+    hasAccessToken: Boolean(accessToken),
+  });
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
       user,
       accessToken,
-      isAuthenticated: Boolean(user && accessToken),
+      isAuthenticated,
       isLoading,
+      status,
+      retrySession,
       requiresEmailVerification,
       pendingTwoFactorChallenge,
       register,
@@ -341,7 +389,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [
       user,
       accessToken,
+      isAuthenticated,
       isLoading,
+      status,
+      retrySession,
       requiresEmailVerification,
       pendingTwoFactorChallenge,
       register,

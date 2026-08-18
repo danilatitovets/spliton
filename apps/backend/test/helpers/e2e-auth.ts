@@ -1,8 +1,9 @@
 import { INestApplication } from '@nestjs/common';
-import { PrismaClient, UserRoleCode, UserStatus } from '@prisma/client';
+import { UserRoleCode, UserStatus } from '@prisma/client';
 import request from 'supertest';
 
 import { e2eEmail } from './e2e-unique';
+import { getE2ePrisma } from './e2e-prisma';
 import { e2eRegisterPayload } from './register-e2e-user';
 
 const DEFAULT_PASSWORD = 'TestPass123!';
@@ -103,17 +104,15 @@ export async function registerAndLoginE2eUser(
     email,
   );
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    await prisma.$disconnect();
     throw new Error(`e2e register: user not found after register: ${email}`);
   }
   await prisma.user.update({
     where: { id: user.id },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const token = await loginE2eUser(app, email, password);
   return { token, userId: user.id, email, password };
@@ -123,7 +122,7 @@ export async function assignE2eStaffRole(
   email: string,
   roleCode: UserRoleCode,
 ): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -133,7 +132,6 @@ export async function assignE2eStaffRole(
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 /** Register user, assign staff role, login again for JWT with roles. */

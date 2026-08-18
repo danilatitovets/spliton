@@ -101,6 +101,15 @@ describe("i18n error mapping", () => {
     );
   });
 
+  it("translates thrown profile i18n keys instead of showing the key", () => {
+    expect(formatApiError(new Error("profile.overview.loadProfileError"), "ru")).toBe(
+      "Не удалось загрузить профиль",
+    );
+    expect(formatApiError(new Error("profile.overview.loadProfileError"), "en")).toMatch(
+      /could not load profile/i,
+    );
+  });
+
   it("sanitizes prisma in formatApiError path", () => {
     expect(
       formatApiError({ code: "INTERNAL_ERROR", message: "PrismaClientKnownRequestError P2002" }, "en"),

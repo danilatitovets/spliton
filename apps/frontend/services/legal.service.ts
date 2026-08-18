@@ -71,10 +71,23 @@ export type ConsentSource =
 
 async function parseJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
-    const err = new Error(body.message ?? res.statusText);
-    (err as Error & { status: number; code?: string }).status = res.status;
-    (err as Error & { code?: string }).code = body.code;
+    const body = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      code?: string;
+      requestId?: string;
+      correlationId?: string;
+      retryable?: boolean;
+    };
+    const err = new Error(body.message ?? res.statusText) as Error & {
+      status: number;
+      code?: string;
+      requestId?: string;
+      retryable?: boolean;
+    };
+    err.status = res.status;
+    err.code = body.code;
+    err.requestId = body.correlationId ?? body.requestId ?? res.headers.get("x-request-id") ?? undefined;
+    err.retryable = body.retryable;
     throw err;
   }
   return res.json() as Promise<T>;
@@ -107,12 +120,38 @@ export async function acceptLegalConsents(
   return parseJson(res);
 }
 
-export async function fetchEligibility(
+function isRetryableEligibilityError(error: unknown): boolean {
+  const status =
+    typeof error === "object" && error && "status" in error
+      ? Number((error as { status?: number }).status)
+      : undefined;
+  if (status == null || Number.isNaN(status)) return true;
+  return status === 401 || status === 408 || status === 425 || status === 429 || status >= 500;
+}
+
+async function fetchEligibilityOnce(
   path: string,
   authorizedFetch: (input: string, init?: RequestInit) => Promise<Response>,
 ): Promise<EligibilityResult> {
   const res = await authorizedFetch(path);
   return parseJson(res);
+}
+
+export async function fetchEligibility(
+  path: string,
+  authorizedFetch: (input: string, init?: RequestInit) => Promise<Response>,
+): Promise<EligibilityResult> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await fetchEligibilityOnce(path, authorizedFetch);
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableEligibilityError(error) || attempt === 2) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 280 * (attempt + 1)));
+    }
+  }
+  throw lastError;
 }
 
 export type EligibilitySummary = {
@@ -194,6 +233,7 @@ const PROFILE_LEGAL_FALLBACK_TYPES = [
   "FEE_POLICY",
 ] as const;
 
+/** Test/Storybook helper. Production profile UI must not call this on API failure. */
 export function buildProfileLegalFallback(t: (key: string) => string): LegalCenterResponse {
   return {
     activePolicies: PROFILE_LEGAL_FALLBACK_TYPES.map((type) => ({

@@ -1,7 +1,6 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   PrimaryRaiseRoundStatus,
   ReleaseStatus,
   UserStatus,
@@ -10,6 +9,7 @@ import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { e2eEmail, e2eKey, e2eSlug, e2eSymbol } from './helpers/e2e-unique';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return e2eEmail(prefix);
@@ -21,7 +21,7 @@ async function registerAndLogin(app: E2eApp, email: string) {
 }
 
 async function seedPrimaryRound(units: string, price = '10') {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const release = await prisma.release.create({
     data: {
       slug: e2eSlug('e2e-rel'),
@@ -44,7 +44,6 @@ async function seedPrimaryRound(units: string, price = '10') {
       soldUnits: new Prisma.Decimal(0),
     },
   });
-  await prisma.$disconnect();
   return { release, round };
 }
 
@@ -87,7 +86,7 @@ describe('Primary order (e2e)', () => {
     expect(second.body.orderId).toBe(first.body.orderId);
     expect(second.body.idempotentReplay).toBe(true);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const orderCount = await prisma2.order.count({
       where: { userId, idempotencyKey: idem },
     });
@@ -151,13 +150,12 @@ describe('Primary order (e2e)', () => {
   it('rejects sold out round', async () => {
     const email = uniqueEmail('primary-sold');
     const { token, userId } = await registerAndLogin(app!, email);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const { release, round } = await seedPrimaryRound('1');
     await prisma.primaryRaiseRound.update({
       where: { id: round.id },
       data: { soldUnits: new Prisma.Decimal(1) },
     });
-    await prisma.$disconnect();
     await seedWalletWithLedger(userId, '500');
 
     const key = e2eKey('sold');
@@ -169,7 +167,7 @@ describe('Primary order (e2e)', () => {
     expect(res.status).toBe(409);
     expect(['SOLD_OUT', 'INSUFFICIENT_PRIMARY_UNITS']).toContain(res.body.code);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const orderCount = await prisma2.order.count({
       where: { userId, releaseId: release.id },
     });
@@ -201,7 +199,7 @@ describe('Primary order (e2e)', () => {
     const statuses = [a.status, b.status].sort();
     expect(statuses).toEqual(expect.arrayContaining([201, 409]));
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const updated = await prisma2.primaryRaiseRound.findUnique({
       where: { id: round.id },
     });

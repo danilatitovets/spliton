@@ -151,12 +151,13 @@ const RU: Record<string, string> = {
     "Мы уже знаем о проблеме. Попробуйте обновить страницу или вернитесь позже.",
   "errors.page.retry": "Повторить",
   "errors.page.goHome": "На главную",
+  "errors.page.errorId": "Код ошибки: {id}",
 
   "notFound.title": "Страница не найдена",
   "notFound.description": "Запрошенная страница не существует или была перемещена.",
   "notFound.goHome": "На главную",
   "notFound.goCatalog": "В каталог",
-  "notFound.analyticsRelease.description": "Релиз не найден в демо-выборке.",
+  "notFound.analyticsRelease.description": "Релиз не найден или больше не доступен.",
   "notFound.analyticsRelease.cta": "Вернуться к аналитике релизов",
   "notFound.catalogRelease.title": "Релиз не найден",
   "notFound.catalogRelease.description":
@@ -339,12 +340,13 @@ const EN: Record<string, string> = {
     "We are already aware of the issue. Try refreshing the page or come back later.",
   "errors.page.retry": "Try again",
   "errors.page.goHome": "Go home",
+  "errors.page.errorId": "Error ID: {id}",
 
   "notFound.title": "Page not found",
   "notFound.description": "The page you requested does not exist or has been moved.",
   "notFound.goHome": "Go home",
   "notFound.goCatalog": "Go to catalog",
-  "notFound.analyticsRelease.description": "Release not found in the demo sample.",
+  "notFound.analyticsRelease.description": "Release not found or no longer available.",
   "notFound.analyticsRelease.cta": "Back to release analytics",
   "notFound.catalogRelease.title": "Release not found",
   "notFound.catalogRelease.description":
@@ -527,12 +529,13 @@ const ES: Record<string, string> = {
     "Ya conocemos el problema. Actualiza la página o vuelve más tarde.",
   "errors.page.retry": "Reintentar",
   "errors.page.goHome": "Ir al inicio",
+  "errors.page.errorId": "ID de error: {id}",
 
   "notFound.title": "Página no encontrada",
   "notFound.description": "La página solicitada no existe o fue movida.",
   "notFound.goHome": "Ir al inicio",
   "notFound.goCatalog": "Ir al catálogo",
-  "notFound.analyticsRelease.description": "Lanzamiento no encontrado en la muestra demo.",
+  "notFound.analyticsRelease.description": "Lanzamiento no encontrado o ya no disponible.",
   "notFound.analyticsRelease.cta": "Volver a analítica de lanzamientos",
   "notFound.catalogRelease.title": "Lanzamiento no encontrado",
   "notFound.catalogRelease.description":
@@ -715,12 +718,13 @@ const PT: Record<string, string> = {
     "Já temos conhecimento do problema. Atualize a página ou volte mais tarde.",
   "errors.page.retry": "Tentar novamente",
   "errors.page.goHome": "Ir ao início",
+  "errors.page.errorId": "ID do erro: {id}",
 
   "notFound.title": "Página não encontrada",
   "notFound.description": "A página pedida não existe ou foi movida.",
   "notFound.goHome": "Ir ao início",
   "notFound.goCatalog": "Ir ao catálogo",
-  "notFound.analyticsRelease.description": "Lançamento não encontrado na amostra demo.",
+  "notFound.analyticsRelease.description": "Lançamento não encontrado ou já não disponível.",
   "notFound.analyticsRelease.cta": "Voltar à análise de lançamentos",
   "notFound.catalogRelease.title": "Lançamento não encontrado",
   "notFound.catalogRelease.description":

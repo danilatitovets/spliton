@@ -70,6 +70,7 @@ export const ROUTES = {
     const q = requireConfirm ? "?confirm=1" : "";
     return `/dashboard/profile/legal/${encodeURIComponent(policyId)}${q}`;
   },
+  dashboardProfileDevices: "/dashboard/profile/devices",
   dashboardNotifications: "/dashboard/notifications",
   adminNotifications: "/admin/notifications",
   adminUpdates: "/admin/updates",

@@ -23,6 +23,7 @@ export class UsersRepository {
             countryCode: true,
             timezone: true,
             preferredLocale: true,
+            passwordChangedAt: true,
           },
         },
         userRoles: {

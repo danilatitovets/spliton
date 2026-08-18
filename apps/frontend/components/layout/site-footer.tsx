@@ -124,7 +124,7 @@ export function SiteFooter({
     <footer
       data-footer-variant={compact ? "compact" : "default"}
       className={cn(
-        "relative z-10 mt-auto overflow-visible bg-black font-sans text-zinc-500",
+        "relative z-10 mt-auto overflow-visible bg-black font-sans text-zinc-500 [overflow-anchor:none]",
         compact ? "border-t-0" : "border-t border-white/8",
         className,
       )}

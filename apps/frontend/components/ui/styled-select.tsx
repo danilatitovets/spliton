@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "@/lib/lucide";
+import { Check, ChevronDown } from "@/lib/lucide";
 import {
   useEffect,
   useId,
@@ -40,32 +40,28 @@ type StyledSelectProps = {
   menuClassName?: string;
   /** Минимальная ширина выпадающего списка (может быть шире триггера). */
   menuMinWidth?: number;
-  /** Максимальная ширина выпадающего списка. */
+  /** Максимальная ширина выпадающего списка. По умолчанию — ширина триггера. */
   menuMaxWidth?: number;
   placeholder?: string;
   size?: "sm" | "md";
   variant?: "default" | "soft" | "okx";
   tone?: "light" | "dark";
+  /** Тон меню. Светлое меню — белая панель как у ChatGPT. */
+  menuTone?: "light" | "dark";
   fullWidth?: boolean;
   align?: "start" | "end";
   borderless?: boolean;
   "aria-label"?: string;
 };
 
-function menuSurfaceClass(
-  tone: StyledSelectProps["tone"],
-  variant: StyledSelectProps["variant"],
-  borderless: boolean,
-) {
-  if (tone === "dark") {
-    return borderless
-      ? "border border-zinc-800/80 bg-[#1a1a1d] shadow-[0_16px_40px_-20px_rgba(0,0,0,0.6)]"
-      : "border border-white/10 bg-zinc-900 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.6)]";
+function menuSurfaceClass(menuTone: "light" | "dark", variant: StyledSelectProps["variant"]) {
+  if (menuTone === "dark") {
+    return "rounded-2xl bg-[#2f2f2f] shadow-[0_16px_48px_rgba(0,0,0,0.45)] ring-1 ring-white/10";
   }
   if (variant === "okx") {
-    return "rounded-lg border border-[#EEEEEE] bg-white shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]";
+    return "rounded-xl bg-white shadow-[0_10px_32px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06]";
   }
-  return "border border-neutral-200 bg-white shadow-[0_16px_40px_-20px_rgba(0,0,0,0.35)]";
+  return "rounded-2xl bg-white shadow-[0_12px_40px_rgba(0,0,0,0.16)] ring-1 ring-black/[0.06]";
 }
 
 export function StyledSelect({
@@ -78,11 +74,12 @@ export function StyledSelect({
   className,
   menuClassName,
   menuMinWidth,
-  menuMaxWidth = 360,
+  menuMaxWidth,
   placeholder,
   size = "md",
   variant = "default",
   tone = "light",
+  menuTone,
   fullWidth = false,
   align = "start",
   borderless = false,
@@ -98,6 +95,8 @@ export function StyledSelect({
   const [mounted, setMounted] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
   const resolvedPlaceholder = placeholder ?? t("form.selectPlaceholder");
+  const resolvedMenuTone = menuTone ?? tone;
+  const lightMenu = resolvedMenuTone === "light";
 
   const items = useMemo(() => options, [options]);
   const currentLabel = items.find((o) => o.value === value)?.label ?? resolvedPlaceholder;
@@ -111,29 +110,22 @@ export function StyledSelect({
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const gap = 6;
+    const gap = 8;
     const viewportPadding = 12;
-    const preferredMax = 280;
+    const preferredMax = 320;
     const minVisible = 160;
     const spaceBelow = window.innerHeight - rect.bottom - viewportPadding - gap;
     const spaceAbove = rect.top - viewportPadding - gap;
     const openAbove = spaceBelow < minVisible && spaceAbove > spaceBelow;
     const maxHeight = Math.min(
       preferredMax,
-      Math.max(120, openAbove ? spaceAbove : spaceBelow),
+      Math.max(132, openAbove ? spaceAbove : spaceBelow),
     );
-    const labelWidthEstimate = items.reduce(
-      (max, item) => Math.max(max, item.label.length * 7.2 + 28),
-      0,
-    );
-    const menuWidth = Math.min(
-      menuMaxWidth,
-      Math.max(rect.width, menuMinWidth ?? 0, labelWidthEstimate, tone === "dark" ? 240 : 200),
-    );
-    const left =
-      align === "end"
-        ? Math.max(viewportPadding, rect.right - menuWidth)
-        : Math.min(rect.left, window.innerWidth - menuWidth - viewportPadding);
+    const viewportMax = window.innerWidth - viewportPadding * 2;
+    const desired = Math.max(rect.width, menuMinWidth ?? rect.width);
+    const menuWidth = Math.min(menuMaxWidth ?? desired, desired, viewportMax);
+    let left = align === "end" ? rect.right - menuWidth : rect.left;
+    left = Math.min(Math.max(viewportPadding, left), window.innerWidth - menuWidth - viewportPadding);
 
     setMenuPos({
       top: openAbove ? rect.top - gap : rect.bottom + gap,
@@ -156,7 +148,7 @@ export function StyledSelect({
       window.removeEventListener("resize", updateMenuPosition);
       window.removeEventListener("scroll", updateMenuPosition, true);
     };
-  }, [open, align, items, menuMinWidth, menuMaxWidth, tone]);
+  }, [open, align, menuMinWidth, menuMaxWidth]);
 
   useEffect(() => {
     if (!open) return;
@@ -184,7 +176,7 @@ export function StyledSelect({
         left: menuPos.left,
         width: menuPos.width,
         minWidth: menuPos.width,
-        zIndex: 1100,
+        zIndex: 240,
         transform: menuPos.placement === "above" ? "translateY(-100%)" : undefined,
       }
     : undefined;
@@ -195,17 +187,13 @@ export function StyledSelect({
       role="listbox"
       aria-labelledby={triggerId}
       style={menuStyle}
-      className={cn(
-        "overflow-hidden rounded-xl",
-        menuSurfaceClass(tone, variant, borderless),
-        menuClassName,
-      )}
+      className={cn("overflow-hidden p-1.5", menuSurfaceClass(resolvedMenuTone, variant), menuClassName)}
     >
       <ul
         style={{ maxHeight: menuPos.maxHeight }}
         className={cn(
-          "overflow-x-hidden overflow-y-auto overscroll-contain py-1.5",
-          tone === "dark" ? "admin-select-menu-scroll" : undefined,
+          "overflow-x-hidden overflow-y-auto overscroll-contain",
+          !lightMenu && "admin-select-menu-scroll",
         )}
       >
         {items.map((item) => {
@@ -222,22 +210,26 @@ export function StyledSelect({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center px-3.5 text-left transition",
-                  tone === "dark" ? "py-2 text-[13px] leading-snug whitespace-nowrap" : "py-2.5 text-sm leading-snug",
+                  "flex w-full items-center justify-between gap-3 rounded-xl px-3.5 text-left transition-colors",
+                  "py-2.5 text-[15px] leading-snug",
                   selected
-                    ? tone === "dark"
-                      ? "bg-[#B7F500]/10 font-medium text-zinc-100"
-                      : variant === "okx"
-                        ? "bg-[#F5F5F5] font-medium text-black"
-                        : "bg-[#B7F500]/14 font-semibold text-neutral-900 ring-1 ring-inset ring-[#B7F500]/20"
-                    : tone === "dark"
-                      ? "text-zinc-300 hover:bg-zinc-800/80"
-                      : variant === "okx"
-                        ? "text-black hover:bg-[#F5F5F5]"
-                        : "text-neutral-700 hover:bg-neutral-50",
+                    ? lightMenu
+                      ? "bg-neutral-100 font-medium text-neutral-950"
+                      : "bg-white/10 font-medium text-white"
+                    : lightMenu
+                      ? "text-neutral-800 hover:bg-neutral-100"
+                      : "text-zinc-200 hover:bg-white/10",
                 )}
               >
-                {item.label}
+                <span className="min-w-0 truncate">{item.label}</span>
+                <Check
+                  className={cn(
+                    "size-4 shrink-0",
+                    selected ? (lightMenu ? "text-neutral-950" : "text-white") : "opacity-0",
+                  )}
+                  strokeWidth={2.4}
+                  aria-hidden
+                />
               </button>
             </li>
           );
@@ -269,7 +261,7 @@ export function StyledSelect({
                 open &&
                   (borderless
                     ? "bg-black/55 ring-0"
-                    : "border-white/20 bg-zinc-800 ring-2 ring-[#B7F500]/15"),
+                    : "border-white/20 bg-zinc-800 ring-2 ring-white/10"),
               )
             : variant === "okx"
               ? cn(
@@ -282,7 +274,7 @@ export function StyledSelect({
                     : "border-neutral-200 bg-neutral-50 text-neutral-800 hover:bg-neutral-100",
                   open &&
                     (variant === "soft"
-                      ? "bg-white ring-2 ring-[#B7F500]/20"
+                      ? "bg-white ring-2 ring-black/5"
                       : "border-neutral-300 bg-white"),
                 ),
           disabled && "cursor-not-allowed opacity-60",
@@ -295,7 +287,11 @@ export function StyledSelect({
         <ChevronDown
           className={cn(
             "size-4 shrink-0 transition-transform",
-            variant === "okx" ? "text-[#848E9C]" : "text-neutral-400",
+            tone === "dark"
+              ? "text-white/45"
+              : variant === "okx"
+                ? "text-[#848E9C]"
+                : "text-neutral-400",
             open && "rotate-180",
           )}
           aria-hidden

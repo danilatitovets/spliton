@@ -51,16 +51,17 @@ export function MetricsKpiGrid({ live = false, overview, wallet, loading, error 
     );
   }
 
+  const empty = emptyAmountLabel(locale);
   const cards = [
     {
       label: t("assets.metrics.statTodayChange"),
-      value: overview?.change30dPct ? `$0` : "$0",
-      hint: overview?.change30dPct ?? "0,00%",
+      value: empty,
+      hint: empty,
     },
     {
       label: t("assets.metrics.statMonthChange"),
-      value: "$0",
-      hint: "0,00%",
+      value: overview?.change30dPct ? `${overview.change30dPct}%` : empty,
+      hint: overview?.change30dPct ? "30d" : empty,
     },
     {
       label: t("assets.metrics.statHoldingsValue"),

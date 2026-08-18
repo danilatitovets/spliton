@@ -3,6 +3,8 @@
  * Eligible users get a header toggle: demo data vs live API across the cabinet.
  */
 
+import { isStrictDeployMode } from "@/lib/public-env";
+
 const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN", "PLATFORM_ADMIN"]);
 
 export const CABINET_DEMO_STORAGE_KEY = "spliton.cabinet-demo-data";
@@ -27,10 +29,13 @@ export function getDemoAccountEmails(): string[] {
     .filter(Boolean);
 }
 
-/** Default on. Set NEXT_PUBLIC_DEMO_FOR_ADMINS=0 to hide admin demo toggle. */
+/**
+ * Staging/production: off unless NEXT_PUBLIC_DEMO_FOR_ADMINS=1.
+ * Local development: on unless explicitly 0/false.
+ */
 export function isDemoForAdminsEnabled(): boolean {
   const raw = trimEnv(process.env.NEXT_PUBLIC_DEMO_FOR_ADMINS);
-  if (raw == null) return true;
+  if (raw == null) return !isStrictDeployMode();
   return raw !== "0" && raw.toLowerCase() !== "false";
 }
 
@@ -49,14 +54,15 @@ export function isDemoPreviewEligible(user: DemoPreviewUser | null | undefined):
 /** @deprecated use isDemoPreviewEligible */
 export const isDemoPreviewUser = isDemoPreviewEligible;
 
+/** Default off. Live cabinet data unless the user explicitly enables demo. */
 function readStoredDemoPreference(): boolean {
-  if (typeof window === "undefined") return true;
+  if (typeof window === "undefined") return false;
   try {
     const raw = window.localStorage.getItem(CABINET_DEMO_STORAGE_KEY);
-    if (raw == null) return true;
+    if (raw == null) return false;
     return raw === "1" || raw === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 

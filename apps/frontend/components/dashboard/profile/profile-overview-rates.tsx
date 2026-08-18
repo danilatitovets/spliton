@@ -6,11 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { RELEASE_ANALYTICS_GLASS_ICONS } from "@/constants/analytics/release-analytics-glass-icons";
 import { analyticsReleaseDetailPath, ROUTES } from "@/constants/routes";
+import { readLocalReleaseNotes } from "@/features/analytics/releases/lib/local-release-notes";
+import { DetailAnalyticsIllustration } from "@/features/analytics/releases/detail/detail-analytics-illustration";
 import { parseSignedPercentChange } from "@/lib/analytics/change-pct";
 import { adaptAnalyticsListItem } from "@/lib/analytics/release-analytics-adapter";
 import { resolveCatalogCoverUrl } from "@/lib/catalog/catalog-demo-covers";
-import { readLocalReleaseNotes } from "@/features/analytics/releases/lib/local-release-notes";
 import { isLiveReleaseAnalyticsEnabled } from "@/lib/public-env";
 import { cn } from "@/lib/utils";
 import { RELEASE_ANALYTICS_ROWS_MOCK } from "@/mocks/analytics/releases.mock";
@@ -99,7 +101,7 @@ export function ProfileOverviewRates() {
       <h2 className="text-[16px] font-semibold tracking-tight text-white">{t("profile.overview.rates.title")}</h2>
 
       <div
-        className="mt-4 flex flex-wrap gap-x-5 gap-y-0 overflow-x-auto overflow-y-hidden border-b border-white/[0.06] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-4 flex flex-wrap gap-x-5 gap-y-2 overflow-x-auto overflow-y-hidden border-b border-white/[0.06] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
       >
         {TABS.map((id) => {
@@ -137,7 +139,16 @@ export function ProfileOverviewRates() {
           ))}
         </div>
       ) : visible.length === 0 ? (
-        <p className="py-8 text-center text-[13px] text-zinc-500">{t("profile.overview.rates.empty")}</p>
+        <div className="flex flex-col items-center px-2 py-8 text-center">
+          <DetailAnalyticsIllustration
+            src={RELEASE_ANALYTICS_GLASS_ICONS.chartEmpty}
+            className="mx-auto w-[5.5rem] sm:w-24"
+            sizes="96px"
+            width={240}
+            height={240}
+          />
+          <p className="mt-3 text-[13px] text-zinc-500">{t("profile.overview.rates.empty")}</p>
+        </div>
       ) : (
         <ul className="mt-1 divide-y divide-white/[0.06]">
           {visible.map((row) => {

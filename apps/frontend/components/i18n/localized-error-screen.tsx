@@ -25,6 +25,11 @@ export function LocalizedErrorScreen({ error, reset }: LocalizedErrorScreenProps
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="text-xl font-semibold text-neutral-900">{t("errors.page.title")}</h1>
       <p className="max-w-md text-sm text-neutral-600">{t("errors.page.description")}</p>
+      {error.digest ? (
+        <p className="font-mono text-xs text-neutral-500">
+          {t("errors.page.errorId").replace("{id}", error.digest)}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button type="button" onClick={() => reset()}>
           {t("errors.page.retry")}

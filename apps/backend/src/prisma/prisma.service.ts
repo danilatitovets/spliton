@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
+import { applyPrismaConnectionLimit } from '../config/db-connection-policy';
+
 @Injectable()
 export class PrismaService
   extends PrismaClient
@@ -19,7 +21,11 @@ export class PrismaService
     // ledger / pool-claim work under concurrent load. Override via env.
     const txMaxWait = Number(process.env.PRISMA_TX_MAX_WAIT_MS ?? '10000');
     const txTimeout = Number(process.env.PRISMA_TX_TIMEOUT_MS ?? '20000');
+    const databaseUrl = process.env.DATABASE_URL?.trim();
     super({
+      ...(databaseUrl
+        ? { datasources: { db: { url: applyPrismaConnectionLimit(databaseUrl) } } }
+        : {}),
       ...(slowMs > 0 ? { log: [{ emit: 'event', level: 'query' as const }] } : {}),
       transactionOptions: {
         maxWait: Number.isFinite(txMaxWait) && txMaxWait > 0 ? txMaxWait : 10_000,

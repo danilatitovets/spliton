@@ -3,19 +3,9 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { ProfileSettingsContent } from "@/components/dashboard/profile/profile-settings-content";
 
-const mockFetchUserMe = vi.fn();
-const mockPatchUserPreferences = vi.fn();
 const mockFetchNotificationPreferences = vi.fn();
 const mockPatchNotificationPreferences = vi.fn();
-
-vi.mock("@/services/user-me.service", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/services/user-me.service")>();
-  return {
-    ...actual,
-    fetchUserMe: (...args: unknown[]) => mockFetchUserMe(...args),
-    patchUserPreferences: (...args: unknown[]) => mockPatchUserPreferences(...args),
-  };
-});
+const mockAuthorizedFetch = vi.fn();
 
 vi.mock("@/services/notifications.service", () => ({
   fetchNotificationPreferences: (...args: unknown[]) => mockFetchNotificationPreferences(...args),
@@ -24,13 +14,16 @@ vi.mock("@/services/notifications.service", () => ({
 
 vi.mock("@/components/providers/auth-provider", () => ({
   useAuth: () => ({
-    authorizedFetch: vi.fn(),
+    authorizedFetch: mockAuthorizedFetch,
     isAuthenticated: true,
+    isLoading: false,
+    status: "authenticated",
   }),
 }));
 
 vi.mock("@/lib/public-env", () => ({
   isLiveAccountEnabled: () => true,
+  isStrictDeployMode: () => false,
 }));
 
 const t = (key: string) => key;
@@ -44,9 +37,6 @@ vi.mock("@/components/providers/i18n-provider", () => ({
 
 describe("ProfileSettingsContent", () => {
   beforeEach(() => {
-    mockFetchUserMe.mockResolvedValue({
-      profile: { displayName: "Alice", timezone: "Europe/Moscow" },
-    });
     mockFetchNotificationPreferences.mockResolvedValue({
       emailFinance: true,
       emailMarket: false,
@@ -58,7 +48,6 @@ describe("ProfileSettingsContent", () => {
       inAppSupport: false,
       inAppNews: true,
     });
-    mockPatchUserPreferences.mockResolvedValue({});
     mockPatchNotificationPreferences.mockResolvedValue({});
   });
 
@@ -67,13 +56,22 @@ describe("ProfileSettingsContent", () => {
     await waitFor(() => expect(mockFetchNotificationPreferences).toHaveBeenCalled());
     expect(screen.getByText("profile.settings.securityEmail.title")).toBeInTheDocument();
     expect(screen.getByText("profile.settings.securityEmail.locked")).toBeInTheDocument();
-    expect(screen.getByText("profile.settings.inAppFinance.title")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "profile.settings.tab.email" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.queryByText("profile.settings.inAppFinance.title")).not.toBeInTheDocument();
+    expect(screen.queryByText("profile.settings.displayName.label")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "profile.settings.saveButton" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "profile.settings.tab.inApp" }));
+    expect(await screen.findByText("profile.settings.inAppFinance.title")).toBeInTheDocument();
+    expect(screen.queryByText("profile.settings.securityEmail.title")).not.toBeInTheDocument();
   });
 
   it("saves a notification toggle immediately in live mode", async () => {
     render(<ProfileSettingsContent />);
-    await waitFor(() => expect(mockFetchUserMe).toHaveBeenCalled());
+    await waitFor(() => expect(mockFetchNotificationPreferences).toHaveBeenCalled());
 
     const marketToggle = await waitFor(() => {
       const switches = screen.getAllByRole("switch");
@@ -85,24 +83,6 @@ describe("ProfileSettingsContent", () => {
     await waitFor(() => {
       expect(mockPatchNotificationPreferences).toHaveBeenCalledWith(expect.any(Function), {
         emailMarket: true,
-      });
-    });
-    expect(mockPatchUserPreferences).not.toHaveBeenCalled();
-  });
-
-  it("saves display name when confirming the editor", async () => {
-    render(<ProfileSettingsContent />);
-    await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
-
-    fireEvent.click(screen.getAllByRole("button", { name: "profile.okx.change" })[0]);
-    fireEvent.change(screen.getByDisplayValue("Alice"), {
-      target: { value: "Bob" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "profile.settings.done" }));
-
-    await waitFor(() => {
-      expect(mockPatchUserPreferences).toHaveBeenCalledWith(expect.any(Function), {
-        displayName: "Bob",
       });
     });
   });

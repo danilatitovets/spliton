@@ -28,6 +28,7 @@ import {
   walletErrorMessage,
 } from "@/services/wallet.service";
 import { CopyValueButton } from "@/components/wallet/copy-value-button";
+import CursorWanderCard from "@/components/ui/cursor-wander-card";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { cn } from "@/lib/utils";
 
@@ -205,7 +206,7 @@ export function PayoutDepositCard() {
               <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  className="text-blue-700 underline"
+                  className="text-neutral-700 underline"
                   onClick={() => void load()}
                 >
                   {t("common.retry")}
@@ -216,7 +217,18 @@ export function PayoutDepositCard() {
               </div>
             </div>
           ) : displayAddress ? (
-            <div className="rounded-3xl bg-blue-50/50 px-5 py-6">
+            <div className="space-y-6 rounded-3xl border border-neutral-200 bg-neutral-50 px-5 py-6">
+              <CursorWanderCard
+                cardholderName={t("deposit.trc20Address")}
+                networkLabel={
+                  live && depositInfo
+                    ? depositInfo.networkDisplayName ?? `${depositInfo.asset} / TRON TRC-20`
+                    : "USDT / TRON TRC-20"
+                }
+                paymentLabel={t("deposit.heading")}
+                paymentValue="USDT"
+                height={260}
+              />
               {live && depositInfo?.userWarnings?.length ? (
                 <div className="mb-4 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
@@ -248,7 +260,7 @@ export function PayoutDepositCard() {
                     href={depositInfo.explorerAddressUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-800 underline"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-neutral-700 underline"
                   >
                     {t("deposit.openExplorer")}
                     <ExternalLink className="size-3" />
@@ -298,7 +310,7 @@ export function PayoutDepositCard() {
                   </button>
                 </div>
               </div>
-              <div className="mt-4 space-y-2 border-t border-blue-200/50 pt-4">
+              <div className="mt-4 space-y-2 border-t border-neutral-200 pt-4">
                 {metaRows.map((row) => (
                   <div key={row.label} className="flex justify-between gap-4 text-sm">
                     <span className="text-neutral-500">{row.label}</span>

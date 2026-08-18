@@ -1,7 +1,6 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   ReleaseStatus,
   UserRoleCode,
   UserStatus,
@@ -11,6 +10,7 @@ import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
 import { uniqueTrc20Address } from './helpers/e2e-trc20-address';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function email(prefix: string) {
   return `e2e-compliance16-${prefix}-${Date.now()}@example.com`;
@@ -22,7 +22,7 @@ async function register(app: E2eApp, addr: string) {
 }
 
 async function assignRole(addr: string, role: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email: addr } });
   const roleRow = await prisma.role.findUnique({ where: { code: role } });
   if (user && roleRow) {
@@ -32,7 +32,6 @@ async function assignRole(addr: string, role: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 describe('Compliance enforcement (e2e)', () => {
@@ -67,7 +66,7 @@ describe('Compliance enforcement (e2e)', () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const posting = await prisma.ledgerPosting.findFirst({
       where: {
         sourceEntityType: 'withdrawal',
@@ -85,7 +84,6 @@ describe('Compliance enforcement (e2e)', () => {
     }
     expect(flag).toBeTruthy();
     expect(flag!.flagCode).toBe('first_wd_large');
-    await prisma.$disconnect();
   });
 
   it('COMPLIANCE can hold withdrawal; ACCOUNTANT cannot freeze', async () => {
@@ -132,7 +130,7 @@ describe('Compliance enforcement (e2e)', () => {
       .send({ operationType: 'withdrawal', note: 'should fail' });
     expect(denied.status).toBe(403);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const row = await prisma.withdrawal.findUnique({
       where: { id: withdrawalId },
     });
@@ -151,7 +149,6 @@ describe('Compliance enforcement (e2e)', () => {
       },
     });
     expect(audit).toBeTruthy();
-    await prisma.$disconnect();
   });
 
   it('frozen wallet blocks new withdrawal', async () => {
@@ -167,9 +164,8 @@ describe('Compliance enforcement (e2e)', () => {
       .send({ email: complianceEmail, password: 'TestPass123!' });
     const cToken = cLogin.body.tokens.accessToken as string;
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const wallet = await prisma.wallet.findFirst({ where: { userId } });
-    await prisma.$disconnect();
 
     const freeze = await request(app!.getHttpServer())
       .post(`/api/admin/v1/compliance/operations/${wallet!.id}/freeze`)
@@ -201,7 +197,7 @@ describe('Compliance enforcement (e2e)', () => {
       .send({ email: complianceEmail, password: 'TestPass123!' });
     const cToken = cLogin.body.tokens.accessToken as string;
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const wallet = await prisma.wallet.findFirst({ where: { userId } });
     const release = await prisma.release.create({
       data: {
@@ -225,7 +221,6 @@ describe('Compliance enforcement (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(5),
       },
     });
-    await prisma.$disconnect();
 
     const freeze = await request(app!.getHttpServer())
       .post(`/api/admin/v1/compliance/operations/${wallet!.id}/freeze`)
@@ -245,12 +240,11 @@ describe('Compliance enforcement (e2e)', () => {
     const { token, userId } = await register(app!, holder);
     await seedWalletWithLedger(userId, '500');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.user.update({
       where: { id: userId },
       data: { status: UserStatus.SUSPENDED },
     });
-    await prisma.$disconnect();
 
     const wd = await request(app!.getHttpServer())
       .post('/api/v1/wallet/withdrawals')

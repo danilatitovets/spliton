@@ -2,12 +2,12 @@ import request from 'supertest';
 import {
   DisputeStatus,
   DisputeType,
-  PrismaClient,
   UserRoleCode,
   UserStatus,
 } from '@prisma/client';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-${prefix}-${Date.now()}@example.com`;
@@ -20,12 +20,11 @@ async function registerUser(app: E2eApp, email: string) {
     .send(e2eRegisterPayload(email, password, 'E2E'))
     .expect(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.updateMany({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -35,7 +34,7 @@ async function registerUser(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -45,7 +44,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 describe('Admin disputes (e2e)', () => {
@@ -68,7 +66,7 @@ describe('Admin disputes (e2e)', () => {
       .send({ email: managerEmail, password: 'TestPass123!' });
     const adminToken = login.body.tokens.accessToken as string;
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const holder = await prisma.user.findFirst({
       where: { status: UserStatus.ACTIVE, email: { not: managerEmail } },
     });
@@ -89,7 +87,6 @@ describe('Admin disputes (e2e)', () => {
         body: 'User dispute message',
       },
     });
-    await prisma.$disconnect();
 
     const auth = { Authorization: `Bearer ${adminToken}` };
 
@@ -121,7 +118,7 @@ describe('Admin disputes (e2e)', () => {
     expect(resolved.status).toBe(200);
     expect(resolved.body.status).toBe('resolved');
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const audit = await prisma2.auditLog.findFirst({
       where: { entityType: 'dispute', entityId: dispute.id, action: 'dispute.status_change' },
       orderBy: { createdAt: 'desc' },
@@ -139,7 +136,7 @@ describe('Admin disputes (e2e)', () => {
       .send({ email: supportEmail, password: 'TestPass123!' });
     const token = login.body.tokens.accessToken as string;
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const holder = await prisma.user.findFirst({ where: { status: UserStatus.ACTIVE } });
     const dispute = await prisma.dispute.create({
       data: {
@@ -149,7 +146,6 @@ describe('Admin disputes (e2e)', () => {
         description: 'Test',
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .patch(`/api/admin/v1/disputes/${dispute.id}/status`)

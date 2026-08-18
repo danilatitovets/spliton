@@ -1,0 +1,252 @@
+.megamenu-ico {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  color: #f4f4f5;
+}
+
+.megamenu-ico svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.megamenu-ico svg *:not([class^="m-"]) {
+  color: #8d8d8d;
+}
+
+.megamenu-ico svg [class^="m-"] {
+  color: #f5f5f5;
+}
+
+.group:hover .megamenu-ico svg *:not([class^="m-"]),
+.group:focus-visible .megamenu-ico svg *:not([class^="m-"]) {
+  color: #cfcfcf;
+}
+
+.group:hover .megamenu-ico svg [class^="m-"],
+.group:focus-visible .megamenu-ico svg [class^="m-"] {
+  color: #ffffff;
+}
+
+.megamenu-ico.header-ico {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.megamenu-ico.header-ico-sm {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.nav-menu-chevron {
+  overflow: visible;
+  color: #8d8d8d;
+}
+
+.group:hover .nav-menu-chevron,
+.group[data-popup-open] .nav-menu-chevron {
+  color: #f5f5f5;
+}
+
+.group:hover .nav-menu-chevron-mark {
+  animation: mm-nudge 0.45s ease-in-out infinite;
+}
+
+.group[data-popup-open] .nav-menu-chevron-mark,
+.group[data-popup-open]:hover .nav-menu-chevron-mark {
+  animation: none;
+}
+
+.megamenu-featured-card {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.megamenu-featured-media {
+  transform-origin: 50% 42%;
+  animation: mm-feat-drift 16s ease-in-out infinite alternate;
+}
+
+.megamenu-featured-card:hover .megamenu-featured-media,
+.megamenu-featured-card:focus-visible .megamenu-featured-media {
+  animation: none;
+  transform: scale(1.12);
+  transition: transform 0.8s ease;
+}
+
+.megamenu-featured-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    108deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  animation: mm-feat-sheen 5.2s ease-in-out infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="spin"] .m-spin,
+.group:focus-visible .megamenu-ico[data-motion="spin"] .m-spin {
+  animation: mm-spin 0.9s linear infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="bars"] .m-bar,
+.group:focus-visible .megamenu-ico[data-motion="bars"] .m-bar {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: mm-bars 0.7s ease-in-out infinite alternate;
+}
+
+.group:hover .megamenu-ico[data-motion="bars"] .m-bar:nth-child(2),
+.group:focus-visible .megamenu-ico[data-motion="bars"] .m-bar:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.group:hover .megamenu-ico[data-motion="bars"] .m-bar:nth-child(3),
+.group:focus-visible .megamenu-ico[data-motion="bars"] .m-bar:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.group:hover .megamenu-ico[data-motion="spread"] .m-spread-a,
+.group:focus-visible .megamenu-ico[data-motion="spread"] .m-spread-a {
+  animation: mm-spread-a 0.4s ease-in-out infinite alternate;
+}
+
+.group:hover .megamenu-ico[data-motion="spread"] .m-spread-b,
+.group:focus-visible .megamenu-ico[data-motion="spread"] .m-spread-b {
+  animation: mm-spread-b 0.4s ease-in-out infinite alternate;
+}
+
+.group:hover .megamenu-ico[data-motion="nudge"] .m-nudge,
+.group:focus-visible .megamenu-ico[data-motion="nudge"] .m-nudge {
+  animation: mm-nudge 0.45s ease-in-out infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="ring"] .m-ring,
+.group:focus-visible .megamenu-ico[data-motion="ring"] .m-ring {
+  transform-box: fill-box;
+  transform-origin: 12px 4px;
+  animation: mm-ring 0.55s ease-in-out infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="needle"] .m-needle,
+.group:focus-visible .megamenu-ico[data-motion="needle"] .m-needle {
+  transform-box: fill-box;
+  transform-origin: 12px 12px;
+  animation: mm-needle 0.8s ease-in-out infinite alternate;
+}
+
+.group:hover .megamenu-ico[data-motion="slide"] .m-slide,
+.group:focus-visible .megamenu-ico[data-motion="slide"] .m-slide {
+  animation: mm-slide 0.55s ease-in-out infinite alternate;
+}
+
+.group:hover .megamenu-ico[data-motion="pulse"] .m-pulse,
+.group:focus-visible .megamenu-ico[data-motion="pulse"] .m-pulse {
+  animation: mm-pulse 0.9s ease-out infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="bounce"] .m-bounce,
+.group:focus-visible .megamenu-ico[data-motion="bounce"] .m-bounce {
+  animation: mm-bounce 0.5s ease-in-out infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="wiggle"] .m-wiggle,
+.group:focus-visible .megamenu-ico[data-motion="wiggle"] .m-wiggle {
+  animation: mm-wiggle 0.45s ease-in-out infinite;
+}
+
+.group:hover .megamenu-ico[data-motion="tilt"] .m-tilt,
+.group:focus-visible .megamenu-ico[data-motion="tilt"] .m-tilt {
+  animation: mm-tilt 0.55s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .megamenu-ico [class^="m-"],
+  .group:focus-visible .megamenu-ico [class^="m-"],
+  .group:hover .nav-menu-chevron-mark,
+  .megamenu-featured-media,
+  .megamenu-featured-card::after {
+    animation: none !important;
+  }
+
+  .megamenu-featured-card:hover .megamenu-featured-media,
+  .megamenu-featured-card:focus-visible .megamenu-featured-media {
+    transform: none;
+  }
+}
+
+@keyframes mm-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes mm-bars {
+  from { transform: scaleY(0.55); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes mm-needle {
+  from { transform: rotate(-18deg); }
+  to { transform: rotate(22deg); }
+}
+
+@keyframes mm-slide {
+  from { transform: translateX(-1.5px); }
+  to { transform: translateX(1.5px); }
+}
+
+@keyframes mm-pulse {
+  0% { opacity: 0.35; transform: scale(0.86); }
+  70% { opacity: 0; transform: scale(1.25); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
+@keyframes mm-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes mm-wiggle {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes mm-tilt {
+  from { transform: rotate(-7deg); }
+  to { transform: rotate(7deg); }
+}
+
+@keyframes mm-spread-a {
+  to { transform: translateY(-1.6px); }
+}
+
+@keyframes mm-spread-b {
+  to { transform: translateY(1.6px); }
+}
+
+@keyframes mm-nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+
+@keyframes mm-ring {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(14deg); }
+}
+
+@keyframes mm-feat-drift {
+  from { transform: scale(1.05) translate3d(0, 0, 0); }
+  to { transform: scale(1.12) translate3d(-2.4%, 1.6%, 0); }
+}
+
+@keyframes mm-feat-sheen {
+  0%, 58% { background-position: 130% 0; }
+  100% { background-position: -40% 0; }
+}

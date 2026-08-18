@@ -18,6 +18,7 @@ type SectionUnavailableStateProps = {
   compact?: boolean;
   className?: string;
   children?: ReactNode;
+  errorId?: string;
 };
 
 const variantClasses: Record<SectionUnavailableVariant, { box: string; title: string; description: string }> = {
@@ -47,6 +48,7 @@ export function SectionUnavailableState({
   compact = false,
   className,
   children,
+  errorId,
 }: SectionUnavailableStateProps) {
   const { t } = useI18n();
   const styles = variantClasses[variant];
@@ -66,6 +68,11 @@ export function SectionUnavailableState({
     >
       <p className={cn("font-medium", styles.title)}>{displayTitle}</p>
       <p className={cn("mt-1.5 leading-relaxed", styles.description)}>{displayDescription}</p>
+      {errorId ? (
+        <p className={cn("mt-2 font-mono text-[11px] tracking-wide opacity-80", styles.description)}>
+          {t("errors.section.errorId").replace("{id}", errorId)}
+        </p>
+      ) : null}
       {onRetry ? (
         <div className="mt-4">
           <RetryButton

@@ -5,10 +5,12 @@ const RU: Record<string, string> = {
   "nav.holdings": "Мои активы",
   "nav.misc": "Сервисы",
   "nav.teaser.catalog":
-    "Spliton: доли дохода по трекам — юниты, USDT (TRC20), раунды, выплаты и вторичный рынок для передачи прав без брокерской модели.",
-  "nav.teaser.holdings": "Сводка активов: позиции, юниты, структура и операции по релизам.",
-  "nav.teaser.payouts": "Обзор, сравнение периодов, график начислений и операции USDT без лишних шагов.",
-  "nav.teaser.misc": "Сервисные разделы: калькулятор, статус и программы — без лишнего шума.",
+    "Юниты в треках, которые уже звучат. Раунды, выплаты USDT и вторичный рынок — без брокера между вами и каталогом.",
+  "nav.teaser.holdings":
+    "Портфель без шума: позиции, юниты и движение по релизам — одним взглядом, без лишней панели.",
+  "nav.teaser.payouts": "Начисления, сравнение периодов и вывод USDT. Деньги приходят туда, куда вы указали.",
+  "nav.teaser.misc":
+    "Калькулятор, комиссии, статус и программы. Всё, что держит платформу рядом — без лишнего шума.",
 
   // Nav catalog children
   "nav.catalog.catalog.label": "Каталог релизов",
@@ -152,6 +154,8 @@ const RU: Record<string, string> = {
   // Navigation profile
   "navigation.profile.overview.label": "Мой профиль",
   "navigation.profile.overview.desc": "Личные данные, отображение и контакты в кабинете.",
+  "navigation.profile.account.label": "Данные аккаунта",
+  "navigation.profile.account.desc": "Email, имя, язык и часовой пояс.",
   "navigation.profile.verification.label": "Верификация",
   "navigation.profile.verification.desc": "KYC, документы и статус проверки аккаунта.",
   "navigation.profile.security.label": "Безопасность",
@@ -287,10 +291,12 @@ const EN: Record<string, string> = {
   "nav.holdings": "My assets",
   "nav.misc": "Services",
   "nav.teaser.catalog":
-    "Spliton: revenue shares in tracks — units, USDT (TRC20), rounds, payouts, and the secondary market without a brokerage model.",
-  "nav.teaser.holdings": "Portfolio summary: positions, units, structure, and activity across releases.",
-  "nav.teaser.payouts": "Overview, period comparison, accrual chart, and USDT operations without extra steps.",
-  "nav.teaser.misc": "Service areas: calculator, fees, status, and programs — without the noise.",
+    "Units in tracks that already play. Rounds, USDT payouts, and the secondary market — no broker between you and the catalog.",
+  "nav.teaser.holdings":
+    "A quiet portfolio: positions, units, and activity across releases — one glance, no extra panel.",
+  "nav.teaser.payouts": "Accruals, period comparison, and USDT withdrawals. Money goes where you pointed it.",
+  "nav.teaser.misc":
+    "Calculator, fees, status, and programs. Everything that keeps the platform close — without the noise.",
 
   "nav.catalog.catalog.label": "Release catalog",
   "nav.catalog.catalog.desc": "Search releases, filters, UNT purchase, and entry into active rounds.",
@@ -426,6 +432,8 @@ const EN: Record<string, string> = {
 
   "navigation.profile.overview.label": "My profile",
   "navigation.profile.overview.desc": "Personal details, display name, and contacts in your dashboard.",
+  "navigation.profile.account.label": "Account details",
+  "navigation.profile.account.desc": "Email, name, language, and time zone.",
   "navigation.profile.verification.label": "Verification",
   "navigation.profile.verification.desc": "KYC, documents, and account review status.",
   "navigation.profile.security.label": "Security",
@@ -552,10 +560,12 @@ const ES: Record<string, string> = {
   "nav.holdings": "Mis activos",
   "nav.misc": "Servicios",
   "nav.teaser.catalog":
-    "Spliton: participación en ingresos de pistas — unidades, USDT (TRC20), rondas, pagos y mercado secundario sin modelo de corretaje.",
-  "nav.teaser.holdings": "Resumen de activos: posiciones, unidades, estructura y actividad por lanzamientos.",
-  "nav.teaser.payouts": "Resumen, comparación de periodos, gráfico de devengos y operaciones USDT sin pasos extra.",
-  "nav.teaser.misc": "Áreas de servicio: calculadora, comisiones, estado y programas — sin ruido.",
+    "Unidades en pistas que ya suenan. Rondas, pagos USDT y mercado secundario — sin bróker entre tú y el catálogo.",
+  "nav.teaser.holdings":
+    "Un portafolio en silencio: posiciones, unidades y actividad por lanzamientos — de un vistazo, sin panel extra.",
+  "nav.teaser.payouts": "Devengos, comparación de periodos y retiros USDT. El dinero llega adonde lo indicaste.",
+  "nav.teaser.misc":
+    "Calculadora, comisiones, estado y programas. Todo lo que mantiene la plataforma cerca — sin ruido.",
 
   "nav.catalog.catalog.label": "Catálogo de lanzamientos",
   "nav.catalog.catalog.desc": "Búsqueda, filtros, compra de UNT y entrada en rondas activas.",
@@ -691,6 +701,8 @@ const ES: Record<string, string> = {
 
   "navigation.profile.overview.label": "Mi perfil",
   "navigation.profile.overview.desc": "Datos personales, nombre visible y contactos en el panel.",
+  "navigation.profile.account.label": "Datos de la cuenta",
+  "navigation.profile.account.desc": "Email, nombre, idioma y zona horaria.",
   "navigation.profile.verification.label": "Verificación",
   "navigation.profile.verification.desc": "KYC, documentos y estado de revisión de la cuenta.",
   "navigation.profile.security.label": "Seguridad",
@@ -817,10 +829,12 @@ const PT: Record<string, string> = {
   "nav.holdings": "Meus ativos",
   "nav.misc": "Serviços",
   "nav.teaser.catalog":
-    "Spliton: participação na receita de faixas — unidades, USDT (TRC20), rodadas, pagamentos e mercado secundário sem modelo de corretagem.",
-  "nav.teaser.holdings": "Resumo de ativos: posições, unidades, estrutura e atividade por lançamentos.",
-  "nav.teaser.payouts": "Visão geral, comparação de períodos, gráfico de recebimentos e operações USDT sem passos extras.",
-  "nav.teaser.misc": "Áreas de serviço: calculadora, taxas, status e programas — sem ruído.",
+    "Unidades em faixas que já tocam. Rodadas, pagamentos USDT e mercado secundário — sem corretor entre você e o catálogo.",
+  "nav.teaser.holdings":
+    "Um portfólio em silêncio: posições, unidades e atividade por lançamentos — num olhar, sem painel extra.",
+  "nav.teaser.payouts": "Recebimentos, comparação de períodos e saques USDT. O dinheiro vai para onde você apontou.",
+  "nav.teaser.misc":
+    "Calculadora, taxas, status e programas. Tudo o que mantém a plataforma perto — sem ruído.",
 
   "nav.catalog.catalog.label": "Catálogo de lançamentos",
   "nav.catalog.catalog.desc": "Pesquisa, filtros, compra de UNT e entrada em rondas ativas.",
@@ -956,6 +970,8 @@ const PT: Record<string, string> = {
 
   "navigation.profile.overview.label": "Meu perfil",
   "navigation.profile.overview.desc": "Dados pessoais, nome exibido e contatos no painel.",
+  "navigation.profile.account.label": "Dados da conta",
+  "navigation.profile.account.desc": "Email, nome, idioma e fuso horário.",
   "navigation.profile.verification.label": "Verificação",
   "navigation.profile.verification.desc": "KYC, documentos e status de revisão da conta.",
   "navigation.profile.security.label": "Segurança",

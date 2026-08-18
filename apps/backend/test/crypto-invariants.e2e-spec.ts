@@ -10,7 +10,6 @@ import {
   LedgerPostingSide,
   OwnershipEventType,
   Prisma,
-  PrismaClient,
   ReleaseStatus,
   UserRoleCode,
   WalletTxDirection,
@@ -31,11 +30,12 @@ import { DepositReconciliationService } from '../src/modules/deposit-ingestion/d
 import { CryptoWorkerLeaseService } from '../src/modules/deposit-ingestion/crypto-worker-lease.service';
 import { DepositAddressPoolService } from '../src/modules/treasury/deposit-address-pool.service';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 async function staffToken(app: E2eApp, role: UserRoleCode = UserRoleCode.ACCOUNTANT) {
   const email = e2eEmail('inv-staff');
   const { userId, password } = await registerE2eUser(app, email);
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const row = await prisma.role.findUnique({ where: { code: role } });
   if (row) {
     await prisma.userRole.upsert({
@@ -44,7 +44,6 @@ async function staffToken(app: E2eApp, role: UserRoleCode = UserRoleCode.ACCOUNT
       update: {},
     });
   }
-  await prisma.$disconnect();
   const login = await request(app.getHttpServer())
     .post('/auth/login')
     .send({ email, password });
@@ -116,7 +115,7 @@ describe('crypto invariants red-team (e2e)', () => {
     void r2;
     void r3;
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     try {
       const deposits = await prisma.deposit.findMany({
         where: { blockchainTxid: canonical },
@@ -166,7 +165,6 @@ describe('crypto invariants red-team (e2e)', () => {
       expect(listed.status).toBe(200);
       expect(listed.body.items[0].status).toBe('completed');
     } finally {
-      await prisma.$disconnect();
     }
   });
 
@@ -182,13 +180,12 @@ describe('crypto invariants red-team (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ txHash: `  0X${canonical.toUpperCase()}  ` });
     expect([200, 201]).toContain(res.status);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     expect(await prisma.deposit.count({ where: { blockchainTxid: canonical } })).toBe(1);
     expect(
       (await prisma.walletBalance.findUnique({ where: { walletId } }))!
         .available.toString(),
     ).toBe('3');
-    await prisma.$disconnect();
   });
 
   it('CONFIRMED != CREDITED under kill switch; user API awaits credit', async () => {
@@ -199,14 +196,13 @@ describe('crypto invariants red-team (e2e)', () => {
       mockUsdtTransfer({ txHash, toAddress: address, amount: '8' }),
     );
     await ingestion.tick();
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const dep = await prisma.deposit.findFirstOrThrow({ where: { blockchainTxid: txHash } });
     expect(dep.status).toBe(DepositStatus.CONFIRMED);
     expect(
       (await prisma.walletBalance.findUnique({ where: { walletId } }))!
         .available.toString(),
     ).toBe('0');
-    await prisma.$disconnect();
 
     const listed = await request(app!.getHttpServer())
       .get('/api/v1/wallet/deposits')
@@ -216,7 +212,7 @@ describe('crypto invariants red-team (e2e)', () => {
   });
 
   it('maxAutoCredit: threshold auto-credits, +1 unit goes to MANUAL_REVIEW', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.treasuryOperationalLimits.upsert({
       where: { id: 'platform' },
       create: {
@@ -285,7 +281,6 @@ describe('crypto invariants red-team (e2e)', () => {
       where: { id: 'platform' },
       data: { maxAutoCreditDepositUsdt: new Prisma.Decimal('2000') },
     });
-    await prisma.$disconnect();
   });
 
   it('multi-leg recover: unique SPLITON dest wins; two SPLITON dests fail closed', async () => {
@@ -309,7 +304,7 @@ describe('crypto invariants red-team (e2e)', () => {
     );
     const recovered = await ingestion.recoverByTxHash(hashOne.toUpperCase());
     expect(recovered.status).toBe('credited');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     expect(
       (await prisma.walletBalance.findUnique({ where: { walletId: owned.walletId } }))!
         .available.toString(),
@@ -325,7 +320,6 @@ describe('crypto invariants red-team (e2e)', () => {
     const amb = await ingestion.recoverByTxHash(hashTwo);
     expect(amb.status).toBe('ambiguous');
     expect(await prisma.deposit.count({ where: { blockchainTxid: hashTwo } })).toBe(0);
-    await prisma.$disconnect();
   });
 
   it('multi-leg ignores non-USDT contract and does not take the first event', async () => {
@@ -348,11 +342,10 @@ describe('crypto invariants red-team (e2e)', () => {
     );
     const out = await ingestion.recoverByTxHash(hash);
     expect(out.status).toBe('credited');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const dep = await prisma.deposit.findFirstOrThrow({ where: { blockchainTxid: hash } });
     expect(dep.amount?.toString()).toBe('2');
     expect(dep.toAddress).toBe(owned.address);
-    await prisma.$disconnect();
   });
 
   it('atomic pool claim: 20 concurrent users, one winner', async () => {

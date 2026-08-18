@@ -1,7 +1,6 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   ReleaseStatus,
   UserRoleCode,
   UserStatus,
@@ -9,6 +8,7 @@ import {
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-secondary-market-${prefix}-${Date.now()}@example.com`;
@@ -21,12 +21,11 @@ async function registerUser(app: E2eApp, email: string) {
     .send(e2eRegisterPayload(email, password, 'E2E Secondary Market Admin'));
   expect(reg.status).toBe(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.updateMany({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -36,7 +35,7 @@ async function registerUser(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -46,7 +45,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 async function staffToken(app: E2eApp, role: UserRoleCode): Promise<string> {
@@ -115,7 +113,7 @@ describe('Admin secondary market API (e2e)', () => {
   it('admin cancel active listing unlocks seller units', async () => {
     const seller = await registerE2eUser(app!, `seller-${Date.now()}@example.com`);
     const complianceToken = await staffToken(app!, UserRoleCode.COMPLIANCE);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-admin-cancel-${Date.now()}`,
@@ -138,7 +136,6 @@ describe('Admin secondary market API (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(10),
       },
     });
-    await prisma.$disconnect();
 
     const listingRes = await request(app!.getHttpServer())
       .post('/api/v1/market/listings')
@@ -153,7 +150,7 @@ describe('Admin secondary market API (e2e)', () => {
       .send({ note: 'policy violation' });
     expect([200, 201]).toContain(cancel.status);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const pos = await prisma2.userPosition.findUnique({
       where: {
         userId_releaseId: { userId: seller.userId, releaseId: release.id },
@@ -171,7 +168,7 @@ describe('Admin secondary market API (e2e)', () => {
   it('admin cancel already cancelled listing returns 409', async () => {
     const seller = await registerE2eUser(app!, `seller2-${Date.now()}@example.com`);
     const complianceToken = await staffToken(app!, UserRoleCode.COMPLIANCE);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-admin-cancel2-${Date.now()}`,
@@ -194,7 +191,6 @@ describe('Admin secondary market API (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(10),
       },
     });
-    await prisma.$disconnect();
 
     const listingRes = await request(app!.getHttpServer())
       .post('/api/v1/market/listings')

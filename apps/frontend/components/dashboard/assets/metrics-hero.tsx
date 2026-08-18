@@ -49,7 +49,7 @@ export function MetricsHero({ live = false, overview, wallet, loading }: Metrics
     },
     {
       label: t("assets.metrics.statTodayChange"),
-      value: loading && !overview ? "…" : formatUsdtAmount(0, locale),
+      value: loading && !overview ? "…" : live ? emptyAmountLabel(locale) : formatUsdtAmount(0, locale),
       hint: changeHint,
       info: t("assets.metrics.statTodayChangeInfo"),
     },

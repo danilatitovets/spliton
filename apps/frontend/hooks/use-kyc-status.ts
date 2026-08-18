@@ -4,12 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { localizedApiError } from "@/lib/api/localized-error";
-import type { KycStatusResponse } from "@/lib/kyc/kyc-status-adapter";
+import type { KycAddressPayload, KycStatusResponse } from "@/lib/kyc/kyc-status-adapter";
 import { isLiveAccountEnabled } from "@/lib/public-env";
 import {
   fetchKycStatus,
+  saveKycAddress,
+  saveKycDetails,
   startKycVerification,
   submitKycManual,
+  uploadKycDocument,
 } from "@/services/kyc.service";
 
 export function useKycStatus() {
@@ -17,7 +20,7 @@ export function useKycStatus() {
   const live = isLiveAccountEnabled() && isAuthenticated;
 
   const [data, setData] = useState<KycStatusResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(live);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,14 +43,13 @@ export function useKycStatus() {
     void load();
   }, [load]);
 
-  const start = useCallback(
-    async (countryCode?: string) => {
+  const run = useCallback(
+    async (fn: () => Promise<KycStatusResponse>) => {
       if (!live) return false;
       setSubmitting(true);
       setError(null);
       try {
-        const res = await startKycVerification(authorizedFetch, countryCode);
-        setData(res);
+        setData(await fn());
         return true;
       } catch (e) {
         setError(localizedApiError(e));
@@ -56,27 +58,48 @@ export function useKycStatus() {
         setSubmitting(false);
       }
     },
-    [authorizedFetch, live],
+    [live],
+  );
+
+  const start = useCallback(
+    async (countryCode?: string) => run(() => startKycVerification(authorizedFetch, countryCode)),
+    [authorizedFetch, run],
+  );
+
+  const saveDetails = useCallback(
+    async (body: { countryCode: string; documentType: string; documentReference: string }) =>
+      run(() => saveKycDetails(authorizedFetch, body)),
+    [authorizedFetch, run],
   );
 
   const submitManual = useCallback(
-    async (body: { countryCode: string; documentType: string; documentReference: string }) => {
-      if (!live) return false;
-      setSubmitting(true);
-      setError(null);
-      try {
-        const res = await submitKycManual(authorizedFetch, body);
-        setData(res);
-        return true;
-      } catch (e) {
-        setError(localizedApiError(e));
-        return false;
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [authorizedFetch, live],
+    async (body?: { countryCode: string; documentType: string; documentReference: string }) =>
+      run(() => submitKycManual(authorizedFetch, body ?? {})),
+    [authorizedFetch, run],
   );
 
-  return { live, data, loading, error, submitting, reload: load, start, submitManual };
+  const saveAddress = useCallback(
+    async (body: KycAddressPayload) => run(() => saveKycAddress(authorizedFetch, body)),
+    [authorizedFetch, run],
+  );
+
+  const uploadDocument = useCallback(
+    async (docType: "identity" | "address" | "selfie", file: File) =>
+      run(() => uploadKycDocument(authorizedFetch, docType, file)),
+    [authorizedFetch, run],
+  );
+
+  return {
+    live,
+    data,
+    loading,
+    error,
+    submitting,
+    reload: load,
+    start,
+    saveDetails,
+    submitManual,
+    saveAddress,
+    uploadDocument,
+  };
 }

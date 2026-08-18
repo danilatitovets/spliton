@@ -31,3 +31,12 @@ export const profileInputClass =
 /** Inputs inside bordered modal field lists — clearer edge, flat fill. */
 export const profileModalInputClass =
   "h-11 w-full rounded-xl border border-white/[0.14] bg-black/35 px-3.5 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-white/30 focus:bg-black/45";
+
+/** Slightly lifted plate on the #0c0c0c modal so each field is visible. */
+export const profileModalBareSurfaceClass =
+  "rounded-xl bg-[#1c1c1c] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]";
+
+export const profileModalBareInputClass = cn(
+  profileModalBareSurfaceClass,
+  "h-11 w-full px-3.5 text-[15px] text-white outline-none placeholder:text-zinc-500",
+);

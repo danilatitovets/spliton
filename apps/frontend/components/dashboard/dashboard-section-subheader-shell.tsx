@@ -11,7 +11,7 @@ const variantSurfaceClass: Record<DashboardSectionSubheaderVariant, string> = {
   white: "border-b border-neutral-100 bg-white",
   muted:
     "border-b border-neutral-200/90 bg-[#f6f7f9]/92 backdrop-blur-md supports-backdrop-filter:bg-[#f6f7f9]/88",
-  dark: "border-b border-white/[0.06] bg-black",
+  dark: "bg-transparent",
 };
 
 type DashboardSectionSubheaderShellProps = {

@@ -1,62 +1,89 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { profileDashboardHref } from "@/constants/dashboard/profile-page";
-import type { VerificationUiStatus } from "@/constants/dashboard/profile-verification";
 import { ROUTES } from "@/constants/routes";
 import { ProfileEligibilityRows } from "@/components/dashboard/profile/profile-eligibility-rows";
 import {
   ProfileOkxAlert,
   ProfileOkxBanner,
   ProfileOkxLink,
-  ProfileOkxRecommended,
-  ProfileOkxRow,
   ProfileOkxSection,
   ProfileOkxSpotlight,
-  profileOkxGhostClass,
-  profileOkxPillClass,
 } from "@/components/dashboard/profile/profile-okx";
-import {
-  ProfileSecurityModal,
-  ProfileSecurityModalField,
-  ProfileSecurityModalFieldList,
-  ProfileSecurityModalHints,
-  ProfileSecurityModalSupportNote,
-} from "@/components/dashboard/profile/profile-security-modal";
 import { PROFILE_GLASS, profileLineIcon } from "@/components/dashboard/profile/profile-shared";
 import { ProfileSectionSkeleton } from "@/components/dashboard/profile/profile-section-skeleton";
 import { ProfileVerificationTimeline } from "@/components/dashboard/profile/profile-verification-timeline";
 import { ProfileVerificationStatusHero } from "@/components/dashboard/profile/profile-verification-status-hero";
-import { VERIFY_VIDEO } from "@/components/dashboard/profile/profile-verification-steps";
-import { profileModalInputClass } from "@/components/dashboard/profile/profile-ui";
+import {
+  ProfileVerificationDocsSection,
+  type VerificationDocDrafts,
+  type VerificationDocModal,
+} from "@/components/dashboard/profile/profile-verification-docs-section";
+import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { useEligibilitySummary } from "@/hooks/use-eligibility-summary";
 import { useKycStatus } from "@/hooks/use-kyc-status";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
-import { StyledSelect } from "@/components/ui/styled-select";
 import { mapEligibilityToAccess } from "@/lib/profile/eligibility-access";
-import { mapKycStatusToUi } from "@/lib/kyc/kyc-status-adapter";
+import { emptyKycSteps } from "@/lib/kyc/kyc-status-adapter";
 import { cn } from "@/lib/utils";
+
+const emptyDrafts = (): VerificationDocDrafts => ({
+  countryCode: "",
+  documentType: "passport",
+  documentRef: "",
+  city: "",
+  street: "",
+  postalCode: "",
+});
 
 export function ProfileVerificationLiveContent() {
   const { t } = useI18n();
-  const { data, loading, error, submitting, reload, start, submitManual } = useKycStatus();
+  const kyc = useKycStatus();
+  const {
+    data,
+    loading,
+    error,
+    submitting,
+    reload,
+    start,
+    saveDetails,
+    submitManual,
+    saveAddress,
+    uploadDocument,
+  } = kyc;
   const {
     data: eligibility,
     loading: eligibilityLoading,
     error: eligibilityError,
   } = useEligibilitySummary();
 
-  const [countryCode, setCountryCode] = useState("RU");
-  const [documentType, setDocumentType] = useState("passport");
-  const [documentRef, setDocumentRef] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
+  const [drafts, setDrafts] = useState<VerificationDocDrafts>(emptyDrafts);
+  const [requestedModal, setRequestedModal] = useState<VerificationDocModal>(null);
 
-  const status = useMemo(
-    () => (data ? mapKycStatusToUi(data.status) : "not_started"),
-    [data],
-  );
+  useEffect(() => {
+    if (!data) return;
+    setDrafts((prev) => ({
+      countryCode: data.countryCode || data.profileCountryCode || prev.countryCode || "",
+      documentType: data.documentType || prev.documentType || "passport",
+      documentRef: data.documentReference || prev.documentRef,
+      city: data.address?.city || prev.city,
+      street: data.address?.street || prev.street,
+      postalCode: data.address?.postalCode || prev.postalCode,
+    }));
+  }, [data]);
+
+  const steps = data?.steps ?? emptyKycSteps();
+  const apiStatus = data?.status;
+  const reviewLocked = apiStatus === "IN_REVIEW" || apiStatus === "MANUAL_REVIEW_REQUIRED";
+  const canFillForm =
+    apiStatus === "NOT_STARTED" ||
+    apiStatus === "PENDING" ||
+    apiStatus === "REJECTED" ||
+    apiStatus === "EXPIRED";
+
+  const canSubmit = Boolean(data?.canSubmit);
+
   const eligibilityRows = useMemo(() => {
     if (!eligibility) return [];
     return [
@@ -64,16 +91,7 @@ export function ProfileVerificationLiveContent() {
       mapEligibilityToAccess("withdraw", "verification.access.withdraw", eligibility.withdraw),
       mapEligibilityToAccess("primary", "verification.access.primary", eligibility.primary),
       mapEligibilityToAccess("secondary", "verification.access.secondary", eligibility.secondary),
-      {
-        id: "payouts",
-        labelKey: "verification.access.payouts",
-        status: eligibility.withdraw.allowed ? ("allowed" as const) : ("limited" as const),
-        message: eligibility.withdraw.userMessage,
-        ctaHref: eligibility.withdraw.allowed ? ROUTES.dashboardPayoutsHistory : profileDashboardHref("verification"),
-        ctaLabelKey: eligibility.withdraw.allowed
-          ? "verification.eligibility.cta.viewPayouts"
-          : "verification.eligibility.cta.completeKyc",
-      },
+      mapEligibilityToAccess("payouts", "verification.access.payouts", eligibility.withdraw),
       {
         id: "documents",
         labelKey: "verification.access.documents",
@@ -91,100 +109,83 @@ export function ProfileVerificationLiveContent() {
     ];
   }, [eligibility]);
 
-  if (loading && !data) {
+  if ((loading && !data) || (!data && !error)) {
     return <ProfileSectionSkeleton variant="cards" />;
   }
 
   if (error && !data) {
     return (
-      <div className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300" role="alert">
-        {error.startsWith("verification.") ? t(error) : error}
-        <button type="button" className="ml-3 font-semibold underline" onClick={() => void reload()}>
+      <div className="rounded-2xl bg-[#111111] px-4 py-6 text-sm text-zinc-300" role="alert">
+        <p className="font-medium text-white">{t("verification.loadError")}</p>
+        <button type="button" className="mt-4 font-semibold text-white underline" onClick={() => void reload()}>
           {t("actions.retry")}
         </button>
       </div>
     );
   }
 
-  const idOk = status === "pending_review" || status === "approved" || status === "in_progress";
-  const addrOk = status === "pending_review" || status === "approved";
-  const selfieOk = status === "pending_review" || status === "approved";
+  if (!data || !apiStatus) return null;
 
-  const canFillForm = status === "not_started" || status === "in_progress" || status === "rejected";
-  const canSubmitManual = countryCode.trim().length >= 2 && documentRef.trim().length > 0;
-
-  const heroCtaLabel =
-    status === "rejected" ? t("verification.fixAndContinue") : t("verification.manualFormOpen");
-
-  const heroAction = canFillForm
-    ? {
-        label: heroCtaLabel,
-        onClick: () => setFormOpen(true),
-      }
-    : status === "approved"
-      ? {
-          label: t("verification.goPayouts"),
-          href: ROUTES.dashboardPayoutsHistory,
-        }
-      : null;
-
-  const spotlightCta = canFillForm ? (
-    <SplitonCtaPill type="button" tone="onDark" onClick={() => setFormOpen(true)} className="w-full min-w-0">
-      {heroCtaLabel}
-    </SplitonCtaPill>
-  ) : status === "approved" ? (
-    <SplitonCtaPill href={ROUTES.dashboardPayoutsHistory} tone="onDark" className="w-full min-w-0">
-      {t("verification.goPayouts")}
-    </SplitonCtaPill>
-  ) : (
-    <SplitonCtaPill type="button" tone="onDark" disabled className="w-full min-w-0 opacity-50">
-      {t("verification.reviewing")}
-    </SplitonCtaPill>
+  const heroAction = heroActionFor(
+    apiStatus,
+    canSubmit,
+    canFillForm,
+    submitting,
+    t,
+    () => setRequestedModal("details"),
+    () => void handleFinalSubmit(),
   );
 
-  const handleFormSubmit = async () => {
-    const country = countryCode.trim() || undefined;
-    if (status === "not_started" || status === "rejected") {
-      const started = await start(country);
-      if (!started) return;
-      if (!documentRef.trim()) return;
-      const submitted = await submitManual({
-        countryCode: countryCode.trim(),
-        documentType,
-        documentReference: documentRef.trim(),
-      });
-      if (submitted) setFormOpen(false);
-      return;
-    }
-    if (status === "in_progress") {
-      const submitted = await submitManual({
-        countryCode: countryCode.trim(),
-        documentType,
-        documentReference: documentRef.trim(),
-      });
-      if (submitted) setFormOpen(false);
-    }
-  };
+  const showSpotlight = apiStatus === "NOT_STARTED" || apiStatus === "REJECTED";
+  const spotlightCta = canFillForm ? (
+    <SplitonCtaPill type="button" tone="onDark" className="w-full min-w-0" onClick={() => setRequestedModal("details")}>
+      {apiStatus === "REJECTED" ? t("verification.fixAndContinue") : t("verification.start")}
+    </SplitonCtaPill>
+  ) : null;
 
-  const formFooterLabel =
-    submitting
-      ? t("verification.submitting")
-      : status === "rejected" && !documentRef.trim()
-        ? t("verification.fixAndContinue")
-        : status === "in_progress" || documentRef.trim()
-          ? t("verification.submit")
-          : t("verification.start");
+  async function saveIdentity(file: File | null) {
+    const country = drafts.countryCode.trim();
+    if (apiStatus === "NOT_STARTED" || apiStatus === "REJECTED" || apiStatus === "EXPIRED") {
+      const started = await start(country || undefined);
+      if (!started) return false;
+    }
+    const saved = await saveDetails({
+      countryCode: country,
+      documentType: drafts.documentType,
+      documentReference: drafts.documentRef.trim(),
+    });
+    if (!saved) return false;
+    if (file) return uploadDocument("identity", file);
+    return true;
+  }
 
-  const formFooterDisabled =
-    submitting ||
-    countryCode.trim().length < 2 ||
-    (status === "in_progress" && !canSubmitManual);
+  async function handleSaveAddress(file: File | null) {
+    const ok = await saveAddress({
+      city: drafts.city.trim(),
+      street: drafts.street.trim(),
+      postalCode: drafts.postalCode.trim(),
+      countryCode: drafts.countryCode.trim() || undefined,
+    });
+    if (!ok) return false;
+    if (file) return uploadDocument("address", file);
+    return true;
+  }
+
+  async function saveSelfie(file: File | null) {
+    if (!file) return steps.selfie;
+    return uploadDocument("selfie", file);
+  }
+
+  async function handleFinalSubmit() {
+    if (submitting || !canSubmit) return;
+    await submitManual();
+  }
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <ProfileVerificationStatusHero action={heroAction} />
 
-      {status === "not_started" || status === "rejected" ? (
+      {showSpotlight ? (
         <ProfileOkxSpotlight
           icon={profileLineIcon("verification", "xl")}
           headline={t("profile.okx.spotlight.verification.headline")}
@@ -195,144 +196,58 @@ export function ProfileVerificationLiveContent() {
         />
       ) : null}
 
-      {status === "rejected" && data?.rejectionReasonSafe ? (
+      {apiStatus === "REJECTED" && data.rejectionReasonSafe ? (
         <ProfileOkxAlert title={t("verification.rejectionTitle")}>
           <p>{data.rejectionReasonSafe}</p>
         </ProfileOkxAlert>
       ) : null}
 
-      <ProfileOkxSection title={t("verification.documents.prepare")}>
-        {canFillForm ? (
-          <ProfileOkxRow
-            icon={profileLineIcon("verification")}
-            title={t("verification.manualFormTitle")}
-            action={
-              <button type="button" onClick={() => setFormOpen(true)} className={profileOkxGhostClass}>
-                {t("verification.manualFormOpen")}
-              </button>
-            }
-          />
-        ) : null}
-        <ProfileOkxRow
-          icon={profileLineIcon("id")}
-          title={t("verification.doc.idTitle")}
-          description={t("verification.doc.idSub")}
-          action={
-            canFillForm && !idOk ? (
-              <button type="button" onClick={() => setFormOpen(true)} className={profileOkxGhostClass}>
-                {t("profile.okx.setup")}
-              </button>
-            ) : (
-              <span className={profileOkxGhostClass}>
-                {idOk ? t("verification.step.done", "Пройден") : t("profile.okx.setup")}
-              </span>
-            )
-          }
-        />
-        <ProfileOkxRow
-          icon={profileLineIcon("address")}
-          title={t("verification.doc.addrTitle")}
-          description={t("verification.doc.addrSub")}
-          badge={<ProfileOkxRecommended>{t("profile.okx.recommended")}</ProfileOkxRecommended>}
-          action={
-            <span className={profileOkxGhostClass}>
-              {addrOk ? t("verification.step.done", "Пройден") : t("profile.okx.setup")}
-            </span>
-          }
-        />
-        <ProfileOkxRow
-          icon={profileLineIcon("selfie")}
-          title={t("verification.doc.selfieTitle")}
-          description={t("verification.doc.selfieSub")}
-          action={
-            <span className={profileOkxGhostClass}>
-              {selfieOk ? t("verification.step.done", "Пройден") : t("profile.okx.setup")}
-            </span>
-          }
-        />
-      </ProfileOkxSection>
-
-      <ProfileSecurityModal
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        title={t("verification.manualFormTitle")}
-        description={t("verification.manualFormHint")}
-        headerVideo
-        headerVideoSrc={VERIFY_VIDEO}
-        footer={
-          <div className="space-y-3">
-            {error ? (
-              <p className="text-center text-sm text-red-400" role="alert">
-                {error.startsWith("verification.") ? t(error) : error}
-              </p>
-            ) : null}
-            <button
-              type="button"
-              disabled={formFooterDisabled}
-              onClick={() => void handleFormSubmit()}
-              className={cn(profileOkxPillClass, "disabled:opacity-60")}
-            >
-              {formFooterLabel}
-            </button>
-          </div>
-        }
-      >
-        <ProfileSecurityModalFieldList>
-          <ProfileSecurityModalField label={t("verification.countryCode")} htmlFor="kyc-country">
-            <input
-              id="kyc-country"
-              type="text"
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
-              placeholder="RU"
-              className={profileModalInputClass}
-              autoComplete="country"
-            />
-          </ProfileSecurityModalField>
-          <ProfileSecurityModalField label={t("verification.documentType")} htmlFor="kyc-doc-type">
-            <StyledSelect
-              id="kyc-doc-type"
-              value={documentType}
-              options={[
-                { value: "passport", label: t("verification.docPassport") },
-                { value: "id_card", label: t("verification.docId") },
-              ]}
-              onChange={setDocumentType}
-              aria-label={t("verification.documentType")}
-              tone="dark"
-              fullWidth
-              className="[&_button]:h-11 [&_button]:rounded-xl [&_button]:border-white/[0.14] [&_button]:bg-black/35 [&_button]:px-3.5 [&_button]:hover:bg-black/45"
-            />
-          </ProfileSecurityModalField>
-          <ProfileSecurityModalField label={t("verification.documentRef")} htmlFor="kyc-doc-ref">
-            <input
-              id="kyc-doc-ref"
-              type="text"
-              value={documentRef}
-              onChange={(e) => setDocumentRef(e.target.value)}
-              placeholder="****1234"
-              className={cn(profileModalInputClass, "font-mono tracking-wide")}
-              autoComplete="off"
-            />
-          </ProfileSecurityModalField>
-        </ProfileSecurityModalFieldList>
-        <ProfileSecurityModalHints items={[t("verification.manualProviderHint")]} />
-        <ProfileSecurityModalSupportNote
-          iconSrc={PROFILE_GLASS.support}
-          title={t("verification.helpTitle")}
-          body={t("verification.helpBody")}
-        />
-      </ProfileSecurityModal>
-
-      {status === "pending_review" ? (
+      {reviewLocked ? (
         <ProfileOkxAlert title={t("verification.status.pendingReview")}>
           <p>{t("verification.pendingHint")}</p>
         </ProfileOkxAlert>
       ) : null}
 
+      <ProfileVerificationDocsSection
+        identityDone={steps.identity || apiStatus === "APPROVED"}
+        addressDone={steps.address}
+        selfieDone={steps.selfie}
+        canEdit={canFillForm}
+        showDetailsRow
+        submitting={submitting}
+        error={error}
+        drafts={drafts}
+        onDraftsChange={setDrafts}
+        onSaveIdentity={saveIdentity}
+        onSaveAddress={handleSaveAddress}
+        onSaveSelfie={saveSelfie}
+        requestedModal={requestedModal}
+        onRequestedModalHandled={() => setRequestedModal(null)}
+      />
+
+      {canFillForm ? (
+        <div className="px-1">
+          <button
+            type="button"
+            disabled={submitting || !canSubmit}
+            onClick={() => void handleFinalSubmit()}
+            className={cn(
+              "inline-flex h-11 min-h-11 items-center justify-center rounded-full px-6 text-[13px] font-semibold",
+              canSubmit ? "bg-white text-black" : "cursor-not-allowed bg-white/10 text-white/40",
+            )}
+          >
+            {submitting ? t("verification.submitting") : t("verification.submit")}
+          </button>
+        </div>
+      ) : null}
+
       <ProfileOkxSection title={t("verification.timeline.title")}>
-        <div className="px-4 pb-2 sm:px-5">
-          <ProfileVerificationTimeline status={status} />
+        <div className="px-4 py-5 sm:px-6 sm:py-6">
+          <ProfileVerificationTimeline
+            status={apiStatus}
+            submittedAt={data.submittedAt}
+            reviewedAt={data.reviewedAt}
+          />
         </div>
       </ProfileOkxSection>
 
@@ -353,8 +268,38 @@ export function ProfileVerificationLiveContent() {
         iconSize="lg"
         title={t("verification.helpTitle")}
         description={t("verification.helpBody")}
-        action={<ProfileOkxLink href={ROUTES.dashboardSupport}>{t("profile.okx.use")}</ProfileOkxLink>}
+        action={<ProfileOkxLink href={ROUTES.dashboardSupport}>{t("verification.contactSupport")}</ProfileOkxLink>}
       />
     </div>
   );
+}
+
+function heroActionFor(
+  status: NonNullable<ReturnType<typeof useKycStatus>["data"]>["status"],
+  canSubmit: boolean,
+  canFillForm: boolean,
+  submitting: boolean,
+  t: (k: string) => string,
+  openDetails: () => void,
+  onSubmit: () => void,
+) {
+  if (status === "APPROVED") {
+    return { label: t("verification.goPayouts"), href: ROUTES.dashboardPayoutsHistory };
+  }
+  if (status === "IN_REVIEW" || status === "MANUAL_REVIEW_REQUIRED") {
+    return { label: t("verification.reviewing"), disabled: true };
+  }
+  if (status === "REJECTED") {
+    return { label: t("verification.fixAndContinue"), onClick: openDetails };
+  }
+  if (status === "EXPIRED") {
+    return { label: t("verification.expired.cta"), onClick: openDetails };
+  }
+  if (canSubmit) {
+    return { label: t("verification.submit"), onClick: onSubmit, disabled: submitting };
+  }
+  if (canFillForm) {
+    return { label: status === "NOT_STARTED" ? t("verification.start") : t("verification.manualFormOpen"), onClick: openDetails };
+  }
+  return null;
 }

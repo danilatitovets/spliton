@@ -162,13 +162,10 @@ export async function fetchCatalogStats(): Promise<CatalogStatsApi> {
 export async function fetchCatalogReleaseById(
   id: string,
 ): Promise<CatalogReleaseDetailApi | null> {
-  try {
-    const res = await fetch(apiUrl(CATALOG_API.release(id)), PUBLIC_CATALOG_FETCH);
-    if (!res.ok) return null;
-    return (await res.json()) as CatalogReleaseDetailApi;
-  } catch {
-    return null;
-  }
+  const res = await fetch(apiUrl(CATALOG_API.release(id)), PUBLIC_CATALOG_FETCH);
+  if (res.status === 404) return null;
+  if (!res.ok) throw await parseApiClientError(res);
+  return (await res.json()) as CatalogReleaseDetailApi;
 }
 
 export async function loadLiveCatalogItems(

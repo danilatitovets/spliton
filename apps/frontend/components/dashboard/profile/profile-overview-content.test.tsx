@@ -9,6 +9,7 @@ import { kycStatusLabel, securityEventLabel } from "@/lib/profile/overview-label
 const mockFetchUserMe = vi.fn();
 const mockFetchWalletSummary = vi.fn();
 const mockListUserHoldings = vi.fn();
+const mockUseAuth = vi.fn();
 
 vi.mock("@/services/user-me.service", () => ({
   fetchUserMe: (...args: unknown[]) => mockFetchUserMe(...args),
@@ -20,17 +21,14 @@ vi.mock("@/services/wallet.service", () => ({
 }));
 
 vi.mock("@/components/providers/auth-provider", () => ({
-  useAuth: () => ({
-    user: { id: "user-1", email: "test@example.com" },
-    authorizedFetch: vi.fn(),
-    isAuthenticated: true,
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock("@/lib/public-env", () => ({
   isLiveAccountEnabled: () => true,
   isAccountCenterDemoMode: () => false,
   isLiveReleaseAnalyticsEnabled: () => false,
+  isStrictDeployMode: () => false,
 }));
 
 vi.mock("@/components/providers/i18n-provider", () => ({
@@ -113,6 +111,17 @@ describe("profile overview live guards", () => {
 
 describe("ProfileOverviewContent", () => {
   beforeEach(() => {
+    mockFetchUserMe.mockReset();
+    mockFetchWalletSummary.mockReset();
+    mockListUserHoldings.mockReset();
+    mockUseAuth.mockReturnValue({
+      user: { id: "user-1", email: "test@example.com" },
+      authorizedFetch: vi.fn(),
+      isAuthenticated: true,
+      isLoading: false,
+      status: "authenticated",
+      retrySession: vi.fn(),
+    });
     mockFetchUserMe.mockResolvedValue({
       id: "user-1",
       email: "test@example.com",
@@ -131,7 +140,7 @@ describe("ProfileOverviewContent", () => {
     });
 
     expect(await screen.findByText("55")).toBeTruthy();
-    expect(screen.getByText("profile.overview.identity.accountType")).toBeTruthy();
+    expect(screen.getByLabelText("profile.overview.identity.viewProfile")).toBeTruthy();
     expect(screen.getByText("tes***@example.com")).toBeTruthy();
     expect(screen.getByText("user-1")).toBeTruthy();
     expect(screen.queryByText(/UID/i)).toBeNull();
@@ -148,5 +157,35 @@ describe("ProfileOverviewContent", () => {
 
     expect(await screen.findByText("55")).toBeTruthy();
     expect(screen.getByText("errors.section.unavailable.title")).toBeTruthy();
+  });
+
+  it("keeps identity from the session when /users/me fails", async () => {
+    mockFetchUserMe.mockRejectedValue({ code: "INTERNAL_ERROR", message: "Internal server error" });
+    mockFetchWalletSummary.mockResolvedValue({ availableBalance: "100.00" });
+    mockListUserHoldings.mockResolvedValue({ items: [] });
+
+    render(<ProfileOverviewContent />);
+
+    expect(await screen.findByText("tes***@example.com")).toBeTruthy();
+    expect(screen.getByText("user-1")).toBeTruthy();
+    expect(screen.queryByText("profile.overview.loadProfileError")).toBeNull();
+  });
+
+  it("does not flash fallback name or security zero while auth is initializing", () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      authorizedFetch: vi.fn(),
+      isAuthenticated: false,
+      isLoading: true,
+      status: "initializing",
+      retrySession: vi.fn(),
+    });
+
+    const { container } = render(<ProfileOverviewContent />);
+    expect(container.querySelector("[aria-busy='true']")).toBeTruthy();
+    expect(screen.queryByText("profile.overview.displayNameFallback")).toBeNull();
+    expect(screen.queryByText("55")).toBeNull();
+    expect(screen.queryByText("profile.overview.identity.verifyBanner")).toBeNull();
+    expect(mockFetchUserMe).not.toHaveBeenCalled();
   });
 });

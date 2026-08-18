@@ -1,42 +1,37 @@
 "use client";
 
 import { SplitonLoadingView } from "@/components/ui/spliton-loader";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { SplitonDarkSurface } from "@/components/dashboard/assets/spliton-dark-surface";
 import { ProductDemoBanner } from "@/components/shared/product-demo-banner";
-import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
 import { ROUTES } from "@/constants/routes";
+import { MOCK_SECURITY_SESSIONS, type SecuritySessionRow } from "@/constants/dashboard/profile-security";
 import { ProfilePasswordChangePanel } from "@/components/dashboard/profile/profile-password-change-panel";
 import {
-  ProfileOkxHeader,
+  ProfileOkxBanner,
   ProfileOkxRecommended,
   ProfileOkxRow,
   ProfileOkxSection,
-  ProfileOkxSpotlight,
   ProfileOkxToggle,
 } from "@/components/dashboard/profile/profile-okx";
-import { PROFILE_GLASS, profileLineIcon } from "@/components/dashboard/profile/profile-shared";
+import { BRAND } from "@/constants/brand";
+import { profileLineIcon } from "@/components/dashboard/profile/profile-shared";
 import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
-import { ProfileSecurityEventsList } from "@/components/dashboard/profile/profile-security-events-list";
-import { ProfileSessionsList } from "@/components/dashboard/profile/profile-sessions-list";
+import { ProfileSessionsPanel } from "@/components/dashboard/profile/profile-sessions-panel";
 import { ProfileTwoFactorPanel } from "@/components/dashboard/profile/profile-two-factor-panel";
-import { useAuth } from "@/components/providers/auth-provider";
+import { useAuthUi } from "@/hooks/use-auth-ui";
+import { ProfileSignInRequired } from "@/components/dashboard/profile/profile-sign-in-required";
+import { ProfileApiOrGenericError } from "@/components/dashboard/profile/profile-support-copy";
+import { ProfileUnderlineTabs } from "@/components/dashboard/profile/profile-underline-tabs";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { formatDate } from "@/lib/i18n/formatters";
-import { profileSecurityLastActive } from "@/lib/i18n/profile-messages";
-import {
-  formatSecurityEventIp,
-  parseUserAgentShort,
-  securityLevelBadgeLabel,
-  securityRecommendationText,
-} from "@/lib/profile/security-labels";
+import { formatApiError } from "@/lib/i18n/format-api-error";
+import { mapUserSessionsToRows } from "@/lib/profile/user-sessions";
+import { securityRecommendationText } from "@/lib/profile/security-labels";
 import { isAccountCenterDemoMode, isLiveAccountEnabled } from "@/lib/public-env";
+import { fetchNotificationPreferences } from "@/services/notifications.service";
 import {
-  fetchNotificationPreferences,
-  patchNotificationPreferences,
-} from "@/services/notifications.service";
-import {
-  fetchSecurityEvents,
   fetchSecurityPreferences,
   fetchUserMe,
   fetchUserSessions,
@@ -44,10 +39,13 @@ import {
   patchSecurityPreferences,
   revokeUserSession,
   type AccountCenterSummary,
-  type SecurityEventItem,
   type UserSecurityPreferences,
 } from "@/services/user-me.service";
-import type { SecuritySessionRow } from "@/constants/dashboard/profile-security";
+
+const SECURITY_HERO_VIDEO = "/videos/position-holding-bg.mp4";
+
+type SecurityTab = "login" | "sessions" | "withdraw";
+const SECURITY_TABS: SecurityTab[] = ["login", "sessions", "withdraw"];
 
 function maskEmail(email: string | undefined | null): string {
   if (!email) return "—";
@@ -57,54 +55,90 @@ function maskEmail(email: string | undefined | null): string {
   return `${visible}***@${domain}`;
 }
 
-function looksLikeUserAgent(value: string): boolean {
-  return /mozilla\/|applewebkit|chrome\/|safari\/|gecko\//i.test(value) || value.length > 64;
+function demoAccountCenter(): AccountCenterSummary {
+  return {
+    accountCompleteness: {
+      score: 55,
+      maxScore: 100,
+      level: "MEDIUM",
+      completedItems: [],
+      missingItems: [],
+    },
+    security: {
+      score: 62,
+      maxScore: 100,
+      level: "MEDIUM",
+      recommendations: [
+        {
+          code: "ENABLE_2FA",
+          title: "",
+          description: "",
+          severity: "HIGH",
+          isCompleted: false,
+        },
+      ],
+      emailVerified: true,
+      twoFactorEnabled: false,
+      passwordSet: true,
+      passwordChangedAt: null,
+    },
+    verification: { status: "NOT_STARTED" },
+    legal: { missingRequiredConsentsCount: 0, hasAcceptedCurrentRequiredPolicies: true },
+    activity: {},
+    securityPreferences: {
+      withdrawalEmailConfirmationEnabled: true,
+      withdrawalAddressWhitelistEnabled: false,
+      suspiciousLoginAlertsEnabled: true,
+      emailSecurityNotificationsEnabled: true,
+      enforcementReady: false,
+    },
+    recentSecurityEvents: [],
+  };
 }
 
-function mapApiSessions(
-  items: Awaited<ReturnType<typeof fetchUserSessions>>["items"],
-  locale: import("@/lib/i18n/types").AppLocale,
-  browserLabel: string,
-): SecuritySessionRow[] {
-  if (items.length === 0) return [];
-  const active = items.filter((s) => s.active);
-  const sorted = [...active].sort(
-    (a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime(),
-  );
-  return sorted.map((row, index) => {
-    const rawDevice = row.device?.trim() ?? "";
-    const device =
-      rawDevice && !looksLikeUserAgent(rawDevice)
-        ? rawDevice
-        : parseUserAgentShort(row.userAgent || rawDevice, locale) || browserLabel;
-    const anyCurrent = sorted.some((s) => s.isCurrent);
-    return {
-      id: row.id,
-      device,
-      location: "—",
-      ip: formatSecurityEventIp(row.ip, locale) ?? "—",
-      lastActive: profileSecurityLastActive(row.lastActiveAt, locale),
-      current: anyCurrent ? Boolean(row.isCurrent) : index === 0,
-    };
-  });
+function fallbackAccountCenter(emailVerified: boolean): AccountCenterSummary {
+  const demo = demoAccountCenter();
+  return {
+    ...demo,
+    security: {
+      ...demo.security,
+      emailVerified,
+      level: emailVerified ? "MEDIUM" : "LOW",
+      score: emailVerified ? 50 : 35,
+      recommendations: emailVerified
+        ? demo.security.recommendations
+        : [
+            {
+              code: "VERIFY_EMAIL",
+              title: "",
+              description: "",
+              severity: "HIGH",
+              isCompleted: false,
+            },
+            ...demo.security.recommendations,
+          ],
+    },
+  };
 }
 
 export function ProfileSecurityContent() {
-  const { user, authorizedFetch, isAuthenticated, resendEmail } = useAuth();
+  const { user, authorizedFetch, authenticated, pending, resendEmail, requiresEmailVerification } = useAuthUi();
   const { locale, t } = useI18n();
-  const live = isLiveAccountEnabled() && isAuthenticated;
+  const live = isLiveAccountEnabled() && authenticated;
   const demo = isAccountCenterDemoMode();
 
-  const [loading, setLoading] = useState(live);
-  const [loadError, setLoadError] = useState<unknown>(null);
-  const [accountCenter, setAccountCenter] = useState<AccountCenterSummary | null>(null);
+  const [activeTab, setActiveTab] = useState<SecurityTab>("login");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [accountCenter, setAccountCenter] = useState<AccountCenterSummary | null>(
+    demo ? demoAccountCenter() : null,
+  );
   const [emailVerified, setEmailVerified] = useState(true);
   const [twoFaEnabled, setTwoFaEnabled] = useState(false);
   const [passwordChangedAt, setPasswordChangedAt] = useState<string | null>(null);
   const [passwordSet, setPasswordSet] = useState(true);
 
-  const [sessions, setSessions] = useState<SecuritySessionRow[]>([]);
-  const [securityEvents, setSecurityEvents] = useState<SecurityEventItem[]>([]);
+  const [sessions, setSessions] = useState<SecuritySessionRow[]>(demo ? MOCK_SECURITY_SESSIONS : []);
   const [prefs, setPrefs] = useState<UserSecurityPreferences | null>(null);
   const [emailSecurityEnabled, setEmailSecurityEnabled] = useState(true);
   const [prefsSaving, setPrefsSaving] = useState<string | null>(null);
@@ -115,78 +149,101 @@ export function ProfileSecurityContent() {
   const [resendBusy, setResendBusy] = useState(false);
   const [resendMsg, setResendMsg] = useState<string | null>(null);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
-  const [userTimezone, setUserTimezone] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
+    if (pending) return;
     if (!live) {
       setLoading(false);
-      setSessions([]);
-      setTwoFaEnabled(false);
-      setEmailVerified(true);
+      if (demo && authenticated) {
+        setAccountCenter(demoAccountCenter());
+        setSessions(MOCK_SECURITY_SESSIONS);
+        setEmailVerified(true);
+        setTwoFaEnabled(false);
+        setPasswordSet(true);
+        setLoadError(null);
+      }
       return;
     }
+
     setLoading(true);
-    setLoadError(null);
     setSessionsError(null);
     try {
-      const [me, sessionData, events, secPrefs, notifPrefs] = await Promise.all([
-        fetchUserMe(authorizedFetch),
-        fetchUserSessions(authorizedFetch),
-        fetchSecurityEvents(authorizedFetch),
-        fetchSecurityPreferences(authorizedFetch),
-        fetchNotificationPreferences(authorizedFetch),
-      ]);
-      const ac = me.accountCenter ?? null;
-      setAccountCenter(ac);
-      setEmailVerified(Boolean(ac?.security.emailVerified ?? me.emailVerified));
-      setTwoFaEnabled(Boolean(ac?.security.twoFactorEnabled ?? me.security?.twoFaEnabled));
-      setPasswordChangedAt(ac?.security.passwordChangedAt ?? null);
-      setPasswordSet(Boolean(ac?.security.passwordSet ?? true));
-      setUserTimezone(me.profile?.timezone?.trim() || "Europe/Moscow");
-      setSessions(mapApiSessions(sessionData.items, locale, t("profile.security.session.browser")));
-      setSecurityEvents(events.items);
-      setPrefs(secPrefs);
-      setEmailSecurityEnabled(Boolean(notifPrefs.emailSecurity ?? true));
-    } catch (err) {
-      setLoadError(err);
-      setAccountCenter(null);
-      setSessions([]);
+      const [meResult, sessionResult, secPrefsResult, notifPrefsResult] =
+        await Promise.allSettled([
+          fetchUserMe(authorizedFetch),
+          fetchUserSessions(authorizedFetch),
+          fetchSecurityPreferences(authorizedFetch),
+          fetchNotificationPreferences(authorizedFetch),
+        ]);
+
+      if (meResult.status === "fulfilled") {
+        const me = meResult.value;
+        const ac = me.accountCenter ?? null;
+        setAccountCenter(ac ?? fallbackAccountCenter(Boolean(me.emailVerified)));
+        setEmailVerified(Boolean(ac?.security?.emailVerified ?? me.emailVerified));
+        setTwoFaEnabled(Boolean(ac?.security?.twoFactorEnabled ?? me.security?.twoFaEnabled));
+        setPasswordChangedAt(ac?.security?.passwordChangedAt ?? null);
+        setPasswordSet(Boolean(ac?.security?.passwordSet ?? true));
+        setLoadError(null);
+      } else if (user || authenticated) {
+        const verified = !requiresEmailVerification;
+        setAccountCenter(fallbackAccountCenter(verified));
+        setEmailVerified(verified);
+        setTwoFaEnabled(false);
+        setPasswordSet(true);
+        setLoadError(null);
+      } else {
+        setAccountCenter(null);
+        setLoadError(formatApiError(meResult.reason, locale) || t("profile.security.loadError"));
+      }
+
+      setSessions(
+        sessionResult.status === "fulfilled"
+          ? mapUserSessionsToRows(sessionResult.value.items, locale, t("profile.security.session.browser"))
+          : [],
+      );
+      setPrefs(secPrefsResult.status === "fulfilled" ? secPrefsResult.value : null);
+      setEmailSecurityEnabled(
+        notifPrefsResult.status === "fulfilled"
+          ? Boolean(notifPrefsResult.value.emailSecurity ?? true)
+          : true,
+      );
     } finally {
       setLoading(false);
     }
-  }, [authorizedFetch, live, locale, t]);
+  }, [authenticated, authorizedFetch, demo, live, locale, pending, requiresEmailVerification, t, user?.id]);
 
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
 
   const security = accountCenter?.security;
-  const level = security?.level ?? "LOW";
   const topRec = security?.recommendations?.find((r) => !r.isCompleted);
-  const score = security?.score ?? (demo ? 55 : 0);
-  const maxScore = security?.maxScore ?? 100;
 
   const patchPref = useCallback(
-    async (key: keyof UserSecurityPreferences | "emailSecurity", value: boolean) => {
+    async (key: keyof UserSecurityPreferences, value: boolean) => {
       if (!live) return;
       setPrefsError(null);
       setPrefsSaving(key);
+      setPrefs((current) => ({
+        withdrawalEmailConfirmationEnabled: current?.withdrawalEmailConfirmationEnabled ?? false,
+        withdrawalAddressWhitelistEnabled: current?.withdrawalAddressWhitelistEnabled ?? false,
+        suspiciousLoginAlertsEnabled: current?.suspiciousLoginAlertsEnabled ?? true,
+        [key]: value,
+      }));
       try {
-        if (key === "emailSecurity") {
-          const updated = await patchNotificationPreferences(authorizedFetch, { emailSecurity: value });
-          setEmailSecurityEnabled(Boolean(updated.emailSecurity));
-        } else {
-          const updated = await patchSecurityPreferences(authorizedFetch, { [key]: value });
-          setPrefs(updated);
-        }
-        await loadAll();
-      } catch {
-        setPrefsError(t("profile.security.preferences.saveError"));
+        const updated = await patchSecurityPreferences(authorizedFetch, { [key]: value });
+        setPrefs(updated);
+      } catch (err) {
+        setPrefs((current) =>
+          current ? { ...current, [key]: !value } : current,
+        );
+        setPrefsError(formatApiError(err, locale) || t("profile.security.preferences.saveError"));
       } finally {
         setPrefsSaving(null);
       }
     },
-    [authorizedFetch, live, loadAll, t],
+    [authorizedFetch, live, locale, t],
   );
 
   const handleResendEmail = useCallback(async () => {
@@ -231,158 +288,95 @@ export function ProfileSecurityContent() {
       )
     : t("profile.security.password.neverChanged");
 
-  const statusText =
-    live && security
-      ? `${securityLevelBadgeLabel(level, locale)}${topRec ? ` / ${securityRecommendationText(topRec.code, locale).title}` : ""}`
-      : t("profile.security.demoDescription");
+  const topRecText = topRec ? securityRecommendationText(topRec.code, locale) : null;
 
   const emailDescription = [maskEmail(user?.email), resendMsg].filter(Boolean).join(". ");
 
-  if (live && loading) {
+  const tabPanel = useMemo(() => {
+    if (activeTab === "login") {
+      return (
+        <ProfileOkxSection id="security-auth" title={t("profile.okx.authMethods")}>
+          <ProfileOkxRow
+            icon={profileLineIcon("email")}
+            title={t("profile.security.email.title")}
+            description={emailDescription}
+            badge={
+              emailVerified ? (
+                <ProfileOkxRecommended>{t("profile.security.email.verified")}</ProfileOkxRecommended>
+              ) : undefined
+            }
+            action={
+              live && !emailVerified ? (
+                <SplitonCtaPill
+                  type="button"
+                  tone="onDark"
+                  disabled={resendBusy}
+                  onClick={() => void handleResendEmail()}
+                  className="min-w-[9.5rem]"
+                >
+                  {resendBusy ? t("profile.security.email.resendSending") : t("profile.okx.setup")}
+                </SplitonCtaPill>
+              ) : undefined
+            }
+          />
+          <ProfileOkxRow
+            icon={profileLineIcon("password")}
+            title={t("profile.security.password.title")}
+            description={passwordMeta}
+            action={
+              live && passwordSet ? (
+                <SplitonCtaPill
+                  type="button"
+                  tone="onDark"
+                  onClick={() => setPasswordPanelOpen(true)}
+                  className="min-w-[9.5rem]"
+                >
+                  {t("profile.okx.change")}
+                </SplitonCtaPill>
+              ) : undefined
+            }
+          />
+          <ProfileOkxRow
+            id="security-2fa"
+            icon={profileLineIcon("twoFa")}
+            title={t("profile.security.twoFa.title")}
+            description={t("profile.security.twoFa.descriptionShort")}
+            badge={
+              twoFaEnabled ? undefined : (
+                <ProfileOkxRecommended>{t("profile.okx.new")}</ProfileOkxRecommended>
+              )
+            }
+            action={
+              live ? (
+                <ProfileTwoFactorPanel
+                  enabled={twoFaEnabled}
+                  onEnabledChange={(v) => {
+                    setTwoFaEnabled(v);
+                    void loadAll();
+                  }}
+                />
+              ) : (
+                <span className="text-xs font-medium text-zinc-500">{t("profile.security.twoFa.disabled")}</span>
+              )
+            }
+          />
+        </ProfileOkxSection>
+      );
+    }
+
+    if (activeTab === "sessions") {
+      return (
+        <ProfileSessionsPanel
+          sessions={sessions}
+          error={sessionsError}
+          live={live}
+          onRevoke={revoke}
+          onLogoutOthers={logoutOthers}
+        />
+      );
+    }
+
     return (
-      <SplitonLoadingView
-        variant="dark"
-        size="lg"
-        minHeight="min-h-[40vh]"
-        label={t("common.loading")}
-        className="bg-transparent"
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-4 sm:space-y-5">
-      {demo ? <ProductDemoBanner messageKey="profile.security.demoBanner" /> : null}
-
-      {loadError ? (
-        <ReadOnlySectionError
-          sectionId="profile-security"
-          error={loadError}
-          onRetry={() => void loadAll()}
-        />
-      ) : null}
-
-      {passwordSuccess ? (
-        <p className="rounded-xl bg-[#B7F500]/12 px-4 py-3 text-sm text-[#B7F500]" role="status">
-          {t("profile.security.password.success")}
-        </p>
-      ) : null}
-
-      <ProfileOkxHeader
-        score={score}
-        scoreMax={maxScore}
-        title={t("profile.security.protectionLevel")}
-        subtitle={statusText}
-        cta={
-          <SplitonCtaPill
-            type="button"
-            tone="onDark"
-            className="min-w-[12rem]"
-            onClick={() =>
-              document.getElementById("security-auth")?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-          >
-            {t("profile.okx.increase")}
-          </SplitonCtaPill>
-        }
-      />
-
-      <ProfileOkxSpotlight
-        icon={PROFILE_GLASS.securitySpotlight}
-        headline={t("profile.okx.spotlight.security.headline")}
-        body={t("profile.okx.spotlight.security.body")}
-        detailsHref={ROUTES.trust}
-        detailsLabel={t("profile.okx.details")}
-        cta={
-          <SplitonCtaPill
-            type="button"
-            tone="onDark"
-            className="w-full min-w-0"
-            onClick={() =>
-              document.getElementById("security-2fa")?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-          >
-            {t("profile.okx.setup")}
-          </SplitonCtaPill>
-        }
-      />
-
-      <ProfileOkxSection id="security-auth" title={t("profile.okx.authMethods")}>
-        <ProfileOkxRow
-          icon={profileLineIcon("email")}
-          title={t("profile.security.email.title")}
-          description={emailDescription}
-          badge={
-            emailVerified ? (
-              <ProfileOkxRecommended>{t("profile.security.email.verified")}</ProfileOkxRecommended>
-            ) : undefined
-          }
-          action={
-            live && !emailVerified ? (
-              <SplitonCtaPill
-                type="button"
-                tone="onDark"
-                disabled={resendBusy}
-                onClick={() => void handleResendEmail()}
-                className="min-w-[9.5rem]"
-              >
-                {resendBusy ? t("profile.security.email.resendSending") : t("profile.okx.setup")}
-              </SplitonCtaPill>
-            ) : undefined
-          }
-        />
-        <ProfileOkxRow
-          icon={profileLineIcon("password")}
-          title={t("profile.security.password.title")}
-          description={passwordMeta}
-          action={
-            live && passwordSet ? (
-              <SplitonCtaPill
-                type="button"
-                tone="onDark"
-                onClick={() => setPasswordPanelOpen(true)}
-                className="min-w-[9.5rem]"
-              >
-                {t("profile.okx.change")}
-              </SplitonCtaPill>
-            ) : undefined
-          }
-        />
-        <ProfileOkxRow
-          id="security-2fa"
-          icon={profileLineIcon("twoFa")}
-          title={t("profile.security.twoFa.title")}
-          description={t("profile.security.twoFa.descriptionShort")}
-          badge={
-            twoFaEnabled ? undefined : (
-              <ProfileOkxRecommended>{t("profile.okx.new")}</ProfileOkxRecommended>
-            )
-          }
-          action={
-            live ? (
-              <ProfileTwoFactorPanel
-                enabled={twoFaEnabled}
-                onEnabledChange={(v) => {
-                  setTwoFaEnabled(v);
-                  void loadAll();
-                }}
-              />
-            ) : (
-              <span className="text-xs font-medium text-zinc-500">{t("profile.security.twoFa.disabled")}</span>
-            )
-          }
-        />
-      </ProfileOkxSection>
-
-      <ProfilePasswordChangePanel
-        open={passwordPanelOpen}
-        onOpenChange={setPasswordPanelOpen}
-        onSuccess={() => {
-          setPasswordSuccess(true);
-          void loadAll();
-        }}
-      />
-
       <ProfileOkxSection id="security-advanced" title={t("profile.okx.advanced")}>
         <ProfileOkxRow
           icon={profileLineIcon("email")}
@@ -427,13 +421,13 @@ export function ProfileSecurityContent() {
         <ProfileOkxRow
           icon={profileLineIcon("email")}
           title={t("profile.security.preferences.emailSecurity.title")}
-          description={t("profile.security.preferences.emailSecurity.descriptionShort")}
+          description={t("profile.settings.securityEmail.locked")}
           action={
             <ProfileOkxToggle
               id="email-sec"
               checked={emailSecurityEnabled}
-              onChange={live ? (v) => void patchPref("emailSecurity", v) : undefined}
-              disabled={!live || prefsSaving === "emailSecurity"}
+              disabled
+              aria-label={t("profile.security.preferences.emailSecurity.title")}
             />
           }
         />
@@ -453,52 +447,139 @@ export function ProfileSecurityContent() {
           </p>
         ) : null}
       </ProfileOkxSection>
+    );
+  }, [
+    activeTab,
+    emailDescription,
+    emailSecurityEnabled,
+    emailVerified,
+    handleResendEmail,
+    live,
+    loadAll,
+    logoutOthers,
+    passwordMeta,
+    passwordSet,
+    patchPref,
+    prefs,
+    prefsError,
+    prefsSaving,
+    resendBusy,
+    revoke,
+    sessions,
+    sessionsError,
+    t,
+    twoFaEnabled,
+  ]);
 
-      <ProfileOkxSection
-        title={t("profile.okx.devices")}
-        description={t("profile.security.access.descriptionShort")}
+  if (pending || (live && loading && !accountCenter)) {
+    return (
+      <SplitonLoadingView
+        variant="dark"
+        size="lg"
+        minHeight="min-h-[40vh]"
+        label={t("common.loading")}
+        className="bg-transparent"
+      />
+    );
+  }
+
+  if (!authenticated && !demo) {
+    return <ProfileSignInRequired titleKey="profile.legal.signInRequired" />;
+  }
+
+  return (
+    <div className="space-y-3 sm:space-y-4">
+      {demo ? <ProductDemoBanner messageKey="profile.security.demoBanner" /> : null}
+
+      <SplitonDarkSurface
+        className="relative min-h-0 px-5 py-14 shadow-none sm:px-10 sm:py-16"
+        contentClassName="relative min-h-[7.5rem] sm:min-h-[8.5rem]"
+        watermarkCentered
+        watermarkText={`${BRAND.name} Security`}
+        backgroundVideo={SECURITY_HERO_VIDEO}
+        videoClarity="crisp"
+        aria-label={t("profile.overview.securityCard.title")}
       >
-        {sessionsError ? (
-          <p className="px-5 py-3 text-xs text-red-300 sm:px-6" role="alert">
-            {String(sessionsError)}
-          </p>
-        ) : null}
-        <ProfileSessionsList sessions={sessions} onRevoke={revoke} live={live} />
-        {live ? (
-          <div className="px-5 py-4 sm:px-6">
-            <SplitonCtaPill type="button" tone="onDark" onClick={logoutOthers} className="w-full min-w-0 sm:w-auto">
-              {t("profile.security.revokeAll")}
-            </SplitonCtaPill>
-          </div>
-        ) : null}
-      </ProfileOkxSection>
+        <h1 className="sr-only">{t("profile.overview.securityCard.title")}</h1>
+      </SplitonDarkSurface>
 
-      {live ? (
-        <ProfileOkxSection title={t("profile.security.events.title")}>
-          <ProfileSecurityEventsList events={securityEvents} timeZone={userTimezone} />
-        </ProfileOkxSection>
+      {loadError ? (
+        <div className="flex flex-col gap-3 rounded-2xl bg-red-500/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-red-300" role="alert">
+            <ProfileApiOrGenericError message={loadError} />
+          </p>
+          <SplitonCtaPill type="button" tone="onDark" variant="ghost" withArrow={false} onClick={() => void loadAll()}>
+            {t("actions.retry")}
+          </SplitonCtaPill>
+        </div>
       ) : null}
 
-      <ProfileOkxSection title={t("profile.okx.account")}>
-        <ProfileOkxRow
-          icon={profileLineIcon("password")}
-          title={t("profile.security.recoverAccess")}
+      {passwordSuccess ? (
+        <p className="rounded-xl bg-[#B7F500]/12 px-4 py-3 text-sm text-[#B7F500]" role="status">
+          {t("profile.security.password.success")}
+        </p>
+      ) : null}
+
+      {topRecText ? (
+        <ProfileOkxBanner
+          title={topRecText.title}
+          description={topRecText.description}
           action={
-            <SplitonCtaPill href={ROUTES.forgotPassword} tone="onDark" className="min-w-[9.5rem]">
-              {t("profile.okx.manage")}
+            <SplitonCtaPill
+              type="button"
+              tone="onDark"
+              className="min-w-[9.5rem]"
+              onClick={() => {
+                if (topRec?.code === "REVIEW_SESSIONS") setActiveTab("sessions");
+                else setActiveTab("login");
+              }}
+            >
+              {t("profile.okx.setup")}
             </SplitonCtaPill>
           }
         />
-        <ProfileOkxRow
-          icon={profileLineIcon("support")}
-          title={t("profile.security.reportSuspicious")}
-          action={
-            <SplitonCtaPill href={ROUTES.dashboardSupport} tone="onDark" className="min-w-[9.5rem]">
-              {t("profile.okx.use")}
-            </SplitonCtaPill>
-          }
-        />
-      </ProfileOkxSection>
+      ) : null}
+
+      <ProfileUnderlineTabs
+        value={activeTab}
+        onChange={setActiveTab}
+        items={SECURITY_TABS.map((id) => ({ id, label: t(`profile.security.tab.${id}`) }))}
+        ariaLabel={t("profile.overview.securityLabel")}
+      />
+
+      {tabPanel}
+
+      <ProfilePasswordChangePanel
+        open={passwordPanelOpen}
+        onOpenChange={setPasswordPanelOpen}
+        onSuccess={() => {
+          setPasswordSuccess(true);
+          void loadAll();
+        }}
+      />
+
+      {activeTab !== "sessions" ? (
+        <ProfileOkxSection title={t("profile.okx.account")}>
+          <ProfileOkxRow
+            icon={profileLineIcon("password")}
+            title={t("profile.security.recoverAccess")}
+            action={
+              <SplitonCtaPill href={ROUTES.forgotPassword} tone="onDark" className="min-w-[9.5rem]">
+                {t("profile.okx.manage")}
+              </SplitonCtaPill>
+            }
+          />
+          <ProfileOkxRow
+            icon={profileLineIcon("support")}
+            title={t("profile.security.reportSuspicious")}
+            action={
+              <SplitonCtaPill href={ROUTES.dashboardSupport} tone="onDark" className="min-w-[9.5rem]">
+                {t("profile.okx.use")}
+              </SplitonCtaPill>
+            }
+          />
+        </ProfileOkxSection>
+      ) : null}
     </div>
   );
 }

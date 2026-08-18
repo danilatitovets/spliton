@@ -31,8 +31,10 @@ import {
 import { ROUTES } from "@/constants/routes";
 import {
   approveAdminKycReview,
+  fetchAdminKycDocuments,
   listAdminKycReviews,
   rejectAdminKycReview,
+  type AdminKycDocumentsPayload,
   type AdminKycReview,
 } from "@/services/admin/adminKyc.service";
 import { cn } from "@/lib/utils";
@@ -73,6 +75,7 @@ export function KycSection() {
   const [rejectId, setRejectId] = React.useState<string | null>(null);
   const [rejectReason, setRejectReason] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("");
+  const [docsById, setDocsById] = React.useState<Record<string, AdminKycDocumentsPayload | "loading" | "error">>({});
 
   const statusOptions = React.useMemo(
     () =>
@@ -90,7 +93,19 @@ export function KycSection() {
     setLoading(true);
     setError(null);
     try {
-      setRows(await listAdminKycReviews(statusFilter || undefined, client));
+      const list = await listAdminKycReviews(statusFilter || undefined, client);
+      setRows(list);
+      setDocsById({});
+      await Promise.all(
+        list.slice(0, 20).map(async (row) => {
+          try {
+            const payload = await fetchAdminKycDocuments(row.id, client);
+            setDocsById((prev) => ({ ...prev, [row.id]: payload }));
+          } catch {
+            setDocsById((prev) => ({ ...prev, [row.id]: "error" }));
+          }
+        }),
+      );
     } catch (e) {
       setError(localizedAdminError(e));
     } finally {
@@ -101,6 +116,17 @@ export function KycSection() {
   React.useEffect(() => {
     void reload();
   }, [reload]);
+
+  async function loadDocuments(id: string) {
+    if (docsById[id] && docsById[id] !== "error") return;
+    setDocsById((prev) => ({ ...prev, [id]: "loading" }));
+    try {
+      const payload = await fetchAdminKycDocuments(id, client);
+      setDocsById((prev) => ({ ...prev, [id]: payload }));
+    } catch {
+      setDocsById((prev) => ({ ...prev, [id]: "error" }));
+    }
+  }
 
   async function handleApprove(id: string) {
     setBusyId(id);
@@ -176,15 +202,15 @@ export function KycSection() {
                           label={a.adminKycStatusLabel(row.status)}
                           tone={kycReviewTone(row.status)}
                         />
-                        <span aria-hidden>·</span>
+                        <span aria-hidden>/</span>
                         <span>{row.countryCode ?? "—"}</span>
-                        <span aria-hidden>·</span>
+                        <span aria-hidden>/</span>
                         <span>
                           {row.submittedAt ? new Date(row.submittedAt).toLocaleString("ru-RU") : "—"}
                         </span>
                         {(row as { documentReference?: string }).documentReference ? (
                           <>
-                            <span aria-hidden>·</span>
+                            <span aria-hidden>/</span>
                             <span className="font-mono text-zinc-400">
                               ref {(row as { documentReference?: string }).documentReference}
                             </span>
@@ -197,6 +223,13 @@ export function KycSection() {
                       >
                         Открыть профиль
                       </Link>
+                      <button
+                        type="button"
+                        className="mt-2 ml-3 text-xs font-medium text-zinc-300 underline"
+                        onClick={() => void loadDocuments(row.id)}
+                      >
+                        Документы
+                      </button>
                     </div>
                     {canMutate ? (
                       <div className="flex shrink-0 flex-wrap gap-2">
@@ -227,7 +260,7 @@ export function KycSection() {
                       <Input
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder={a.t("admin.placeholder.kycRejectReason")}
+                        placeholder="Причина, которую увидит пользователь"
                         className={cn(adminFieldInput, "sm:max-w-md")}
                       />
                       <Button
@@ -238,6 +271,43 @@ export function KycSection() {
                       >
                         Подтвердить отклонение
                       </Button>
+                    </div>
+                  ) : null}
+                  {docsById[row.id] === "loading" ? (
+                    <p className="mt-3 text-xs text-zinc-500">Загрузка документов…</p>
+                  ) : docsById[row.id] === "error" ? (
+                    <p className="mt-3 text-xs text-red-300">Не удалось открыть документы</p>
+                  ) : typeof docsById[row.id] === "object" ? (
+                    <div className="mt-4 space-y-3 border-t border-zinc-800/80 pt-4">
+                      {(docsById[row.id] as AdminKycDocumentsPayload).address ? (
+                        <p className="text-xs text-zinc-400">
+                          Адрес: {(docsById[row.id] as AdminKycDocumentsPayload).address?.city},{" "}
+                          {(docsById[row.id] as AdminKycDocumentsPayload).address?.street}
+                        </p>
+                      ) : null}
+                      {(docsById[row.id] as AdminKycDocumentsPayload).documents.length === 0 ? (
+                        <p className="text-xs text-zinc-500">Файлов нет</p>
+                      ) : (
+                        <ul className="grid gap-3 sm:grid-cols-3">
+                          {(docsById[row.id] as AdminKycDocumentsPayload).documents.map((doc) => (
+                            <li key={doc.docType} className="rounded-xl bg-zinc-950/50 p-3">
+                              <p className="text-xs font-medium text-zinc-200">{doc.docType}</p>
+                              {doc.signedUrl ? (
+                                doc.kind === "pdf" || doc.signedUrl.toLowerCase().includes(".pdf") ? (
+                                  <a href={doc.signedUrl} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-[#B7F500]">
+                                    Открыть PDF
+                                  </a>
+                                ) : (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={doc.signedUrl} alt="" className="mt-2 max-h-40 w-full rounded-lg object-contain" />
+                                )
+                              ) : (
+                                <p className="mt-2 text-xs text-zinc-500">Файл недоступен</p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   ) : null}
                 </li>

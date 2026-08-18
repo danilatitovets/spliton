@@ -11,6 +11,7 @@ import { MediaPlaceholder } from "@/components/dashboard/dashboard-media-placeho
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { ReadOnlySectionError } from "@/components/shared/data-states/read-only-section-error";
 import { ROUTES } from "@/constants/routes";
 import { catalogItems, type CatalogItem } from "@/lib/catalog-mock";
 import { formatUsdtRu } from "@/lib/wallet/format-money";
@@ -124,8 +125,11 @@ export function ArtistPageContent() {
   const [data, setData] = React.useState<ArtistDashboard | null>(null);
   const [releases, setReleases] = React.useState<ArtistRelease[]>([]);
   const [forbidden, setForbidden] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<unknown>(null);
   const [loading, setLoading] = React.useState(Boolean(user));
-  const [catalogPool, setCatalogPool] = React.useState<CatalogItem[]>(catalogItems);
+  const [catalogPool, setCatalogPool] = React.useState<CatalogItem[]>(
+    isLiveCatalogEnabled() ? [] : catalogItems,
+  );
 
   const kpiConfig = React.useMemo(
     () =>
@@ -151,10 +155,10 @@ export function ArtistPageContent() {
     let cancelled = false;
     void loadLiveCatalogItems({ page: 1, pageSize: 32 }, locale)
       .then((res) => {
-        if (!cancelled && res.items.length > 0) setCatalogPool(res.items);
+        if (!cancelled) setCatalogPool(res.items);
       })
       .catch(() => {
-        if (!cancelled) setCatalogPool(catalogItems);
+        if (!cancelled) setCatalogPool([]);
       });
     return () => {
       cancelled = true;
@@ -167,6 +171,7 @@ export function ArtistPageContent() {
       return;
     }
     setLoading(true);
+    setLoadError(null);
     const headers = { Authorization: `Bearer ${accessToken}` };
     void Promise.all([
       fetch(resolveApiUrl("/api/v1/artist/dashboard"), { headers, credentials: "include" }),
@@ -175,6 +180,7 @@ export function ArtistPageContent() {
       .then(async ([dashRes, relRes]) => {
         if (dashRes.status === 403 || relRes.status === 403) {
           setForbidden(true);
+          setLoadError(null);
           setData(null);
           setReleases([]);
           return;
@@ -183,11 +189,13 @@ export function ArtistPageContent() {
         const dash = (await dashRes.json()) as ArtistDashboard;
         const rel = (await relRes.json()) as { items: ArtistRelease[] };
         setForbidden(false);
+        setLoadError(null);
         setData(dash);
         setReleases(rel.items);
       })
-      .catch(() => {
-        setForbidden(true);
+      .catch((e) => {
+        setForbidden(false);
+        setLoadError(e);
         setData(null);
         setReleases([]);
       })
@@ -218,6 +226,13 @@ export function ArtistPageContent() {
             </div>
           ) : (
             <>
+              {loadError ? (
+                <ReadOnlySectionError
+                  sectionId="artist-portal"
+                  error={loadError}
+                  onRetry={load}
+                />
+              ) : null}
               {forbidden ? <IssuerPortalOnboarding /> : null}
 
               {hasPortalAccess && data ? (

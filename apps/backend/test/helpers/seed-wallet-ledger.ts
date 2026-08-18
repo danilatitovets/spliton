@@ -4,9 +4,10 @@ import {
   LedgerOperationType,
   LedgerPostingSide,
   Prisma,
-  PrismaClient,
   WalletStatus,
 } from '@prisma/client';
+
+import { getE2ePrisma } from './e2e-prisma';
 
 /** Creates wallet + balance cache and opening ledger credit aligned with migration baseline. */
 export async function seedWalletWithLedger(
@@ -14,7 +15,7 @@ export async function seedWalletWithLedger(
   available: string,
   locked = '0',
 ) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const wallet = await prisma.wallet.create({
     data: {
       userId,
@@ -65,6 +66,5 @@ export async function seedWalletWithLedger(
     });
   }
 
-  await prisma.$disconnect();
   return wallet;
 }

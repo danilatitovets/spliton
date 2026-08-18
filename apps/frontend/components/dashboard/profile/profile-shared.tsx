@@ -159,25 +159,39 @@ export function ProfileScoreRing({
   maxScore,
   label,
   size = "md",
+  tone = "spliton",
   className,
+  pending = false,
 }: {
   score: number;
   maxScore: number;
   label?: string;
   size?: "sm" | "md";
+  tone?: "spliton" | "gold";
   className?: string;
+  pending?: boolean;
 }) {
+  const outer = size === "sm" ? "h-[72px] w-[72px]" : "h-[76px] w-[76px]";
+  if (pending) {
+    return (
+      <div
+        className={cn("shrink-0 animate-pulse rounded-full bg-white/[0.08]", outer, className)}
+        aria-hidden
+      />
+    );
+  }
   const pct = maxScore > 0 ? Math.min(1, score / maxScore) : 0;
   const deg = pct * 360;
-  const outer = size === "sm" ? "h-[64px] w-[64px]" : "h-[76px] w-[76px]";
-  const inner = size === "sm" ? "h-[52px] w-[52px]" : "h-[62px] w-[62px]";
-  const scoreText = size === "sm" ? "text-[13px]" : "text-[15px]";
+  const inner = size === "sm" ? "h-[58px] w-[58px]" : "h-[62px] w-[62px]";
+  const scoreText = size === "sm" ? "text-[15px]" : "text-[16px]";
+  const accent = tone === "spliton" ? "#B7F500" : "#E8B86D";
+  const track = tone === "spliton" ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.12)";
 
   return (
     <div
       className={cn("relative grid shrink-0 place-items-center rounded-full", outer, className)}
       style={{
-        background: `conic-gradient(#E8B86D 0deg ${deg}deg, rgba(255,255,255,0.12) ${deg}deg 360deg)`,
+        background: `conic-gradient(${accent} 0deg ${deg}deg, ${track} ${deg}deg 360deg)`,
       }}
       aria-hidden
     >
@@ -187,7 +201,13 @@ export function ProfileScoreRing({
           inner,
         )}
       >
-        <span className={cn("font-semibold tabular-nums leading-none tracking-tight text-[#E8B86D]", scoreText)}>
+        <span
+          className={cn(
+            "font-bold tabular-nums leading-none tracking-[-0.03em]",
+            scoreText,
+            tone === "spliton" ? "text-[#B7F500]" : "text-[#E8B86D]",
+          )}
+        >
           {score}
         </span>
         {label ? (

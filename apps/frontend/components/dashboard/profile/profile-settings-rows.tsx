@@ -40,7 +40,7 @@ export function ProfileSettingsToggleRow({
         onClick={() => onChange(!checked)}
         className={cn(
           "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-          checked ? "bg-[#B7F500]" : "bg-white/15",
+          checked ? "bg-white" : "bg-white/20",
           disabled && "cursor-not-allowed opacity-50",
         )}
       >

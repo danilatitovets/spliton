@@ -94,3 +94,42 @@ export function assertDbConnectionPolicy(
     );
   }
 }
+
+const DEFAULT_PRISMA_CONNECTION_LIMIT = 5;
+const MAX_PRISMA_CONNECTION_LIMIT = 15;
+
+/**
+ * Cap Prisma's client pool so one Nest replica cannot exhaust Supabase
+ * session-mode `pool_size` (historically 15 → EMAXCONNSESSION).
+ * Does not log or return secrets beyond the rewritten URL for Prisma itself.
+ */
+export function applyPrismaConnectionLimit(
+  raw: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const parsed = Number(env.PRISMA_CONNECTION_LIMIT ?? DEFAULT_PRISMA_CONNECTION_LIMIT);
+  const limit =
+    Number.isFinite(parsed) && parsed > 0
+      ? Math.min(Math.floor(parsed), MAX_PRISMA_CONNECTION_LIMIT)
+      : DEFAULT_PRISMA_CONNECTION_LIMIT;
+  const trimmed = raw.trim();
+  try {
+    const url = new URL(trimmed.replace(/^postgresql:/i, 'postgres:'));
+    const local =
+      url.hostname === '127.0.0.1' ||
+      url.hostname === 'localhost' ||
+      url.hostname === '::1';
+    // Isolated Docker/local Postgres can take more connections than Supabase
+    // session pooler (pool_size 15). Do not cap unless explicitly configured.
+    if (local && env.PRISMA_CONNECTION_LIMIT == null) {
+      return trimmed;
+    }
+    if (!url.searchParams.has('connection_limit')) {
+      url.searchParams.set('connection_limit', String(limit));
+    }
+    return url.toString().replace(/^postgres:/i, 'postgresql:');
+  } catch {
+    if (/[?&]connection_limit=/.test(trimmed)) return trimmed;
+    return `${trimmed}${trimmed.includes('?') ? '&' : '?'}connection_limit=${limit}`;
+  }
+}

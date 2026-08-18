@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PrismaClient, UserRoleCode, UserStatus } from '@prisma/client';
+import { UserRoleCode, UserStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(): string {
   return `e2e-status-${Date.now()}@example.com`;
@@ -14,7 +15,7 @@ async function registerAdmin(app: E2eApp, email: string) {
       .send(e2eRegisterPayload(email, password))
     .expect(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({
     where: { code: UserRoleCode.ADMIN },
@@ -30,7 +31,6 @@ async function registerAdmin(app: E2eApp, email: string) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -90,7 +90,7 @@ describe('Admin system status (e2e)', () => {
       .set(auth)
       .expect(201);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audits = await prisma.auditLog.findMany({
       where: {
         entityId: incidentId,
@@ -111,7 +111,6 @@ describe('Admin system status (e2e)', () => {
       orderBy: { createdAt: 'desc' },
       take: 5,
     });
-    await prisma.$disconnect();
 
     expect(audits.length).toBeGreaterThanOrEqual(2);
     expect(

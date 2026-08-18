@@ -1,12 +1,12 @@
 import request from 'supertest';
 import {
   HelpArticleStatus,
-  PrismaClient,
   UserRoleCode,
   UserStatus,
 } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-help-${prefix}-${Date.now()}@example.com`;
@@ -19,12 +19,11 @@ async function registerAndLogin(app: E2eApp, email: string) {
     .send(e2eRegisterPayload(email, password))
     .expect(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.update({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -34,7 +33,7 @@ async function registerAndLogin(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -44,7 +43,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 describe('Admin help center API (e2e)', () => {
@@ -106,7 +104,7 @@ describe('Admin help center API (e2e)', () => {
     expect(publicRes.status).toBe(200);
     expect(publicRes.body.article.slug).toBe(artSlug);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audits = await prisma.auditLog.findMany({
       where: {
         entityType: { in: ['help_category', 'help_article'] },
@@ -114,7 +112,6 @@ describe('Admin help center API (e2e)', () => {
       },
       orderBy: { createdAt: 'asc' },
     });
-    await prisma.$disconnect();
     const actions = audits.map((a) => a.action);
     expect(actions).toEqual(
       expect.arrayContaining([
@@ -194,7 +191,7 @@ describe('Admin help center API (e2e)', () => {
     const auth = { Authorization: `Bearer ${login.body.tokens.accessToken}` };
     const suffix = Date.now();
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const author = await prisma.user.findUnique({ where: { email } });
     const category = await prisma.helpCategory.create({
       data: {
@@ -213,7 +210,6 @@ describe('Admin help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .patch(`/api/admin/v1/help/articles/${article.id}/publish`)
@@ -250,7 +246,7 @@ describe('Admin help center API (e2e)', () => {
       .send({ slug: `forbidden-${Date.now()}`, titleTranslations: { ru: 'X' } })
       .expect(403);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const author = await prisma.user.findUnique({ where: { email: managerEmail } });
     const suffix = Date.now();
     const category = await prisma.helpCategory.create({
@@ -270,7 +266,6 @@ describe('Admin help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     await request(app!.getHttpServer())
       .patch(`/api/admin/v1/help/articles/${article.id}/publish`)
@@ -290,7 +285,7 @@ describe('Admin help center API (e2e)', () => {
       .send({ email, password: 'TestPass123!' });
     const auth = { Authorization: `Bearer ${login.body.tokens.accessToken}` };
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const author = await prisma.user.findUnique({ where: { email } });
     const suffix = Date.now();
     const category = await prisma.helpCategory.create({
@@ -312,7 +307,6 @@ describe('Admin help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     await request(app!.getHttpServer())
       .patch(`/api/admin/v1/help/articles/${article.id}/archive`)
@@ -333,7 +327,7 @@ describe('Admin help center API (e2e)', () => {
       .get(`/api/v1/help/articles/${slug}`)
       .expect(404);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const audit = await prisma2.auditLog.findFirst({
       where: { entityId: article.id, action: 'help.article.archived' },
     });
@@ -350,7 +344,7 @@ describe('Admin help center API (e2e)', () => {
       .send({ email, password: 'TestPass123!' });
     const auth = { Authorization: `Bearer ${login.body.tokens.accessToken}` };
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const author = await prisma.user.findUnique({ where: { email } });
     const suffix = Date.now();
     const category = await prisma.helpCategory.create({
@@ -370,7 +364,6 @@ describe('Admin help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .delete(`/api/admin/v1/help/categories/${category.id}`)
@@ -388,7 +381,7 @@ describe('Admin help center API (e2e)', () => {
       .send({ email, password: 'TestPass123!' });
     const auth = { Authorization: `Bearer ${login.body.tokens.accessToken}` };
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const author = await prisma.user.findUnique({ where: { email } });
     const suffix = Date.now();
     const category = await prisma.helpCategory.create({
@@ -408,7 +401,6 @@ describe('Admin help center API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .patch(`/api/admin/v1/help/articles/${article.id}/publish`)

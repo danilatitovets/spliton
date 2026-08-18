@@ -16,8 +16,11 @@ import { profileCardClass } from "./profile-ui";
 
 const GEO_TEXTURE = "/images/profile/profile-sidebar-geo-texture.png";
 
-const chevronLinkClass =
-  "mt-3 inline-flex items-center gap-0.5 text-[13px] font-medium text-white transition hover:text-zinc-300";
+const sidebarCardTitleClass =
+  "text-[17px] font-bold leading-[1.2] tracking-[-0.02em] text-white";
+const sidebarCardBodyClass = "mt-2 text-[14px] leading-[1.5] text-zinc-500";
+const sidebarCardLinkClass =
+  "mt-4 inline-flex items-center gap-0.5 text-[14px] font-semibold text-white transition hover:text-zinc-300";
 
 function hasOpenSecurityGaps(
   security: AccountCenterSummary["security"] | undefined,
@@ -38,6 +41,7 @@ export function ProfileOverviewSidebar({ accountCenter, live, demo = false }: Pr
   const security = accountCenter?.security;
   const verification = accountCenter?.verification;
 
+  const securityPending = live && !demo && !security;
   const securityScore = live && security ? (security.score ?? 0) : demo ? PROFILE_DEMO_SECURITY_SCORE : 0;
   const securityMax = live && security ? (security.maxScore ?? 100) : 100;
   const showVerification = Boolean((live && verification) || demo);
@@ -57,20 +61,30 @@ export function ProfileOverviewSidebar({ accountCenter, live, demo = false }: Pr
   return (
     <aside className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:sticky lg:top-[calc(var(--profile-sticky-offset,7rem)+0.5rem)]">
       <section className={profileCardClass}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-4 sm:gap-5">
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold text-white">{t("profile.overview.securityCard.title")}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
-              {hasOpenSecurityGaps(security, demo)
-                ? t("profile.overview.securityCard.remaining")
-                : t("profile.overview.securityCard.secured")}
+            <h3 className={sidebarCardTitleClass}>{t("profile.overview.securityCard.title")}</h3>
+            <p className={sidebarCardBodyClass}>
+              {securityPending ? (
+                <span className="mt-0.5 inline-block h-4 w-40 animate-pulse rounded bg-white/[0.08]" />
+              ) : hasOpenSecurityGaps(security, demo) ? (
+                t("profile.overview.securityCard.remaining")
+              ) : (
+                t("profile.overview.securityCard.secured")
+              )}
             </p>
-            <Link href={profileDashboardHref("security")} className={chevronLinkClass}>
+            <Link href={profileDashboardHref("security")} className={sidebarCardLinkClass}>
               {t("profile.overview.securityCard.levelCta")}
-              <ChevronRight className="size-4" aria-hidden />
+              <ChevronRight className="size-4 shrink-0" aria-hidden />
             </Link>
           </div>
-          <ProfileScoreRing score={securityScore} maxScore={securityMax} size="sm" />
+          <ProfileScoreRing
+            score={securityScore}
+            maxScore={securityMax}
+            size="sm"
+            tone="spliton"
+            pending={securityPending}
+          />
         </div>
       </section>
 
@@ -93,7 +107,7 @@ export function ProfileOverviewSidebar({ accountCenter, live, demo = false }: Pr
             <span className="text-[15px] font-semibold">{t("profile.overview.promo.title")}</span>
             <ChevronRight className="size-4 shrink-0" aria-hidden />
           </Link>
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {promo.map((item) => {
               const Icon = item.icon;
               return (
@@ -115,20 +129,20 @@ export function ProfileOverviewSidebar({ accountCenter, live, demo = false }: Pr
 
       {showVerification ? (
         <section className={profileCardClass}>
-          <div className="flex items-center gap-3.5 sm:gap-4">
+          <div className="flex items-start gap-3.5 sm:gap-4">
             <ProfileGlassIcon src={PROFILE_METAL.id} size="lg" />
             <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-semibold text-white">
+              <h3 className={sidebarCardTitleClass}>
                 {t("profile.overview.placeholder.titleVerification")}
-              </p>
-              <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
+              </h3>
+              <p className={sidebarCardBodyClass}>
                 {live && verification
                   ? kycStatusLabel(verification.status, locale)
                   : t("profile.overview.verificationCard.assistantBody")}
               </p>
-              <Link href={profileDashboardHref("verification")} className={chevronLinkClass}>
+              <Link href={profileDashboardHref("verification")} className={sidebarCardLinkClass}>
                 {t("profile.overview.verificationCard.try")}
-                <ChevronRight className="size-4" aria-hidden />
+                <ChevronRight className="size-4 shrink-0" aria-hidden />
               </Link>
             </div>
           </div>

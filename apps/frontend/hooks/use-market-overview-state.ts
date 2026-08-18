@@ -3,6 +3,7 @@
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { isNoiseCatalogRelease } from "@/lib/catalog/is-noise-catalog-item";
 import {
   buildMarketOverviewUrlSearchParams,
   parseMarketOverviewSearchParams,
@@ -256,7 +257,11 @@ export function useMarketOverviewState() {
         setPagination(null);
       } else {
         setLoadError(null);
-        setLiveRows(listRes.items.map((item) => adaptMarketOverviewRow(item, period)));
+        setLiveRows(
+          listRes.items
+            .filter((item) => !isNoiseCatalogRelease(item.title, item.symbol, item.artist))
+            .map((item) => adaptMarketOverviewRow(item, period)),
+        );
         setPagination(listRes.pagination);
       }
 

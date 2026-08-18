@@ -1,13 +1,13 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
 import {
-  PrismaClient,
   SupportTicketCategory,
   SupportTicketStatus,
   UserRoleCode,
   UserStatus,
 } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-${prefix}-${Date.now()}@example.com`;
@@ -20,12 +20,11 @@ async function registerUser(app: E2eApp, email: string) {
       .send(e2eRegisterPayload(email, password, 'E2E'))
     .expect(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.updateMany({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -35,7 +34,7 @@ async function registerUser(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -45,7 +44,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 describe('Admin support center (e2e)', () => {
@@ -68,7 +66,7 @@ describe('Admin support center (e2e)', () => {
       .send({ email, password: 'TestPass123!' });
     const adminToken = login.body.tokens.accessToken as string;
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const holder = await prisma.user.findFirst({
       where: { status: UserStatus.ACTIVE, email: { not: email } },
     });
@@ -89,7 +87,6 @@ describe('Admin support center (e2e)', () => {
         isStaff: false,
       },
     });
-    await prisma.$disconnect();
 
     const auth = { Authorization: `Bearer ${adminToken}` };
     const list = await request(app!.getHttpServer())

@@ -1,7 +1,6 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   PrimaryRaiseRoundStatus,
   ReleaseStatus,
 } from '@prisma/client';
@@ -16,9 +15,10 @@ import { DepositIngestionSource } from '@prisma/client';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
 import { canonicalTestTxHash } from './helpers/canonical-tx-hash';
 import { assignUserDepositAddress } from './helpers/assign-user-deposit-address';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 async function seedPrimaryRound(units: string, price = '10') {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const release = await prisma.release.create({
     data: {
       slug: e2eSlug('crypto-rel'),
@@ -41,7 +41,6 @@ async function seedPrimaryRound(units: string, price = '10') {
       soldUnits: new Prisma.Decimal(0),
     },
   });
-  await prisma.$disconnect();
   return { release, round };
 }
 
@@ -85,7 +84,7 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
     for (let i = 0; i < 5; i += 1) {
       await ingestion.tick();
     }
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const balance = await prisma.walletBalance.findUnique({
       where: { walletId },
     });
@@ -93,7 +92,6 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
     expect(
       await prisma.deposit.count({ where: { blockchainTxid: txHash } }),
     ).toBe(1);
-    await prisma.$disconnect();
   });
 
   it('parallel processTransfer credits once', async () => {
@@ -109,12 +107,11 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
       ingestion.processTransfer(transfer, DepositIngestionSource.AUTO),
     ]);
     expect(results.filter((r) => r === 'credited').length).toBe(1);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     expect(
       (await prisma.walletBalance.findUnique({ where: { walletId } }))!
         .available.toString(),
     ).toBe('7');
-    await prisma.$disconnect();
   });
 
   it('admin recover by txHash is idempotent with worker', async () => {
@@ -132,7 +129,7 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
     ]);
     void a;
     void b;
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     expect(
       (await prisma.walletBalance.findUnique({ where: { walletId } }))!
         .available.toString(),
@@ -140,7 +137,6 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
     expect(
       await prisma.deposit.count({ where: { blockchainTxid: txHash } }),
     ).toBe(1);
-    await prisma.$disconnect();
   });
 
   it('kill switch confirms but does not credit', async () => {
@@ -152,14 +148,13 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
     );
     const out = await ingestion.tick();
     expect(out.credited).toBe(0);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const dep = await prisma.deposit.findFirst({ where: { blockchainTxid: txHash } });
     expect(dep?.status).toBe('CONFIRMED');
     expect(
       (await prisma.walletBalance.findUnique({ where: { walletId } }))!
         .available.toString(),
     ).toBe('0');
-    await prisma.$disconnect();
   });
 
   it('rejects failed and wrong-token transfers', async () => {
@@ -207,7 +202,7 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
       .send({ roundId: round.id, units: 2, idempotencyKey: idem });
     expect(first.status).toBe(201);
     expect(first.body.status).toBe('settled');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const balance = await prisma.walletBalance.findUnique({
       where: { walletId },
     });
@@ -220,6 +215,5 @@ describe('USDT TRC-20 crypto engine (e2e)', () => {
       where: { userId, releaseId: release.id },
     });
     expect(ownership).toBeTruthy();
-    await prisma.$disconnect();
   });
 });

@@ -17,6 +17,7 @@ import {
   ELIGIBILITY_MESSAGES,
   type EligibilityResult,
 } from './eligibility.types';
+import { effectiveKycStatus } from './kyc-effective-status';
 
 @Injectable()
 export class EligibilityService {
@@ -132,7 +133,7 @@ export class EligibilityService {
         riskLevel: AmlRiskLevel;
         restrictions: unknown;
       } | null;
-      kyc: { status: KycStatus } | null;
+      kyc: { status: KycStatus; expiresAt?: Date | null } | null;
       missing: Awaited<ReturnType<LegalConsentsService['getMissingConsents']>>;
       countryCheck?: Awaited<ReturnType<CountryRestrictionsService['checkCountry']>>;
     },
@@ -194,7 +195,7 @@ export class EligibilityService {
         this.kycRequiredForTrading());
 
     if (needsKyc) {
-      const kycResult = this.evaluateKyc(kyc?.status ?? KycStatus.NOT_STARTED);
+      const kycResult = this.evaluateKyc(effectiveKycStatus(kyc));
       if (!kycResult.allowed) return kycResult;
     }
 
@@ -276,7 +277,6 @@ export class EligibilityService {
       return { allowed: true, userMessage: 'OK' };
     }
     if (
-      status === KycStatus.PENDING ||
       status === KycStatus.IN_REVIEW ||
       status === KycStatus.MANUAL_REVIEW_REQUIRED
     ) {

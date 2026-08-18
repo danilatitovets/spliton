@@ -4,8 +4,8 @@ import { AssetsCabinetShell } from "@/components/dashboard/assets/assets-cabinet
 
 export default function AssetsLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-white">
-      <main className="scheme-light flex-1 text-neutral-900">
+    <div className="flex min-h-dvh flex-col">
+      <main className="flex-1">
         <AssetsCabinetShell>{children}</AssetsCabinetShell>
       </main>
     </div>

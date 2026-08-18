@@ -391,73 +391,27 @@ export function useReleaseAnalyticsState() {
   // Always available: fill empty live chart panels so Demo / sparse prod never looks blank.
   const chartsMock = React.useMemo(() => buildReleaseAnalyticsChartsMock(period), [period]);
 
-  const hasPositiveVolume = React.useCallback(
-    (points: { volumeUsdt?: string; payoutsUsdt?: string }[] | null | undefined) => {
-      if (!points?.length) return false;
-      return points.some((p) => {
-        const raw = p.volumeUsdt ?? p.payoutsUsdt ?? "0";
-        const n = Number.parseFloat(String(raw).replace(",", "."));
-        return Number.isFinite(n) && n > 0;
-      });
-    },
-    [],
-  );
-
   const timeseriesView = React.useMemo(() => {
     if (!liveMode) return chartsMock.timeseries;
-    if (!timeseries) return chartsMock.timeseries;
-    return {
-      ...timeseries,
-      primaryVolume: hasPositiveVolume(timeseries.primaryVolume)
-        ? timeseries.primaryVolume
-        : chartsMock.timeseries.primaryVolume,
-      secondaryVolume: hasPositiveVolume(timeseries.secondaryVolume)
-        ? timeseries.secondaryVolume
-        : chartsMock.timeseries.secondaryVolume,
-      payouts: hasPositiveVolume(timeseries.payouts)
-        ? timeseries.payouts
-        : chartsMock.timeseries.payouts,
-    };
-  }, [chartsMock, hasPositiveVolume, liveMode, timeseries]);
+    return timeseries;
+  }, [chartsMock.timeseries, liveMode, timeseries]);
 
   const compareView = React.useMemo(() => {
     if (!liveMode) return chartsMock.compare;
-    if (!compare?.items?.length) return chartsMock.compare;
     return compare;
-  }, [chartsMock, compare, liveMode]);
+  }, [chartsMock.compare, compare, liveMode]);
 
   const genresView = React.useMemo(() => {
     if (!liveMode) return chartsMock.genres;
-    if (!genresApi?.items?.length) return chartsMock.genres;
-    const mockByLabel = new Map(
-      chartsMock.genres.items.map((g) => [g.genre.trim().toLowerCase(), g.averageYieldPct]),
-    );
-    return {
-      ...genresApi,
-      items: genresApi.items.map((item) => {
-        if (item.averageYieldPct != null && Math.abs(item.averageYieldPct) > 1e-6) return item;
-        const mockY = mockByLabel.get(item.genre.trim().toLowerCase());
-        if (mockY == null) return item;
-        return { ...item, averageYieldPct: mockY };
-      }),
-    };
-  }, [chartsMock, genresApi, liveMode]);
+    return genresApi;
+  }, [chartsMock.genres, genresApi, liveMode]);
 
   const funnelView = React.useMemo(() => {
     if (!liveMode) return chartsMock.funnel;
-    if (!funnel?.steps) return chartsMock.funnel;
     return funnel;
-  }, [chartsMock, funnel, liveMode]);
+  }, [chartsMock.funnel, funnel, liveMode]);
 
-  const chartsDemoFill = React.useMemo(() => {
-    if (!liveMode) return true;
-    const tsEmpty =
-      !hasPositiveVolume(timeseries?.primaryVolume) &&
-      !hasPositiveVolume(timeseries?.secondaryVolume) &&
-      !hasPositiveVolume(timeseries?.payouts);
-    const cmpEmpty = !compare?.items?.length;
-    return tsEmpty || cmpEmpty;
-  }, [compare, hasPositiveVolume, liveMode, timeseries]);
+  const chartsDemoFill = !liveMode;
 
   const filteredRows = React.useMemo(() => {
     if (liveMode) return liveRows ?? [];

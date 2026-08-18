@@ -27,7 +27,6 @@ import { UserWalletService } from '../wallets/user-wallet.service';
 import { WalletAuditService } from '../wallets/wallet-audit.service';
 import { CacheInvalidationService } from '../../common/platform/cache/cache-invalidation.service';
 import { FeatureFlagsService } from '../../common/platform/feature-flags/feature-flags.service';
-import { hashRequestPayload } from '../../common/platform/idempotency/request-hash.util';
 import { ErrorCodes } from '../../common/platform/errors/error-codes';
 import { throwAppError } from '../../common/platform/errors/throw-app-error';
 import { EligibilityService } from '../compliance/eligibility.service';
@@ -63,10 +62,6 @@ export class PrimaryOrderService {
     this.flags.assertEnabled('enablePrimaryMarket');
 
     const idempotencyKey = dto.idempotencyKey.trim();
-    const requestHash = hashRequestPayload({
-      roundId: dto.roundId,
-      units: dto.units,
-    });
     const units = new Prisma.Decimal(String(dto.units));
 
     if (units.lessThanOrEqualTo(0)) {
@@ -81,11 +76,10 @@ export class PrimaryOrderService {
       where: { userId, idempotencyKey },
     });
     if (existing) {
-      const priorHash = hashRequestPayload({
-        roundId: existing.primaryRaiseRoundId ?? dto.roundId,
-        units: Number(existing.unitsTotal.toString()),
-      });
-      if (priorHash !== requestHash) {
+      const sameRound =
+        (existing.primaryRaiseRoundId ?? dto.roundId) === dto.roundId;
+      const sameUnits = existing.unitsTotal.eq(units);
+      if (!sameRound || !sameUnits) {
         throwAppError(
           ErrorCodes.IDEMPOTENCY_CONFLICT,
           'Idempotency key was already used with different purchase parameters',

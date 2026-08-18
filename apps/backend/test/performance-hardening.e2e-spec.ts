@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PrismaClient, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -10,6 +10,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { EmailService } from '../src/modules/email/email.service';
 import { FakeEmailService } from './helpers/fake-email.service';
 import { ConfigurableThrottlerGuard } from '../src/common/guards/configurable-throttler.guard';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 /** Login route limit from AuthController: 5 attempts per 60s per IP (see @Throttle on POST /auth/login). */
 const LOGIN_ROUTE_LIMIT = 5;
@@ -136,13 +137,12 @@ async function loginActiveUser(
   await request(app.getHttpServer())
     .post('/auth/register')
       .send(e2eRegisterPayload(email, password, 'Perf'));
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   await prisma.user.update({
     where: { id: user!.id },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
   const login = await request(app.getHttpServer())
     .post('/auth/login')
     .send({ email, password });

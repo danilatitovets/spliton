@@ -4,28 +4,17 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Bell,
-  ChevronDown,
-  CircleHelp,
-  Menu,
-  User,
-  X,
-} from "@/lib/lucide";
-
 import { DashboardMobileMenu } from "@/components/dashboard/dashboard-mobile-menu";
 import { useMobileTabBarShell } from "@/components/layout/mobile-tab-bar-shell";
 import { useDashboardHeaderOverlay } from "@/components/layout/dashboard-header-overlay-context";
+import { DashboardHeaderNavMenu } from "@/components/dashboard/dashboard-header-nav-menu";
 import {
-  DASHBOARD_MEGAMENU_PANEL_ID,
   DASHBOARD_PROFILE_MEGAMENU_ID,
   DASHBOARD_SUPPORT_MEGAMENU_ID,
-  DashboardMegamenuPanel,
-  SplitMegamenuFlyout,
   ProfileMegamenuFlyout,
   SupportMegamenuFlyout,
-  isSplitMegamenuId,
 } from "@/components/dashboard/dashboard-megamenu";
+import { HeaderChromeIcon } from "@/components/dashboard/megamenu-item-icons";
 import {
   DashboardHeaderSearchInline,
 } from "@/components/dashboard/dashboard-header-search";
@@ -40,7 +29,6 @@ import { CabinetDemoDataToggle } from "@/components/dashboard/cabinet-demo-data-
 import { useHeaderWalletBalance } from "@/hooks/use-header-wallet-balance";
 import { useLocalizedNavItems } from "@/hooks/use-localized-nav";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { tf } from "@/lib/i18n/financial-messages";
 import { cn } from "@/lib/utils";
 
 const DEPOSIT_HREF = `${ROUTES.dashboardPayouts}/deposit`;
@@ -59,7 +47,7 @@ function HeaderDivider({ className }: { className?: string }) {
 }
 
 const headerIconShellClass =
-  "flex size-9 shrink-0 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/8 hover:text-white";
+  "group flex size-9 shrink-0 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/8 hover:text-white";
 
 function navItemActive(item: DashboardNavItem, pathname: string, hash: string) {
   if (item.href === ROUTES.dashboard) {
@@ -101,116 +89,6 @@ function navItemActive(item: DashboardNavItem, pathname: string, hash: string) {
   }
   const frag = item.href.includes("#") ? `#${item.href.split("#")[1]}` : "";
   return pathname === ROUTES.dashboard && frag !== "" && hash === frag;
-}
-
-function NavTrigger({
-  item,
-  pathname,
-  hash,
-  expandedKey,
-  onToggle,
-  onHoverOpen,
-  onNavigate,
-  onFlyoutEnter,
-  onFlyoutLeave,
-  isDesktop,
-  size = "desktop",
-  menuAriaLabel,
-}: {
-  item: DashboardNavItem;
-  pathname: string;
-  hash: string;
-  expandedKey: string | null;
-  onToggle: (id: string) => void;
-  onHoverOpen: (id: string) => void;
-  /** Закрыть мегаменю при переходе по ссылке пункта */
-  onNavigate: () => void;
-  onFlyoutEnter?: () => void;
-  onFlyoutLeave?: () => void;
-  isDesktop: boolean;
-  size?: "desktop" | "mobile";
-  menuAriaLabel: string;
-}) {
-  const isOpen = expandedKey === item.id;
-  const isActive = navItemActive(item, pathname, hash) || isOpen;
-  const hasMenu = Boolean(item.children?.length);
-
-  const shellDesktop =
-    "flex shrink-0 items-center rounded-md text-[11px] font-semibold uppercase tracking-[0.1em] leading-[1.15] transition-colors xl:px-0";
-  const shellMobile = "flex w-full min-w-0 items-center rounded-md text-[11px] font-medium";
-  const shell = size === "desktop" ? shellDesktop : shellMobile;
-  const activeShell = isActive
-    ? "bg-white/12 text-white"
-    : "text-white/80 hover:bg-white/8 hover:text-white";
-  const linkPad =
-    size === "desktop"
-      ? "flex items-center rounded-l-md px-2.5 py-2 xl:pl-3 xl:pr-1.5"
-      : "flex min-w-0 flex-1 items-center justify-center rounded-l-md px-2 py-1.5 pr-1";
-  const btnPad =
-    size === "desktop" ? "flex items-center justify-center rounded-r-md py-2 pr-2 pl-0.5" : "flex items-center rounded-r-md py-1.5 pr-2 pl-0.5";
-
-  if (!hasMenu) {
-    return (
-      <Link
-        href={item.href}
-        className={cn(
-          size === "desktop"
-            ? "flex shrink-0 items-center gap-1 rounded-md px-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] leading-[1.15] text-white/80 transition-colors xl:px-3"
-            : "flex min-w-0 w-full items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-white/80",
-          isActive ? "bg-white/12 text-white" : "hover:bg-white/8 hover:text-white",
-        )}
-      >
-        <span className="truncate">{item.label}</span>
-      </Link>
-    );
-  }
-
-  return (
-    <div
-      className="relative shrink-0"
-      onMouseEnter={() => {
-        if (isDesktop) onHoverOpen(item.id);
-      }}
-    >
-      <div className={cn(shell, activeShell)}>
-        <Link href={item.href} onClick={onNavigate} className={cn(linkPad, "min-w-0 hover:text-zinc-100")}>
-          <span className="truncate">{item.label}</span>
-        </Link>
-        <button
-          type="button"
-          id={`nav-trigger-${item.id}`}
-          aria-expanded={isOpen}
-          aria-controls={DASHBOARD_MEGAMENU_PANEL_ID}
-          aria-label={menuAriaLabel}
-          onClick={(e) => {
-            e.preventDefault();
-            onToggle(item.id);
-          }}
-          className={cn(btnPad, "text-inherit hover:text-zinc-100")}
-        >
-          <ChevronDown
-            className={cn(
-              size === "desktop" ? "size-3.5" : "size-3",
-              "opacity-70 transition-transform duration-200",
-              isOpen && "-rotate-180",
-            )}
-            strokeWidth={2}
-            aria-hidden
-          />
-        </button>
-      </div>
-
-      {isSplitMegamenuId(item.id) && isOpen && isDesktop ? (
-        <div
-          className="absolute left-0 top-full z-[120] hidden pt-2 xl:block"
-          onMouseEnter={onFlyoutEnter}
-          onMouseLeave={onFlyoutLeave}
-        >
-          <SplitMegamenuFlyout openItem={item} onNavigate={onNavigate} />
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 type DashboardHeaderProps = {
@@ -263,7 +141,7 @@ function HeaderHelpLink({
         if (expanded) e.preventDefault();
       }}
     >
-      <CircleHelp className="size-[18px]" strokeWidth={1.75} aria-hidden />
+      <HeaderChromeIcon kind="help" />
     </Link>
   );
 }
@@ -314,7 +192,6 @@ export function DashboardHeader({
   const scheduleCloseMenu = React.useCallback(() => {
     cancelCloseMenuTimer();
     closeMenuTimerRef.current = window.setTimeout(() => {
-      setExpandedKey(null);
       setProfileOpen(false);
       setSupportOpen(false);
       closeMenuTimerRef.current = null;
@@ -340,18 +217,13 @@ export function DashboardHeader({
     return () => window.removeEventListener("hashchange", onHashChange);
   }, [closeProfileDrawer]);
 
-  const onHoverOpen = React.useCallback((id: string) => {
+  const onNavValueChange = React.useCallback((next: string | null) => {
     cancelCloseMenuTimer();
-    setProfileOpen(false);
-    setSupportOpen(false);
-    setExpandedKey(id);
-  }, [cancelCloseMenuTimer]);
-
-  const onToggle = React.useCallback((id: string) => {
-    cancelCloseMenuTimer();
-    setProfileOpen(false);
-    setSupportOpen(false);
-    setExpandedKey((k) => (k === id ? null : id));
+    setExpandedKey(next);
+    if (next) {
+      setProfileOpen(false);
+      setSupportOpen(false);
+    }
   }, [cancelCloseMenuTimer]);
 
   const closeSubnav = React.useCallback(() => {
@@ -392,18 +264,17 @@ export function DashboardHeader({
   React.useEffect(() => {
     const onPointerDown = (e: MouseEvent | PointerEvent) => {
       const el = headerRef.current;
-      if (!el || (!expandedKey && !profileOpen && !supportOpen)) return;
+      if (!el || (!profileOpen && !supportOpen)) return;
       const target = e.target as Node;
       if (!el.contains(target)) {
         cancelCloseMenuTimer();
-        setExpandedKey(null);
         setProfileOpen(false);
         setSupportOpen(false);
       }
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [expandedKey, profileOpen, supportOpen, cancelCloseMenuTimer]);
+  }, [profileOpen, supportOpen, cancelCloseMenuTimer]);
 
   React.useEffect(() => {
     return () => {
@@ -444,12 +315,6 @@ export function DashboardHeader({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const openItem = navItems.find((i) => i.id === expandedKey);
-
-  /** Портальный фон: только для полноширинных mega-menu (не split-flyout и не профиль). */
-  const showFlyoutBackdrop =
-    portalReady && expandedKey != null && !isSplitMegamenuId(expandedKey);
-
   const mobileMenuLayer =
     portalReady
       ? createPortal(
@@ -462,6 +327,7 @@ export function DashboardHeader({
             navItemActive={navItemActive}
             t={t}
             isAuthenticated={wallet.isAuthenticated}
+            authPending={wallet.isAuthPending}
             balanceShort={wallet.balanceShort}
             balanceError={wallet.error}
             depositHref={DEPOSIT_HREF}
@@ -471,22 +337,8 @@ export function DashboardHeader({
         )
       : null;
 
-  const headerFlyoutBackdrop = showFlyoutBackdrop ? (
-      <div
-        role="presentation"
-        aria-hidden
-        className="fixed inset-0 z-[105] bg-black/40"
-        style={{
-          WebkitBackdropFilter: "blur(40px) brightness(0.42) saturate(0.92)",
-          backdropFilter: "blur(40px) brightness(0.42) saturate(0.92)",
-        }}
-        onClick={closeSubnav}
-      />
-    ) : null;
-
   return (
     <>
-      {headerFlyoutBackdrop ? createPortal(headerFlyoutBackdrop, document.body) : null}
       {mobileMenuLayer}
       <header
         ref={headerRef}
@@ -509,28 +361,14 @@ export function DashboardHeader({
 
           <HeaderDivider className="mx-1 hidden xl:block" />
 
-          <nav
-            className="hidden min-w-0 items-center gap-0.5 overflow-x-auto overflow-y-visible xl:flex xl:gap-1 2xl:overflow-visible"
-            aria-label={t("navigation.header.mainNav")}
-          >
-            {navItems.map((item) => (
-              <NavTrigger
-                key={item.id}
-                item={item}
-                pathname={pathname}
-                hash={hash}
-                expandedKey={expandedKey}
-                onToggle={onToggle}
-                onHoverOpen={onHoverOpen}
-                onNavigate={closeSubnav}
-                onFlyoutEnter={cancelCloseMenuTimer}
-                onFlyoutLeave={scheduleCloseMenu}
-                isDesktop={isDesktop}
-                size="desktop"
-                menuAriaLabel={tf(t("navigation.header.navMenu"), { label: item.label })}
-              />
-            ))}
-          </nav>
+          <DashboardHeaderNavMenu
+            items={navItems}
+            value={expandedKey}
+            onValueChange={onNavValueChange}
+            onNavigate={closeSubnav}
+            ariaLabel={t("navigation.header.mainNav")}
+            isItemActive={(item) => navItemActive(item, pathname, hash)}
+          />
         </div>
 
         <DashboardHeaderSearchInline />
@@ -538,7 +376,12 @@ export function DashboardHeader({
         {/* Actions + utilities */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <CabinetDemoDataToggle />
-          {wallet.isAuthenticated ? (
+          {wallet.isAuthPending ? (
+            <span
+              className="hidden h-9 w-[5.5rem] animate-pulse rounded-lg bg-white/10 xl:inline-flex"
+              aria-hidden
+            />
+          ) : wallet.isAuthenticated ? (
             <Link
               href={DEPOSIT_HREF}
               className="hidden h-9 shrink-0 items-center rounded-full bg-white/10 px-4 text-[12px] font-medium text-white transition hover:bg-white/16 active:scale-[0.98] xl:inline-flex"
@@ -555,16 +398,16 @@ export function DashboardHeader({
           )}
 
           {wallet.isAuthenticated ? (
-            <details className="relative hidden 2xl:block">
+            <details className="group relative hidden 2xl:block">
               <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-white/85 transition-colors marker:hidden hover:bg-white/8 [&::-webkit-details-marker]:hidden">
                 <span className="max-w-[8rem] truncate tabular-nums">
                   {wallet.balanceShort ?? (wallet.error ? "—" : "…")}
                 </span>
                 <span className="text-white/65">USDT</span>
-                <ChevronDown className="size-3.5 text-white/65" strokeWidth={2} aria-hidden />
+                <HeaderChromeIcon kind="chevron" className="header-ico-sm text-white/65" />
               </summary>
-              <div className="absolute right-0 z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-white/[0.1] bg-[#0a0a0a] py-1 shadow-2xl ring-1 ring-black/60">
-                <div className="border-b border-white/[0.06] px-3 py-2.5">
+              <div className="absolute right-0 z-50 mt-1.5 w-56 overflow-hidden rounded-xl bg-[#0a0a0a] py-1 shadow-2xl">
+                <div className="px-3 py-2.5">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
                     {t("nav.balance")}
                   </p>
@@ -591,7 +434,14 @@ export function DashboardHeader({
             </details>
           ) : null}
 
-          {wallet.isAuthenticated ? (
+          {wallet.isAuthPending ? (
+            <span
+              className={cn(headerIconShellClass, "xl:hidden")}
+              aria-hidden
+            >
+              <span className="size-[18px] animate-pulse rounded-full bg-white/20" />
+            </span>
+          ) : wallet.isAuthenticated ? (
             <button
               type="button"
               className={cn(
@@ -608,7 +458,7 @@ export function DashboardHeader({
                 openProfileDrawer();
               }}
             >
-              <User className="size-[18px]" strokeWidth={1.75} aria-hidden />
+              <HeaderChromeIcon kind="user" />
             </button>
           ) : (
             <Link
@@ -616,7 +466,7 @@ export function DashboardHeader({
               className={cn(headerIconShellClass, "xl:hidden")}
               aria-label={t("navigation.header.login")}
             >
-              <User className="size-[18px]" strokeWidth={1.75} aria-hidden />
+              <HeaderChromeIcon kind="user" />
             </Link>
           )}
 
@@ -642,7 +492,7 @@ export function DashboardHeader({
               setMobileMenuOpen((prev) => !prev);
             }}
           >
-            {mobileMenuOpen ? <X className="size-[18px]" strokeWidth={1.75} aria-hidden /> : <Menu className="size-[18px]" strokeWidth={1.75} aria-hidden />}
+            {mobileMenuOpen ? <HeaderChromeIcon kind="close" /> : <HeaderChromeIcon kind="menu" />}
           </button>
 
           <div
@@ -657,8 +507,7 @@ export function DashboardHeader({
             <button
               type="button"
               className={cn(
-                "relative z-[1] flex size-9 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-100",
-                "text-white/80 hover:bg-white/8 hover:text-white",
+                "group relative z-[1] flex size-9 shrink-0 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/8 hover:text-white",
                 profileOpen && "bg-white/12 text-white",
               )}
               aria-label={t("navigation.header.profile")}
@@ -676,7 +525,7 @@ export function DashboardHeader({
                 setProfileOpen((p) => !p);
               }}
             >
-              <User className="size-[18px]" strokeWidth={1.75} aria-hidden />
+              <HeaderChromeIcon kind="user" />
             </button>
 
             {profileOpen && isDesktop ? (
@@ -739,8 +588,6 @@ export function DashboardHeader({
         </div>
       </div>
       </div>
-
-      <DashboardMegamenuPanel openItem={openItem} onNavigate={closeSubnav} />
     </header>
     </>
   );

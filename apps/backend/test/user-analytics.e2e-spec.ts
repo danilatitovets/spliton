@@ -1,8 +1,9 @@
 import request from 'supertest';
-import { Prisma, PrismaClient, ReleaseStatus } from '@prisma/client';
+import { Prisma, ReleaseStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { e2eEmail, e2eSlug, e2eSymbol } from './helpers/e2e-unique';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 async function registerAndLogin(app: E2eApp, email: string) {
   const { token, userId } = await registerE2eUser(app, email);
@@ -10,7 +11,7 @@ async function registerAndLogin(app: E2eApp, email: string) {
 }
 
 async function seedReleaseWithPosition(userId: string) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const release = await prisma.release.create({
     data: {
       slug: e2eSlug('ua'),
@@ -35,12 +36,11 @@ async function seedReleaseWithPosition(userId: string) {
       avgEntryPrice: new Prisma.Decimal(10),
     },
   });
-  await prisma.$disconnect();
   return release;
 }
 
 async function seedPublicReleaseForAnalytics() {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const release = await prisma.release.create({
     data: {
       slug: e2eSlug('ua-pub-list'),
@@ -54,7 +54,6 @@ async function seedPublicReleaseForAnalytics() {
       status: ReleaseStatus.ACTIVE,
     },
   });
-  await prisma.$disconnect();
   return release;
 }
 
@@ -172,7 +171,7 @@ describe('User analytics (e2e)', () => {
   it('denies ledger without position', async () => {
     const email = e2eEmail('ua-ledger');
     const { token } = await registerAndLogin(app!, email);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: e2eSlug('ua-x'),
@@ -185,7 +184,6 @@ describe('User analytics (e2e)', () => {
         status: ReleaseStatus.ACTIVE,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get(`/api/v1/analytics/releases/${release.id}/ledger`)
@@ -194,7 +192,7 @@ describe('User analytics (e2e)', () => {
   });
 
   it('exposes public market endpoint without auth', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: e2eSlug('ua-pub'),
@@ -207,7 +205,6 @@ describe('User analytics (e2e)', () => {
         status: ReleaseStatus.ACTIVE,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       `/api/v1/analytics/releases/${release.id}/market`,

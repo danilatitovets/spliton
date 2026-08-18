@@ -21,6 +21,7 @@ const PROTECTED_PAGES = [
   '/dashboard/profile',
   '/dashboard/profile?tab=security',
   '/dashboard/profile?tab=verification',
+  '/dashboard/profile/devices',
 ] as const;
 
 test.describe('Protected pages smoke (session hint)', () => {

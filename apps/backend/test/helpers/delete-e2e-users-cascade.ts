@@ -1,6 +1,7 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { resolveE2eDatabaseUrl } from './e2e-database-url';
+import { getE2ePrisma } from './e2e-prisma';
 
 /**
  * Deletes e2e users and dependent rows (orders, trades, wallets, …) in FK-safe order.
@@ -10,10 +11,9 @@ export async function deleteE2eUsersWhere(
   where: Prisma.UserWhereInput,
 ): Promise<number> {
   resolveE2eDatabaseUrl();
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
 
-  try {
-    const users = await prisma.user.findMany({ where, select: { id: true } });
+  const users = await prisma.user.findMany({ where, select: { id: true } });
     const ids = users.map((u) => u.id);
     if (ids.length === 0) return 0;
 
@@ -189,7 +189,4 @@ export async function deleteE2eUsersWhere(
     );
 
     return ids.length;
-  } finally {
-    await prisma.$disconnect();
-  }
 }

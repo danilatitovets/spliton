@@ -1,7 +1,8 @@
 import request from 'supertest';
-import { Prisma, PrismaClient, WalletStatus } from '@prisma/client';
+import { Prisma, WalletStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -22,7 +23,7 @@ describe('User wallet read (e2e)', () => {
     const email = uniqueEmail('wallet-read');
     const { token, userId } = await registerE2eUser(app!, email);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const wallet = await prisma.wallet.create({
       data: {
         userId,
@@ -53,7 +54,6 @@ describe('User wallet read (e2e)', () => {
         happenedAt: new Date(),
       },
     });
-    await prisma.$disconnect();
 
     const summary = await request(app!.getHttpServer())
       .get('/api/v1/wallet')

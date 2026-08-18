@@ -1,47 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  Activity,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  BarChart3,
-  BookOpen,
-  Calculator,
-  CircleHelp,
-  ChevronRight,
-  Compass,
-  FileText,
-  GitCompare,
-  Handshake,
-  History,
-  LayoutDashboard,
-  LayoutGrid,
-  MessageSquarePlus,
-  Mic2,
-  Newspaper,
-  Percent,
-  PieChart,
-  Scale,
-  ShieldCheck,
-  SlidersHorizontal,
-  Settings,
-  Lock,
-  LogOut,
-  UserRound,
-  TrendingUp,
-  UserPlus,
-  Wallet,
-  type LucideIcon,
-} from "@/lib/lucide";
-import type {
-  DashboardNavBadge,
-  DashboardNavItem,
-  DashboardNavSubItem,
+  MEGAMENU_CARD_TEXTURE,
+  megamenuTexturePosition,
+  type DashboardNavBadge,
+  type DashboardNavItem,
+  type DashboardNavSubItem,
 } from "@/components/dashboard/dashboard-nav";
-import { SUPPORT_QUICK_ACTIONS } from "@/constants/support-hub-config";
+import { MegamenuItemIcon } from "@/components/dashboard/megamenu-item-icons";
+import { BRAND } from "@/constants/brand";
 import { profileDashboardHref } from "@/constants/dashboard/profile-page";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -194,7 +163,7 @@ function SubItemIcon({ sub, className }: { sub: DashboardNavSubItem; className?:
     return (
       <div
         className={cn(
-          "relative z-[2] h-[96px] w-[92%] overflow-hidden rounded-lg bg-black/40",
+          "relative z-[2] h-[96px] w-[92%] overflow-hidden",
           className,
         )}
       >
@@ -202,7 +171,10 @@ function SubItemIcon({ sub, className }: { sub: DashboardNavSubItem; className?:
         <img
           src={sub.iconSrc}
           alt=""
-          className="h-full w-full object-cover object-center brightness-125 contrast-125 saturate-110"
+          className={cn(
+            "h-full w-full object-center",
+            sub.iconFit === "contain" ? "object-contain p-1" : "object-cover",
+          )}
         />
       </div>
     );
@@ -222,62 +194,77 @@ function SubItemIcon({ sub, className }: { sub: DashboardNavSubItem; className?:
 }
 
 const cardShell =
-  "group relative flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black transition-colors duration-150 sm:min-h-[236px]";
+  "group relative flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-xl bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)] transition-colors duration-150 sm:min-h-[236px]";
 
-const cardHover =
-  "hover:border-white/14 hover:bg-zinc-950";
+const cardHover = "hover:bg-zinc-950";
 
-function MegamenuFeaturedGraphic() {
+const SPLITON_TEXTURE = "/images/landing/footer-spliton-texture-fill-bw.png";
+
+function MegamenuCardTexture({
+  position,
+  watermark = false,
+}: {
+  position?: string;
+  watermark?: boolean;
+}) {
   return (
-    <div className="relative mx-auto flex min-h-[84px] flex-1 items-center justify-center py-2" aria-hidden>
-      <div className="absolute inset-x-1 bottom-1 opacity-35">
-        <CardInnerWaves className="size-full" />
-      </div>
-      <div className="relative flex size-[72px] items-center justify-center">
-        <div className="absolute inset-0 rounded-full border border-white/10" />
-        <div className="absolute inset-2 rounded-full border border-white/[0.06]" />
-        <div className="absolute inset-[14px] rounded-full border border-dashed border-white/10" />
-        <div className="relative z-[1] flex size-8 items-center justify-center rounded-full bg-white/[0.06] text-[9px] font-bold text-white/90">
-          RS
+    <>
+      <div
+        className="megamenu-featured-media pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `url('${MEGAMENU_CARD_TEXTURE}')`,
+          backgroundSize: "cover",
+          backgroundPosition: position ?? "center",
+          opacity: 0.88,
+        }}
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-0 bg-black/55" aria-hidden />
+      {watermark ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden sm:justify-end" aria-hidden>
+          <p
+            className="select-none whitespace-nowrap bg-clip-text font-bold leading-[0.78] tracking-[-0.06em] text-transparent"
+            style={{
+              fontSize: "clamp(3.2rem, 22vw, 9rem)",
+              backgroundImage: `url('${SPLITON_TEXTURE}')`,
+              backgroundSize: "140% auto",
+              backgroundPosition: "48% 42%",
+              backgroundRepeat: "no-repeat",
+              WebkitTextStroke: "0.5px rgba(255,255,255,0.1)",
+            }}
+          >
+            {BRAND.name}
+          </p>
         </div>
-        <span className="absolute -right-0.5 top-2 size-1.5 rounded-full bg-white/35" />
-        <span className="absolute bottom-4 -left-0.5 size-1 rounded-full bg-white/20" />
-      </div>
-    </div>
+      ) : null}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-black/85 via-black/35 to-transparent"
+        aria-hidden
+      />
+    </>
   );
 }
 
 function MegamenuIntroCard({
   title,
+  description,
   href,
   onNavigate,
-  imageSrc,
+  textureId,
 }: {
   title: string;
+  description?: string;
   href: string;
   onNavigate: () => void;
-  imageSrc?: string;
+  textureId?: string;
 }) {
   return (
-    <Link href={href} onClick={onNavigate} className={cn(cardShell, cardHover, "p-3 sm:p-3.5")}>
-      {imageSrc ? (
-        <div className="pointer-events-none absolute inset-0">
-          <Image
-            src={imageSrc}
-            alt=""
-            fill
-            className="object-cover object-center brightness-75"
-          />
-          <div className="absolute inset-0 bg-black/55" />
-        </div>
-      ) : null}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.25]">
-        <CardInnerWaves className="absolute inset-x-0 bottom-0 h-24 w-full" />
-      </div>
-      <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+    <Link href={href} onClick={onNavigate} className={cn(cardShell, cardHover, "megamenu-featured-card p-3 sm:p-3.5")}>
+      <MegamenuCardTexture position={megamenuTexturePosition(textureId ?? "catalog")} watermark />
+      <div className="relative z-[2] mt-auto flex min-h-0 flex-1 flex-col justify-end">
         <h2 className="text-sm font-bold leading-tight tracking-tight text-white sm:text-[15px]">{title}</h2>
-        {!imageSrc ? (
-          <MegamenuFeaturedGraphic />
+        {description ? (
+          <p className="mt-1.5 line-clamp-3 text-[11px] leading-snug text-zinc-400 sm:text-xs">{description}</p>
         ) : null}
       </div>
     </Link>
@@ -352,56 +339,22 @@ function MegamenuLinkCard({
           "p-3 sm:p-3.5",
         )}
       >
-        {sub.iconSrc ? (
-          <div className="pointer-events-none absolute inset-0">
-            <Image
-              src={sub.iconSrc}
-              alt=""
-              fill
-              className="object-cover object-center brightness-[0.85] saturate-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/75" />
-          </div>
-        ) : null}
-        {!sub.iconSrc ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 opacity-25">
-            <CardInnerWaves className="size-full" />
-          </div>
-        ) : null}
-
+        <MegamenuCardTexture />
         <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
           <div className="flex items-start justify-between gap-2">
-            <h3
-              className={cn(
-                "min-w-0 text-[13px] font-bold leading-snug sm:text-sm",
-                "text-white",
-              )}
-            >
+            <h3 className="min-w-0 text-[13px] font-bold leading-snug text-white sm:text-sm">
               {sub.label}
             </h3>
             {sub.badge ? <SubnavBadge badge={sub.badge} /> : null}
           </div>
-          <p
-            className={cn(
-              "mt-2 line-clamp-3 text-[11px] leading-relaxed sm:text-xs",
-              sub.iconSrc ? "text-neutral-400" : "text-neutral-500",
-            )}
-          >
+          <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-zinc-400 sm:text-xs">
             {sub.description}
           </p>
-
-          {!sub.iconSrc ? (
-            <div
-              className={cn(
-                "relative mt-2 flex min-h-[88px] flex-1 flex-col justify-end overflow-hidden rounded-lg bg-black/25 py-3",
-              )}
-            >
-              <MegamenuLineArt variant={index} className="absolute inset-0 size-full opacity-75" />
-              <div className="relative flex flex-1 items-center justify-center py-3">
-                <SubItemIcon sub={sub} />
-              </div>
+          <div className="relative mt-2 flex min-h-[88px] flex-1 flex-col justify-end overflow-hidden py-1">
+            <div className="relative flex flex-1 items-center justify-center py-2">
+              <SubItemIcon sub={sub} />
             </div>
-          ) : null}
+          </div>
         </div>
       </Link>
     </div>
@@ -456,43 +409,6 @@ export const PROFILE_MEGAMENU_ITEMS: DashboardNavSubItem[] = [
   },
 ];
 
-const SERVICE_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.calculator]: Calculator,
-  [ROUTES.fees]: Percent,
-  [ROUTES.systemStatus]: Activity,
-  [ROUTES.news]: Newspaper,
-  [ROUTES.referralProgram]: UserPlus,
-  [ROUTES.partnerProgram]: Handshake,
-  [ROUTES.dashboardArtist]: Mic2,
-  [ROUTES.dashboardDisputes]: Scale,
-  [ROUTES.dashboardStatements]: FileText,
-  [ROUTES.trust]: ShieldCheck,
-};
-
-const CATALOG_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.dashboardCatalog]: BookOpen,
-  [ROUTES.analyticsReleases]: BarChart3,
-  [ROUTES.guideSelection]: Compass,
-  [ROUTES.catalogReleaseParameters]: SlidersHorizontal,
-  [ROUTES.catalogMarketOverview]: LayoutGrid,
-};
-
-const HOLDINGS_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.myAssetsOverview]: Wallet,
-  [ROUTES.myAssetsMetrics]: TrendingUp,
-  [ROUTES.myAssetsOperations]: Activity,
-  [ROUTES.myAssetsPositionsStructure]: PieChart,
-};
-
-const PAYOUTS_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.dashboardPayouts]: LayoutDashboard,
-  [ROUTES.dashboardPayoutsComparison]: GitCompare,
-  [ROUTES.dashboardPayoutsHistory]: History,
-  [`${ROUTES.dashboardPayouts}/deposit`]: ArrowDownToLine,
-  [`${ROUTES.dashboardPayouts}/withdraw`]: ArrowUpFromLine,
-};
-
-/** OKX-style section titles for long service menus */
 const SERVICE_MENU_SECTIONS: { title: string; hrefs: string[] }[] = [
   {
     title: "Платформа",
@@ -507,22 +423,6 @@ const SERVICE_MENU_SECTIONS: { title: string; hrefs: string[] }[] = [
     hrefs: [ROUTES.dashboardDisputes, ROUTES.dashboardStatements, ROUTES.trust],
   },
 ];
-
-const PROFILE_MENU_ICONS: Record<string, LucideIcon> = {
-  [profileDashboardHref("overview")]: UserRound,
-  [profileDashboardHref("verification")]: ShieldCheck,
-  [profileDashboardHref("security")]: Lock,
-  [profileDashboardHref("settings")]: Settings,
-  [ROUTES.login]: LogOut,
-};
-
-const SUPPORT_MENU_ICONS: Record<string, LucideIcon> = {
-  [ROUTES.support]: CircleHelp,
-  [ROUTES.dashboardSupport]: MessageSquarePlus,
-  [ROUTES.systemStatus]: Activity,
-  [`${ROUTES.dashboardProfile}?tab=security`]: ShieldCheck,
-  ...Object.fromEntries(SUPPORT_QUICK_ACTIONS.map((action) => [action.href, action.icon])),
-};
 
 export const SUPPORT_MEGAMENU_ITEMS: DashboardNavSubItem[] = [
   {
@@ -559,87 +459,56 @@ export const SUPPORT_MEGAMENU_ITEMS: DashboardNavSubItem[] = [
   },
 ];
 
-export const MEGAMENU_ICON_MAPS: Record<string, Record<string, LucideIcon>> = {
-  misc: SERVICE_MENU_ICONS,
-  catalog: CATALOG_MENU_ICONS,
-  holdings: HOLDINGS_MENU_ICONS,
-  payouts: PAYOUTS_MENU_ICONS,
-};
-
 function SplitMegamenuNavRow({
   sub,
   onNavigate,
-  Icon,
   dangerAction,
+  comfortable = false,
 }: {
   sub: DashboardNavSubItem;
   onNavigate: () => void;
-  Icon: LucideIcon;
   dangerAction?: () => void | Promise<void>;
+  comfortable?: boolean;
 }) {
   const danger = Boolean(sub.danger);
-  /** Dark flyout: idle transparent; hover = light plate like pre-dark megamenu (`#f4f4f5`). */
   const shell = cn(
-    "group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-150 sm:px-3.5 sm:py-3",
-    "bg-transparent hover:!bg-[#f4f4f5] focus-visible:!bg-[#f4f4f5] active:!bg-[#f4f4f5]",
-  );
-  const iconContain = sub.iconFit === "contain";
-  const iconShell = cn(
-    "mt-0.5 flex size-11 shrink-0 items-center justify-center transition-colors duration-150",
-    sub.iconSrc
-      ? "overflow-visible bg-transparent"
-      : "overflow-hidden rounded-full bg-white/[0.08] text-zinc-200 group-hover:!bg-zinc-200/80 group-hover:!text-zinc-900 group-focus-visible:!bg-zinc-200/80 group-focus-visible:!text-zinc-900",
+    "group flex w-full items-start text-left transition-colors duration-150",
+    "bg-transparent hover:bg-white/[0.06] focus-visible:bg-white/[0.06]",
+    comfortable
+      ? "gap-3.5 rounded-xl px-3 py-3"
+      : "gap-3 rounded-xl px-3 py-2.5 sm:px-3.5 sm:py-3",
   );
   const labelClass = cn(
-    "text-[14px] font-semibold leading-snug tracking-[-0.01em] transition-colors duration-150",
-    danger ? "text-zinc-200" : "text-white",
-    "group-hover:!text-zinc-900 group-focus-visible:!text-zinc-900",
+    "font-semibold leading-snug tracking-[-0.01em] transition-colors duration-150",
+    comfortable ? "text-[15px]" : "text-[14px]",
+    danger ? "text-red-300" : "text-white",
   );
   const inner = (
     <>
-      <span className={iconShell}>
-        {sub.iconSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element -- public megamenu assets
-          <img
-            src={sub.iconSrc}
-            alt=""
-            className={cn(
-              "size-full object-contain",
-              iconContain ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]" : null,
-            )}
-          />
-        ) : (
-          <Icon className="size-[18px]" strokeWidth={1.75} aria-hidden />
+      <span
+        className={cn(
+          "mt-0.5 grid shrink-0 place-items-center rounded-lg bg-white/[0.06] transition-colors duration-150 group-hover:bg-white/[0.1]",
+          comfortable ? "size-10" : "size-9",
         )}
+      >
+        <MegamenuItemIcon href={sub.href} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2">
           <span className={labelClass}>{sub.label}</span>
-          {sub.badge ? (
-            <span className="contents group-hover:[&>span]:border-neutral-200 group-hover:[&>span]:bg-neutral-100 group-hover:[&>span]:text-neutral-800">
-              <SubnavBadge badge={sub.badge} variant="dark" />
-            </span>
-          ) : null}
+          {sub.badge ? <SubnavBadge badge={sub.badge} variant="dark" /> : null}
         </span>
         {sub.description ? (
           <p
             className={cn(
-              "mt-0.5 line-clamp-2 text-[12px] leading-snug text-zinc-500 transition-colors duration-150",
-              "group-hover:!text-zinc-500 group-focus-visible:!text-zinc-500",
+              "mt-0.5 line-clamp-2 leading-snug text-zinc-500",
+              comfortable ? "text-[13px]" : "text-[12px]",
             )}
           >
             {sub.description}
           </p>
         ) : null}
       </span>
-      <ChevronRight
-        className={cn(
-          "mt-1.5 size-4 shrink-0 text-zinc-500 transition-colors duration-150",
-          "group-hover:!text-zinc-400 group-focus-visible:!text-zinc-400",
-        )}
-        strokeWidth={2}
-        aria-hidden
-      />
     </>
   );
 
@@ -658,18 +527,18 @@ function SplitMegamenuNavRow({
   );
 }
 
-/** Одноколоночный flyout — только список ссылок (OKX), без превью справа. */
-export function SplitMegamenuFlyout({
+export function SplitMegamenuList({
   openItem,
   onNavigate,
+  comfortable = false,
   className,
 }: {
   openItem: DashboardNavItem;
   onNavigate: () => void;
+  comfortable?: boolean;
   className?: string;
 }) {
   const children = openItem.children ?? [];
-  const iconMap = MEGAMENU_ICON_MAPS[openItem.id] ?? {};
 
   if (!children.length) return null;
 
@@ -683,14 +552,72 @@ export function SplitMegamenuFlyout({
         })).filter((s) => s.items.length > 0)
       : null;
 
-  const renderRow = (sub: DashboardNavSubItem) => {
-    const Icon = iconMap[sub.href] ?? BookOpen;
-    return (
-      <li key={sub.href} className="shrink-0">
-        <SplitMegamenuNavRow sub={sub} onNavigate={onNavigate} Icon={Icon} />
-      </li>
-    );
-  };
+  const renderRow = (sub: DashboardNavSubItem) => (
+    <li key={sub.href} className="shrink-0">
+      <SplitMegamenuNavRow sub={sub} onNavigate={onNavigate} comfortable={comfortable} />
+    </li>
+  );
+
+  const links = (
+    <ul
+      className={cn(
+        "flex flex-col overflow-y-auto [scrollbar-color:rgb(63_63_70)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar]:w-1.5",
+        comfortable ? "max-h-[min(420px,calc(100dvh-7rem))] gap-0.5" : "max-h-[min(640px,calc(100dvh-5.5rem))] gap-0.5",
+      )}
+    >
+      {sections
+        ? sections.map((section) => (
+            <li key={section.title} className="shrink-0">
+              <p className="px-3 pb-1 pt-2.5 text-[11px] font-medium uppercase tracking-[0.06em] text-zinc-500">
+                {section.title}
+              </p>
+              <ul className="flex flex-col gap-0.5">{section.items.map((sub) => renderRow(sub))}</ul>
+            </li>
+          ))
+        : children.map((sub) => renderRow(sub))}
+    </ul>
+  );
+
+  if (!comfortable) {
+    return <div className={cn("p-2", className)}>{links}</div>;
+  }
+
+  return (
+    <div
+      className={cn(
+        "grid gap-2 p-2 sm:w-[28rem] lg:w-[34rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]",
+        className,
+      )}
+    >
+      <Link
+        href={openItem.href}
+        onClick={onNavigate}
+        className="megamenu-featured-card relative isolate flex min-h-[13.5rem] flex-col justify-end overflow-hidden rounded-xl bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)] no-underline outline-none focus-visible:ring-2 focus-visible:ring-white/20 lg:min-h-full"
+      >
+        <MegamenuCardTexture position={megamenuTexturePosition(openItem.id)} watermark />
+        <div className="relative z-[2] p-5">
+          <p className="text-[18px] font-semibold tracking-tight text-white">{openItem.label}</p>
+          {openItem.megaTeaser ? (
+            <p className="mt-2 line-clamp-4 text-[13px] leading-snug text-zinc-400">{openItem.megaTeaser}</p>
+          ) : null}
+        </div>
+      </Link>
+      {links}
+    </div>
+  );
+}
+
+/** Одноколоночный flyout — только список ссылок (OKX), без превью справа. */
+export function SplitMegamenuFlyout({
+  openItem,
+  onNavigate,
+  className,
+}: {
+  openItem: DashboardNavItem;
+  onNavigate: () => void;
+  className?: string;
+}) {
+  if (!openItem.children?.length) return null;
 
   return (
     <div
@@ -699,21 +626,8 @@ export function SplitMegamenuFlyout({
       aria-labelledby={`nav-trigger-${openItem.id}`}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="w-[min(calc(100vw-1.5rem),380px)] overflow-hidden rounded-2xl bg-[#111111] shadow-[0_20px_60px_-16px_rgba(0,0,0,0.75)] ring-1 ring-white/[0.08]">
-        <ul className="flex max-h-[min(560px,calc(100dvh-5.5rem))] flex-col gap-0.5 overflow-y-auto p-2 [scrollbar-color:rgb(63_63_70)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar]:w-1.5">
-          {sections
-            ? sections.map((section) => (
-                <li key={section.title} className="shrink-0">
-                  <p className="px-3 pb-1 pt-2.5 text-[11px] font-medium uppercase tracking-[0.06em] text-zinc-400">
-                    {section.title}
-                  </p>
-                  <ul className="flex flex-col gap-0.5">
-                    {section.items.map((sub) => renderRow(sub))}
-                  </ul>
-                </li>
-              ))
-            : children.map((sub) => renderRow(sub))}
-        </ul>
+      <div className="w-[min(calc(100vw-1.5rem),380px)] overflow-hidden rounded-2xl bg-[#111111] shadow-[0_20px_60px_-16px_rgba(0,0,0,0.75)]">
+        <SplitMegamenuList openItem={openItem} onNavigate={onNavigate} />
       </div>
     </div>
   );
@@ -759,21 +673,17 @@ export function ProfileMegamenuFlyout({
       aria-label={t("navigation.megamenu.profileAria")}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="w-[min(calc(100vw-1.5rem),380px)] overflow-hidden rounded-2xl bg-[#111111] shadow-[0_20px_60px_-16px_rgba(0,0,0,0.75)] ring-1 ring-white/[0.08]">
+      <div className="w-[min(calc(100vw-1.5rem),380px)] overflow-hidden rounded-2xl bg-[#111111] shadow-[0_20px_60px_-16px_rgba(0,0,0,0.75)]">
         <ul className="flex max-h-[min(560px,calc(100dvh-5.5rem))] flex-col gap-0.5 overflow-y-auto p-2 [scrollbar-color:rgb(63_63_70)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar]:w-1.5">
-          {profileItems.map((sub) => {
-            const Icon = PROFILE_MENU_ICONS[sub.href] ?? UserRound;
-            return (
-              <li key={sub.href} className="shrink-0">
-                <SplitMegamenuNavRow
-                  sub={sub}
-                  onNavigate={onNavigate}
-                  Icon={Icon}
-                  dangerAction={sub.danger ? handleLogout : undefined}
-                />
-              </li>
-            );
-          })}
+          {profileItems.map((sub) => (
+            <li key={sub.href} className="shrink-0">
+              <SplitMegamenuNavRow
+                sub={sub}
+                onNavigate={onNavigate}
+                dangerAction={sub.danger ? handleLogout : undefined}
+              />
+            </li>
+          ))}
         </ul>
       </div>
     </div>
@@ -799,16 +709,13 @@ export function SupportMegamenuFlyout({
       aria-label={t("navigation.header.help")}
       className={cn("pointer-events-auto", className)}
     >
-      <div className="w-[min(calc(100vw-1.5rem),380px)] overflow-hidden rounded-2xl bg-[#111111] shadow-[0_20px_60px_-16px_rgba(0,0,0,0.75)] ring-1 ring-white/[0.08]">
+      <div className="w-[min(calc(100vw-1.5rem),380px)] overflow-hidden rounded-2xl bg-[#111111] shadow-[0_20px_60px_-16px_rgba(0,0,0,0.75)]">
         <ul className="flex max-h-[min(560px,calc(100dvh-5.5rem))] flex-col gap-0.5 overflow-y-auto p-2 [scrollbar-color:rgb(63_63_70)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar]:w-1.5">
-          {supportItems.map((sub) => {
-            const Icon = SUPPORT_MENU_ICONS[sub.href] ?? CircleHelp;
-            return (
-              <li key={sub.href} className="shrink-0">
-                <SplitMegamenuNavRow sub={sub} onNavigate={onNavigate} Icon={Icon} />
-              </li>
-            );
-          })}
+          {supportItems.map((sub) => (
+            <li key={sub.href} className="shrink-0">
+              <SplitMegamenuNavRow sub={sub} onNavigate={onNavigate} />
+            </li>
+          ))}
         </ul>
       </div>
     </div>
@@ -833,7 +740,7 @@ function MobileMegamenuScroll({
   onNavigate: () => void;
 }) {
   const { t } = useI18n();
-  const showIntro = openItem.id !== "holdings";
+  const showIntro = true;
   const introTitle =
     openItem.id === "catalog"
       ? t("navigation.megamenu.catalogCta")
@@ -851,15 +758,10 @@ function MobileMegamenuScroll({
           <div className="w-[min(260px,85vw)] flex-none snap-start">
             <MegamenuIntroCard
               title={introTitle}
+              description={openItem.megaTeaser}
               href={openItem.href}
               onNavigate={onNavigate}
-              imageSrc={
-                openItem.id === "catalog"
-                  ? "/images/catalog/1.png"
-                  : openItem.id === "payouts"
-                    ? "/images/payouts-menu/6.png"
-                    : undefined
-              }
+              textureId={openItem.id}
             />
           </div>
         ) : null}
@@ -900,7 +802,7 @@ export function DashboardMegamenuPanel({
     );
   }
 
-  const showIntro = openItem.id !== "holdings";
+  const showIntro = true;
   const introTitle =
     openItem.id === "catalog"
       ? t("navigation.megamenu.catalogCta")
@@ -928,15 +830,10 @@ export function DashboardMegamenuPanel({
           {showIntro ? (
             <MegamenuIntroCard
               title={introTitle}
+              description={openItem.megaTeaser}
               href={openItem.href}
               onNavigate={onNavigate}
-              imageSrc={
-                openItem.id === "catalog"
-                  ? "/images/catalog/1.png"
-                  : openItem.id === "payouts"
-                    ? "/images/payouts-menu/6.png"
-                    : undefined
-              }
+              textureId={openItem.id}
             />
           ) : null}
           {openItem.children.map((sub, i) => (
@@ -949,15 +846,10 @@ export function DashboardMegamenuPanel({
             <div className="w-[min(260px,85vw)] flex-none snap-start">
               <MegamenuIntroCard
                 title={introTitle}
+                description={openItem.megaTeaser}
                 href={openItem.href}
                 onNavigate={onNavigate}
-                imageSrc={
-                  openItem.id === "catalog"
-                    ? "/images/catalog/1.png"
-                    : openItem.id === "payouts"
-                      ? "/images/payouts-menu/6.png"
-                      : undefined
-                }
+                textureId={openItem.id}
               />
             </div>
           ) : null}

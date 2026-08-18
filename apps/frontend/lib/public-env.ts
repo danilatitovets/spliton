@@ -1,6 +1,7 @@
 /**
  * Single source of truth for Next.js public env (Spliton).
- * Mock data is allowed only in local development unless explicitly set to live.
+ * Mock is allowed only when a *_DATA_SOURCE flag is explicitly set to "mock"
+ * (tests, Storybook, explicit local demo). Unset and unknown values resolve to live.
  */
 
 export type AppRuntimeMode = "development" | "staging" | "production";
@@ -41,9 +42,8 @@ export function isStrictDeployMode(mode: AppRuntimeMode = getAppRuntimeMode()): 
 
 function parseDataSource(raw: string | undefined): DataSourceMode {
   const v = raw?.trim().toLowerCase();
-  if (v === "live") return "live";
   if (v === "mock") return "mock";
-  return "mock";
+  return "live";
 }
 
 function readApiBaseUrlFromEnv(): string | undefined {
@@ -190,7 +190,7 @@ export function isLiveAccountEnabled(): boolean {
   return getAuthDataSource() === "live";
 }
 
-/** True when account center may show demo/mock fallbacks (local dev only). */
+/** True when account center may show demo/mock fallbacks (explicit mock only). */
 export function isAccountCenterDemoMode(): boolean {
   return !isLiveAccountEnabled();
 }

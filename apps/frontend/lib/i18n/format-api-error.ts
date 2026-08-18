@@ -62,6 +62,7 @@ export type ApiErrorShape = {
   message?: string | string[] | Record<string, unknown>;
   status?: number;
   requestId?: string;
+  retryable?: boolean;
 };
 
 function normalizeCode(code?: string): string | undefined {
@@ -92,6 +93,8 @@ function extractErrorShape(err: unknown): ApiErrorShape {
       status?: number;
       statusCode?: number;
       requestId?: string;
+      correlationId?: string;
+      retryable?: boolean;
       details?: { blockingCode?: string };
       response?: {
         error?: {
@@ -99,16 +102,20 @@ function extractErrorShape(err: unknown): ApiErrorShape {
           message?: string | string[];
           details?: { blockingCode?: string };
         };
+        requestId?: string;
+        correlationId?: string;
       };
     };
     const blocking =
       e.details?.blockingCode ?? e.response?.error?.details?.blockingCode;
+    const requestId = e.correlationId ?? e.requestId ?? e.response?.correlationId ?? e.response?.requestId;
     if (e.code || e.message || e.status != null || e.statusCode != null || blocking) {
       return {
         code: blocking ?? e.code,
         message: e.message,
         status: e.status ?? e.statusCode,
-        requestId: e.requestId,
+        requestId,
+        retryable: e.retryable,
       };
     }
     if (e.response?.error) {
@@ -116,6 +123,8 @@ function extractErrorShape(err: unknown): ApiErrorShape {
         code: blocking ?? e.response.error.code,
         message: e.response.error.message,
         status: e.status ?? e.statusCode,
+        requestId,
+        retryable: e.retryable,
       };
     }
   }
@@ -124,13 +133,16 @@ function extractErrorShape(err: unknown): ApiErrorShape {
       code?: string;
       status?: number;
       requestId?: string;
+      correlationId?: string;
+      retryable?: boolean;
       details?: { blockingCode?: string };
     };
     return {
       code: withCode.details?.blockingCode ?? withCode.code,
       message: err.message,
       status: withCode.status,
-      requestId: withCode.requestId,
+      requestId: withCode.correlationId ?? withCode.requestId,
+      retryable: withCode.retryable,
     };
   }
   return {};
@@ -198,7 +210,7 @@ export function formatApiError(
 export function formatApiErrorWithMeta(
   err: unknown,
   locale?: AppLocale,
-): { message: string; code?: string; requestId?: string } {
+): { message: string; code?: string; requestId?: string; retryable?: boolean } {
   const loc = locale ?? readStoredLocale();
   const shape = extractErrorShape(err);
   const code = normalizeCode(shape.code);
@@ -206,5 +218,6 @@ export function formatApiErrorWithMeta(
     message: formatApiError(err, loc),
     code,
     requestId: shape.requestId,
+    retryable: shape.retryable,
   };
 }

@@ -57,7 +57,6 @@ export function ReleaseAnalyticsScreen() {
   const {
     liveMode,
     demoPreview,
-    chartsDemoFill,
     period,
     setPeriod,
     query,
@@ -120,7 +119,7 @@ export function ReleaseAnalyticsScreen() {
         overview={overview}
         loading={liveMode && overviewLoading}
         overviewError={liveMode && overviewError}
-        mockMode={!liveMode || chartsDemoFill}
+        mockMode={!liveMode}
         onRetry={reload}
         viewTab={viewTab}
         onViewTab={setViewTab}
@@ -149,7 +148,7 @@ export function ReleaseAnalyticsScreen() {
               loading={liveMode && chartsLoading}
               error={liveMode && chartsError}
               onRetry={liveMode ? reload : undefined}
-              demoFill={!liveMode || chartsDemoFill}
+              demoFill={!liveMode}
               period={period}
             />
             <ReleaseAnalyticsCategories genres={genresApi} rows={filteredRows} />

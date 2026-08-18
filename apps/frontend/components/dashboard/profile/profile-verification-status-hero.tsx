@@ -31,18 +31,13 @@ export function ProfileVerificationStatusHero({
       className="relative min-h-0 px-5 py-14 shadow-none sm:px-10 sm:py-16"
       contentClassName="relative min-h-[7.5rem] sm:min-h-[8.5rem]"
       watermarkCentered
-      watermarkFillText={title}
+      watermarkText={title}
       backgroundVideo={VERIFY_VIDEO}
       videoClarity="crisp"
       aria-label={title}
+      overlay={showAction && action ? <HeroExpandPlus action={action} /> : null}
     >
       <h1 className="sr-only">{title}</h1>
-
-      {showAction && action ? (
-        <div className="pointer-events-none absolute inset-0 z-20">
-          <HeroExpandPlus action={action} />
-        </div>
-      ) : null}
     </SplitonDarkSurface>
   );
 }

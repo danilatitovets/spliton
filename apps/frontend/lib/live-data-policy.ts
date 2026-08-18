@@ -1,5 +1,5 @@
 ﻿/**
- * Runtime policy: mock/fake financial data only when data source is explicitly mock (local dev).
+ * Runtime policy: mock/fake financial data only when data source is explicitly mock.
  */
 
 import {

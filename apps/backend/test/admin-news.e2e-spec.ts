@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PrismaClient, UserRoleCode, UserStatus } from '@prisma/client';
+import { UserRoleCode, UserStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-news-${prefix}-${Date.now()}@example.com`;
@@ -14,12 +15,11 @@ async function registerAndLogin(app: E2eApp, email: string) {
       .send(e2eRegisterPayload(email, password))
     .expect(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.update({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -29,7 +29,7 @@ async function registerAndLogin(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -39,7 +39,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 describe('Admin news CRUD (e2e)', () => {
@@ -98,12 +97,11 @@ describe('Admin news CRUD (e2e)', () => {
         expect(body.status).toBe('draft');
       });
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audits = await prisma.auditLog.findMany({
       where: { entityId: id, entityType: 'news_post' },
       orderBy: { createdAt: 'asc' },
     });
-    await prisma.$disconnect();
     const actions = audits.map((a) => a.action);
     expect(actions).toEqual(
       expect.arrayContaining(['news.create', 'news.publish', 'news.unpublish']),

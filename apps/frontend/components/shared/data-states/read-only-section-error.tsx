@@ -1,6 +1,9 @@
 "use client";
 
+import { useI18n } from "@/components/providers/i18n-provider";
 import { useReadOnlySectionError } from "@/hooks/use-read-only-section-error";
+import { formatApiErrorWithMeta } from "@/lib/i18n/format-api-error";
+import { looksLikeI18nKey } from "@/lib/i18n/dictionaries";
 
 import { SectionUnavailableState } from "./section-unavailable-state";
 
@@ -28,19 +31,26 @@ export function ReadOnlySectionError({
   title,
   description,
 }: ReadOnlySectionErrorProps) {
+  const { t } = useI18n();
   useReadOnlySectionError(sectionId, error, onRetry);
 
   if (!error) return null;
 
+  const meta = formatApiErrorWithMeta(error);
+  const rawDescription = description ?? meta.message;
+  const resolvedDescription =
+    rawDescription && looksLikeI18nKey(rawDescription) ? t(rawDescription, rawDescription) : rawDescription;
+
   return (
     <SectionUnavailableState
       title={title}
-      description={description}
+      description={resolvedDescription}
       onRetry={onRetry}
       retryLabel={retryLabel}
       variant={variant}
       compact={compact}
       className={className}
+      errorId={meta.requestId}
     />
   );
 }

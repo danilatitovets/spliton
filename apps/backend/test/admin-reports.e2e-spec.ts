@@ -1,7 +1,6 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
 import {
-  PrismaClient,
   ReportJobStatus,
   UserRoleCode,
   UserStatus,
@@ -9,6 +8,7 @@ import {
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { ReportWorkerService } from '../src/modules/admin/common/report-worker.service';
 import { AdminReportsService } from '../src/modules/admin/v1/admin-reports.service';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 async function staffToken(app: E2eApp, role: UserRoleCode) {
   const email = `e2e-rpt-${role.toLowerCase()}-${Date.now()}@example.com`;
@@ -18,7 +18,7 @@ async function staffToken(app: E2eApp, role: UserRoleCode) {
       .send(e2eRegisterPayload(email, password))
     .expect(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const r = await prisma.role.findUnique({ where: { code: role } });
   if (user && r) {
@@ -32,7 +32,6 @@ async function staffToken(app: E2eApp, role: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -145,11 +144,10 @@ describe('Admin reports center (e2e)', () => {
     expect(completed.fileSizeBytes).toBeGreaterThan(0);
     expect(completed.expiresAt).toBeTruthy();
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audits = await prisma.auditLog.findMany({
       where: { entityType: 'report_job', entityId: gen.body.id },
     });
-    await prisma.$disconnect();
     expect(audits.some((a) => a.action === 'report.generate')).toBe(true);
   });
 
@@ -194,7 +192,7 @@ describe('Admin reports center (e2e)', () => {
 
     await waitForReportStatus(app!, token, gen.body.id, 'completed');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.reportJob.update({
       where: { id: gen.body.id },
       data: {
@@ -203,7 +201,6 @@ describe('Admin reports center (e2e)', () => {
         completedAt: new Date(),
       },
     });
-    await prisma.$disconnect();
 
     const retry = await request(app!.getHttpServer())
       .post(`/api/admin/v1/reports/${gen.body.id}/retry`)
@@ -229,10 +226,9 @@ describe('Admin reports center (e2e)', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(gen.body.status).toBe('queued');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const queued = await prisma.reportJob.findUnique({ where: { id: gen.body.id } });
     expect(queued?.status).toBe(ReportJobStatus.QUEUED);
-    await prisma.$disconnect();
 
     const worker = app!.get(ReportWorkerService);
     const reports = app!.get(AdminReportsService);
@@ -249,7 +245,7 @@ describe('Admin reports center (e2e)', () => {
         12,
       );
     } catch {
-      const resetPrisma = new PrismaClient();
+      const resetPrisma = getE2ePrisma();
       await resetPrisma.reportJob.update({
         where: { id: gen.body.id },
         data: {
@@ -262,7 +258,6 @@ describe('Admin reports center (e2e)', () => {
           attemptCount: 0,
         },
       });
-      await resetPrisma.$disconnect();
       await reports.processJobById(gen.body.id);
       completed = await waitForReportStatus(
         app!,
@@ -289,7 +284,7 @@ describe('Admin reports center (e2e)', () => {
       .get(`/api/admin/v1/reports/${gen.body.id}/download`)
       .set('Authorization', `Bearer ${token}`);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audits = await prisma.auditLog.findMany({
       where: {
         entityType: 'report_job',
@@ -297,7 +292,6 @@ describe('Admin reports center (e2e)', () => {
         action: 'report.sensitive_export',
       },
     });
-    await prisma.$disconnect();
     expect(audits.length).toBeGreaterThan(0);
   });
 });

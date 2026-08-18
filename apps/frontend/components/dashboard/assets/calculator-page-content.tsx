@@ -74,7 +74,7 @@ export function CalculatorPageContent() {
       return {
         buyPlatformFeeRate: pctToRate(fees.primaryPurchaseFeePct),
         secondaryMarketFeeRate: pctToRate(fees.secondaryMarketFeePct),
-        withdrawFeeMinUsdt: Number(fees.withdrawalFeeFixedUsdt) || CALCULATOR_MOCK.withdrawFeeMinUsdt,
+        withdrawFeeMinUsdt: Number(fees.withdrawalFeeFixedUsdt) || 0,
         withdrawFeeRate: pctToRate(fees.withdrawalFeePct),
         effectiveFrom: fees.effectiveFrom,
         fromLive: true as const,

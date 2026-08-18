@@ -1,6 +1,7 @@
 import request from 'supertest';
-import { NewsPostStatus, PrismaClient } from '@prisma/client';
+import { NewsPostStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 describe('Public news API (e2e)', () => {
   let app: E2eApp | undefined;
@@ -14,7 +15,7 @@ describe('Public news API (e2e)', () => {
   });
 
   it('lists only published posts', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
     expect(author).toBeTruthy();
@@ -40,7 +41,6 @@ describe('Public news API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get('/api/v1/news');
     expect(res.status).toBe(200);
@@ -55,7 +55,7 @@ describe('Public news API (e2e)', () => {
   });
 
   it('returns post by slug', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = Date.now();
     const author = await prisma.user.findFirst();
     const slug = `slug-${suffix}`;
@@ -69,7 +69,6 @@ describe('Public news API (e2e)', () => {
         authorUserId: author!.id,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(`/api/v1/news/${slug}`);
     expect(res.status).toBe(200);

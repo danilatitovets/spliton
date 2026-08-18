@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { formatAuditActionLabel } from "@/lib/i18n/admin-messages";
 import {
   formatSecurityEventIp,
+  publicClientIp,
   securityEventLabel,
   securityEventTone,
 } from "@/lib/profile/security-event-display";
@@ -24,9 +25,13 @@ describe("security-event-display", () => {
     expect(securityEventTone("REFRESH_SUCCESS")).toBe("neutral");
   });
 
-  it("hides localhost ip", () => {
+  it("hides localhost and CGNAT ips", () => {
     expect(formatSecurityEventIp("::1", "ru")).toBe("Это устройство");
+    expect(formatSecurityEventIp("100.64.0.6", "ru")).toBe("Это устройство");
+    expect(formatSecurityEventIp("10.0.0.8", "en")).toBe("This device");
     expect(formatSecurityEventIp("203.0.113.1", "en")).toBe("203.0.113.1");
+    expect(publicClientIp("100.64.0.6")).toBeNull();
+    expect(publicClientIp("203.0.113.1")).toBe("203.0.113.1");
   });
 });
 

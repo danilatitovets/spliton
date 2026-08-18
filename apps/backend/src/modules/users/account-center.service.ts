@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   ConsentSource,
   DisputeStatus,
@@ -19,6 +19,8 @@ import {
 
 @Injectable()
 export class AccountCenterService {
+  private readonly logger = new Logger(AccountCenterService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly legalConsents: LegalConsentsService,
@@ -35,116 +37,154 @@ export class AccountCenterService {
       ConsentSource.LOGIN,
     ] as const;
 
-    const missingPromise = this.legalConsents.getMissingConsentsForSources(userId, [
-      ...consentSources,
-    ]);
-    const eligibilityPromise = missingPromise.then((missingBySource) =>
-      this.eligibility.checkMany(
-        userId,
-        [
-          ConsentSource.LOGIN,
-          ConsentSource.WITHDRAWAL,
-          ConsentSource.PRIMARY_PURCHASE,
-          ConsentSource.SECONDARY_TRADE,
-        ],
-        { missingBySource },
-      ),
+    const user = await this.settle(
+      'user.findUnique',
+      userId,
+      null,
+      () =>
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            emailVerifiedAt: true,
+            passwordHash: true,
+            profile: {
+              select: {
+                displayName: true,
+                timezone: true,
+                passwordChangedAt: true,
+              },
+            },
+          },
+        }),
     );
 
+    const [twoFaCount, activeSessionsCount, lastLogin, kyc] = await Promise.all([
+      this.settle('twoFactorMethod.count', userId, 0, () =>
+        this.prisma.twoFactorMethod.count({
+          where: { userId, status: 'ENABLED' },
+        }),
+      ),
+      this.settle('userSession.count', userId, 0, () =>
+        this.prisma.userSession.count({
+          where: { userId, revokedAt: null },
+        }),
+      ),
+      this.settle('auditLog.lastLogin', userId, null, () =>
+        this.prisma.auditLog.findFirst({
+          where: { entityType: 'auth', actorUserId: userId, action: 'LOGIN_SUCCESS' },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        }),
+      ),
+      this.settle('kycVerification.findFirst', userId, null, () =>
+        this.prisma.kycVerification.findFirst({
+          where: { userId },
+          orderBy: { updatedAt: 'desc' },
+          select: { status: true, level: true },
+        }),
+      ),
+    ]);
+
+    const [securityPrefs, notificationPrefs, securityEvents] = await Promise.all([
+      this.settle('userSecurityPreference', userId, null, () =>
+        this.prisma.userSecurityPreference.findUnique({ where: { userId } }),
+      ),
+      this.settle('notificationPreference', userId, null, () =>
+        this.prisma.notificationPreference.findUnique({ where: { userId } }),
+      ),
+      this.settle('auditLog.securityEvents', userId, [] as Array<{
+        id: string;
+        action: string;
+        ip: string | null;
+        userAgent: string | null;
+        createdAt: Date;
+      }>, () =>
+        this.prisma.auditLog.findMany({
+          where: { entityType: 'auth', actorUserId: userId },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: { id: true, action: true, ip: true, userAgent: true, createdAt: true },
+        }),
+      ),
+    ]);
+
     const [
-      user,
-      twoFaCount,
-      activeSessionsCount,
-      lastLogin,
-      kyc,
-      missingBySource,
-      eligibilityByAction,
-      securityPrefs,
-      notificationPrefs,
-      securityEvents,
       openSupportTicketsCount,
       openDisputesCount,
       pendingWithdrawalsCount,
       hasWalletActivity,
       unreadNotificationsCount,
     ] = await Promise.all([
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          emailVerifiedAt: true,
-          passwordHash: true,
-          profile: {
-            select: {
-              displayName: true,
-              timezone: true,
-              passwordChangedAt: true,
+      this.settle('supportTicket.count', userId, 0, () =>
+        this.prisma.supportTicket.count({
+          where: {
+            userId,
+            status: { not: SupportTicketStatus.CLOSED },
+          },
+        }),
+      ),
+      this.settle('dispute.count', userId, 0, () =>
+        this.prisma.dispute.count({
+          where: {
+            userId,
+            status: {
+              notIn: [DisputeStatus.RESOLVED, DisputeStatus.REJECTED, DisputeStatus.CLOSED],
             },
           },
-        },
-      }),
-      this.prisma.twoFactorMethod.count({
-        where: { userId, status: 'ENABLED' },
-      }),
-      this.prisma.userSession.count({
-        where: { userId, revokedAt: null },
-      }),
-      this.prisma.auditLog.findFirst({
-        where: { entityType: 'auth', actorUserId: userId, action: 'LOGIN_SUCCESS' },
-        orderBy: { createdAt: 'desc' },
-        select: { createdAt: true },
-      }),
-      this.prisma.kycVerification.findFirst({
-        where: { userId },
-        orderBy: { updatedAt: 'desc' },
-        select: { status: true, level: true },
-      }),
-      missingPromise,
-      eligibilityPromise,
-      this.prisma.userSecurityPreference.findUnique({ where: { userId } }),
-      this.prisma.notificationPreference.findUnique({ where: { userId } }),
-      this.prisma.auditLog.findMany({
-        where: { entityType: 'auth', actorUserId: userId },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: { id: true, action: true, ip: true, userAgent: true, createdAt: true },
-      }),
-      this.prisma.supportTicket.count({
-        where: {
-          userId,
-          status: { not: SupportTicketStatus.CLOSED },
-        },
-      }),
-      this.prisma.dispute.count({
-        where: {
-          userId,
-          status: {
-            notIn: [DisputeStatus.RESOLVED, DisputeStatus.REJECTED, DisputeStatus.CLOSED],
+        }),
+      ),
+      this.settle('withdrawal.count', userId, 0, () =>
+        this.prisma.withdrawal.count({
+          where: {
+            status: {
+              in: [
+                WithdrawalStatus.REQUESTED,
+                WithdrawalStatus.LOCKED,
+                WithdrawalStatus.REVIEW,
+                WithdrawalStatus.APPROVED,
+                WithdrawalStatus.PROCESSING,
+                WithdrawalStatus.ON_HOLD,
+              ],
+            },
+            walletTx: { wallet: { userId } },
           },
-        },
-      }),
-      this.prisma.withdrawal.count({
-        where: {
-          status: {
-            in: [
-              WithdrawalStatus.REQUESTED,
-              WithdrawalStatus.LOCKED,
-              WithdrawalStatus.REVIEW,
-              WithdrawalStatus.APPROVED,
-              WithdrawalStatus.PROCESSING,
-              WithdrawalStatus.ON_HOLD,
-            ],
-          },
-          walletTx: { wallet: { userId } },
-        },
-      }),
-      this.prisma.walletTransaction
-        .findFirst({
+        }),
+      ),
+      this.settle('walletTransaction.exists', userId, false, async () => {
+        const row = await this.prisma.walletTransaction.findFirst({
           where: { wallet: { userId } },
           select: { id: true },
-        })
-        .then((row) => Boolean(row)),
-      this.notifications.unreadCountForUser(userId, roles).then((r) => r.count),
+        });
+        return Boolean(row);
+      }),
+      this.settle('notifications.unread', userId, 0, async () => {
+        const result = await this.notifications.unreadCountForUser(userId, roles);
+        return result.count;
+      }),
     ]);
+
+    const missingBySource = await this.settle(
+      'legal.missingConsents',
+      userId,
+      new Map(),
+      () => this.legalConsents.getMissingConsentsForSources(userId, [...consentSources]),
+    );
+    const eligibilityByAction = await this.settle(
+      'eligibility.checkMany',
+      userId,
+      new Map(),
+      () =>
+        this.eligibility.checkMany(
+          userId,
+          [
+            ConsentSource.LOGIN,
+            ConsentSource.WITHDRAWAL,
+            ConsentSource.PRIMARY_PURCHASE,
+            ConsentSource.SECONDARY_TRADE,
+          ],
+          { missingBySource },
+        ),
+    );
 
     const registerMissing = missingBySource.get(ConsentSource.REGISTER) ?? [];
     const primaryMissing = missingBySource.get(ConsentSource.PRIMARY_PURCHASE) ?? [];
@@ -237,5 +277,23 @@ export class AccountCenterService {
         createdAt: ev.createdAt.toISOString(),
       })),
     };
+  }
+
+  private async settle<T>(
+    label: string,
+    userId: string,
+    fallback: T,
+    run: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await run();
+    } catch (error: unknown) {
+      this.logger.warn(
+        `${label} failed for ${userId}: ${
+          error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
+      return fallback;
+    }
   }
 }

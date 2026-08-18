@@ -10,6 +10,7 @@ export const VERIFICATION_UI_STATUSES = [
   "pending_review",
   "approved",
   "rejected",
+  "expired",
 ] as const;
 
 export type VerificationUiStatus = (typeof VERIFICATION_UI_STATUSES)[number];

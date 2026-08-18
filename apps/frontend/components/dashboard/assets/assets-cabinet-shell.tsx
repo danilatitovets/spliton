@@ -49,6 +49,7 @@ export function AssetsCabinetShell({
 }) {
   const pathname = usePathname() ?? "";
   const p = pathname.replace(/\/$/, "") || "/";
+  const overviewDark = p === ROUTES.dashboardOverview;
   const fullBleed =
     p === ROUTES.assetsUnt ||
     p.startsWith(`${ROUTES.assetsUnt}/`) ||
@@ -56,7 +57,12 @@ export function AssetsCabinetShell({
   const subheader = fullBleed ? undefined : resolveAssetsSubheader(pathname);
 
   return (
-    <div className="[--dashboard-header-h:3rem] sm:[--dashboard-header-h:3.5rem] xl:[--dashboard-header-h:4rem]">
+    <div
+      className={cn(
+        "[--dashboard-header-h:3rem] sm:[--dashboard-header-h:3.5rem] xl:[--dashboard-header-h:4rem]",
+        overviewDark ? "min-h-dvh bg-black text-white scheme-dark" : "min-h-dvh bg-white text-neutral-900 scheme-light",
+      )}
+    >
       <DashboardCabinetHeaderStack subheader={subheader} />
       {fullBleed ? (
         children

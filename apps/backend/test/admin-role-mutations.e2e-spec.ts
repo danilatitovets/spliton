@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PrismaClient, UserRoleCode, UserStatus } from '@prisma/client';
+import { UserRoleCode, UserStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-rbac-${prefix}-${Date.now()}@example.com`;
@@ -14,17 +15,16 @@ async function registerUser(app: E2eApp, email: string) {
       .send(e2eRegisterPayload(email, password, 'E2E RBAC'));
   expect(reg.status).toBe(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.updateMany({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
   return password;
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -34,7 +34,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
   return user?.id;
 }
 
@@ -142,11 +141,10 @@ describe('Admin role mutations (e2e)', () => {
     const superA = await staffToken(app!, 'super-a', UserRoleCode.SUPER_ADMIN);
     const superB = await staffToken(app!, 'super-b', UserRoleCode.SUPER_ADMIN);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const userB = await prisma.user.findUnique({
       where: { email: superB.email },
     });
-    await prisma.$disconnect();
     expect(userB).toBeTruthy();
 
     const removeB = await request(app!.getHttpServer())

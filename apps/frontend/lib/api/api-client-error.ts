@@ -6,6 +6,7 @@ export class ApiClientError extends Error {
     readonly status?: number,
     readonly requestId?: string,
     readonly details?: unknown,
+    readonly retryable?: boolean,
   ) {
     super(message);
     this.name = "ApiClientError";
@@ -21,6 +22,8 @@ type ErrorBody = {
   code?: string;
   message?: string | string[] | Record<string, unknown>;
   requestId?: string;
+  correlationId?: string;
+  retryable?: boolean;
   details?: { blockingCode?: string; [key: string]: unknown };
 };
 
@@ -53,9 +56,15 @@ export async function parseApiClientError(res: Response): Promise<ApiClientError
       extractMessage(rawMessage) ??
       (typeof rawMessage === "string" ? rawMessage : undefined) ??
       res.statusText;
-    return new ApiClientError(message, code, res.status, body.requestId, details);
+    const requestId =
+      body.correlationId ??
+      body.requestId ??
+      res.headers.get("x-request-id") ??
+      undefined;
+    return new ApiClientError(message, code, res.status, requestId, details, body.retryable);
   } catch {
-    return new ApiClientError(res.statusText, undefined, res.status);
+    const requestId = res.headers.get("x-request-id") ?? undefined;
+    return new ApiClientError(res.statusText, undefined, res.status, requestId);
   }
 }
 

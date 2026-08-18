@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { ProfileSecurityContent } from "@/components/dashboard/profile/profile-security-content";
@@ -42,12 +42,14 @@ vi.mock("@/components/providers/auth-provider", () => ({
     authorizedFetch: vi.fn(),
     isAuthenticated: true,
     resendEmail: vi.fn(),
+    requiresEmailVerification: false,
   }),
 }));
 
 vi.mock("@/lib/public-env", () => ({
   isLiveAccountEnabled: () => true,
   isAccountCenterDemoMode: () => false,
+  isStrictDeployMode: () => false,
 }));
 
 vi.mock("@/components/providers/i18n-provider", () => ({
@@ -115,21 +117,76 @@ describe("ProfileSecurityContent", () => {
     mockFetchNotificationPreferences.mockResolvedValue({ emailSecurity: true });
   });
 
-  it("renders backend security level in live mode", async () => {
+  it("renders live security page without a score ring", async () => {
     render(<ProfileSecurityContent />);
     await waitFor(() => expect(mockFetchUserMe).toHaveBeenCalled());
-    expect(await screen.findByText(/Medium level/)).toBeTruthy();
-    expect(screen.getByText(/Enable 2FA/)).toBeTruthy();
+    expect(await screen.findByText(/Enable 2FA/)).toBeTruthy();
+    expect(screen.queryByText("profile.security.protectionLevel")).toBeNull();
+    expect(screen.queryByText(/Medium level/)).toBeNull();
   });
 
-  it("shows linked devices in live mode", async () => {
+  it("shows Telegram-style session cards instead of meter and empty KPIs", async () => {
+    mockFetchUserMe.mockResolvedValue({
+      id: "user-1",
+      email: "test@example.com",
+      accountCenter: { ...accountCenter, security: { ...accountCenter.security, lastLoginAt: null } },
+    });
+    mockFetchUserSessions.mockResolvedValue({
+      items: [
+        {
+          id: "s-1",
+          device: "Chrome / Windows",
+          ip: "100.64.0.6",
+          userAgent: "Mozilla/5.0 Chrome Windows",
+          lastActiveAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          active: true,
+          revokedAt: null,
+          isCurrent: true,
+        },
+      ],
+    });
+
     render(<ProfileSecurityContent />);
     await waitFor(() => expect(mockFetchUserMe).toHaveBeenCalled());
-    expect(await screen.findByText("profile.security.access.descriptionShort")).toBeTruthy();
+    fireEvent.click(await screen.findByRole("tab", { name: "profile.security.tab.sessions" }));
+
+    expect(await screen.findByText("profile.security.sessions.thisDevice")).toBeTruthy();
+    expect(screen.getByText("Chrome / Windows")).toBeTruthy();
+    expect(screen.getAllByText("profile.devices.openPage").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "profile.devices.openPage" })).toHaveAttribute(
+      "href",
+      "/dashboard/profile/devices",
+    );
+    expect(screen.queryByText("profile.security.sessions.kpi.location")).toBeNull();
+    expect(screen.queryByText("profile.security.sessions.kpi.lastLogin")).toBeNull();
+    expect(screen.queryByText("profile.security.sessions.kpi.alerts")).toBeNull();
+    expect(screen.queryByText("profile.devices.title")).toBeNull();
+    expect(screen.queryByText("profile.security.events.title")).toBeNull();
+    expect(screen.queryByText("profile.security.recoverAccess")).toBeNull();
+    expect(screen.queryByText("100.64.0.6")).toBeNull();
   });
 
   it("renders 2FA panel in live mode", async () => {
     render(<ProfileSecurityContent />);
     expect(await screen.findByTestId("two-fa-panel")).toBeTruthy();
+  });
+
+  it("does not allow turning off security email notifications", async () => {
+    render(<ProfileSecurityContent />);
+    fireEvent.click(await screen.findByRole("tab", { name: "profile.security.tab.withdraw" }));
+    const emailSwitch = await screen.findByRole("switch", {
+      name: "profile.security.preferences.emailSecurity.title",
+    });
+    expect(emailSwitch).toBeDisabled();
+    expect(emailSwitch).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("still renders security controls when /users/me fails", async () => {
+    mockFetchUserMe.mockRejectedValue({ code: "INTERNAL_ERROR", message: "Internal server error" });
+    render(<ProfileSecurityContent />);
+    expect(await screen.findByTestId("two-fa-panel")).toBeTruthy();
+    expect(screen.queryByText("profile.security.loadError")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

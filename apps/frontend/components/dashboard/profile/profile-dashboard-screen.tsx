@@ -1,9 +1,11 @@
 ﻿"use client";
 
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 
-import { parseProfilePageTabParam } from "@/constants/dashboard/profile-page";
+import { isProfileDevicesView, parseProfilePageTabParam } from "@/constants/dashboard/profile-page";
+import { ProfileAccountContent } from "@/components/dashboard/profile/profile-account-content";
+import { ProfileDevicesPageContent } from "@/components/dashboard/profile/profile-devices-page";
 import { ProfileSettingsContent } from "@/components/dashboard/profile/profile-settings-content";
 import { ProfileSecurityContent } from "@/components/dashboard/profile/profile-security-content";
 import { ProfileVerificationContent } from "@/components/dashboard/profile/profile-verification-content";
@@ -12,10 +14,31 @@ import { ProfileOverviewContent } from "@/components/dashboard/profile/profile-o
 
 export function ProfileDashboardScreen() {
   const searchParams = useSearchParams();
-  const tab = useMemo(
-    () => parseProfilePageTabParam(searchParams.get("tab")),
-    [searchParams],
-  );
+  const tabParam = searchParams.get("tab");
+  const viewParam = searchParams.get("view");
+  const tab = useMemo(() => parseProfilePageTabParam(tabParam), [tabParam]);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [tab, tabParam, viewParam]);
+
+  if (isProfileDevicesView("/dashboard/profile", tabParam, viewParam)) {
+    return (
+      <div className="scroll-mt-24">
+        <ProfileDevicesPageContent />
+      </div>
+    );
+  }
+
+  if (tab === "account") {
+    return (
+      <div className="scroll-mt-24">
+        <ProfileAccountContent />
+      </div>
+    );
+  }
 
   if (tab === "verification") {
     return (

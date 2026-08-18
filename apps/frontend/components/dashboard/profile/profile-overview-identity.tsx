@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
-import { Check, Copy, Shield, UserPlus, X } from "@/lib/lucide";
+import { useState } from "react";
+import { Check, Copy, Plus, X } from "@/lib/lucide";
 
 import { profileDashboardHref } from "@/constants/dashboard/profile-page";
+import { ProfileMusicAvatar } from "@/components/dashboard/profile/profile-music-avatar";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
@@ -32,29 +33,11 @@ export function isKycApproved(status: string | null | undefined): boolean {
   return (status ?? "").toLowerCase().replace(/_/g, "") === "approved";
 }
 
-function IdentityPill({
-  href,
-  children,
-}: {
-  href: string;
-  children: ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 text-[12px] font-medium text-zinc-200 transition hover:bg-white/[0.1] hover:text-white"
-    >
-      {children}
-    </Link>
-  );
-}
-
 type Props = {
   displayName: string | null;
   email: string | null;
   userId: string | null;
   kycStatus: string | null;
-  securityLevel: string | null;
   fallbackName: string;
 };
 
@@ -63,7 +46,6 @@ export function ProfileOverviewIdentity({
   email,
   userId,
   kycStatus,
-  securityLevel,
   fallbackName,
 }: Props) {
   const { t } = useI18n();
@@ -71,8 +53,6 @@ export function ProfileOverviewIdentity({
   const [bannerOpen, setBannerOpen] = useState(true);
   const nick = displayName?.trim() || maskProfileEmail(email) || fallbackName;
   const verified = isKycApproved(kycStatus);
-  const levelKey = securityLevel ? `profile.overview.identity.level.${securityLevel.toLowerCase()}` : "";
-  const levelLabel = levelKey ? t(levelKey) : t("profile.overview.identity.level.medium");
 
   async function onCopyId() {
     if (!userId) return;
@@ -84,7 +64,7 @@ export function ProfileOverviewIdentity({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      {bannerOpen && !verified ? (
+      {bannerOpen && kycStatus != null && !verified ? (
         <div className="flex items-center gap-3 rounded-[1.25rem] bg-amber-500/12 px-4 py-3 text-[13px] leading-relaxed text-amber-100">
           <p className="min-w-0 flex-1">
             {t("profile.overview.identity.verifyBanner")}{" "}
@@ -106,60 +86,55 @@ export function ProfileOverviewIdentity({
         </div>
       ) : null}
 
-      <section className={profileCardClass}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3.5">
-            <div
-              className="grid size-12 shrink-0 place-items-center rounded-full bg-white/[0.08] text-[14px] font-semibold tracking-wide text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] sm:size-[3.25rem] sm:text-[15px]"
-              aria-hidden
-            >
-              {profileInitials(displayName, email)}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[15px] font-semibold tracking-tight text-white sm:text-[16px]">{nick}</p>
-              {userId ? (
-                <div className="mt-1 flex min-w-0 items-center gap-1">
-                  <p className="min-w-0 truncate text-[13px] text-zinc-500">
-                    <span>{t("profile.overview.identity.idPrefix")}</span>{" "}
-                    <span className="font-mono">{userId}</span>
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void onCopyId()}
-                    className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition hover:bg-white/[0.06] hover:text-white"
-                    aria-label={t("profile.overview.copyId")}
-                  >
-                    {copied ? <Check className="size-3.5 text-[#B7F500]" /> : <Copy className="size-3.5" />}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
+      <section className={cn(profileCardClass, "relative overflow-hidden")}>
+        <Link
+          href={profileDashboardHref("account")}
+          className="group/plus absolute right-3 top-3 z-10 inline-flex h-9 max-w-none items-center overflow-hidden rounded-full bg-white/[0.08] px-3 text-zinc-200 ring-1 ring-white/[0.08] transition-[max-width,background-color,color] duration-300 hover:bg-white/[0.12] hover:text-white focus-visible:bg-white/[0.12] focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 md:max-w-[2.25rem] md:px-0 md:hover:max-w-[12.5rem] md:focus-visible:max-w-[12.5rem] sm:right-4 sm:top-4"
+          aria-label={t("profile.overview.identity.viewProfile")}
+        >
+          <span className="inline-flex size-9 shrink-0 items-center justify-center">
+            <Plus className="size-4" strokeWidth={2.2} aria-hidden />
+          </span>
+          <span className="whitespace-nowrap text-[12px] font-medium opacity-100 md:pr-3.5 md:opacity-0 md:transition-opacity md:duration-300 md:group-hover/plus:opacity-100 md:group-focus-visible/plus:opacity-100">
+            {t("profile.overview.identity.viewProfile")}
+          </span>
+        </Link>
 
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <IdentityPill href={profileDashboardHref("security")}>
-              <span className="grid size-5 place-items-center rounded-full bg-white/[0.12] text-white">
-                <Shield className="size-3" aria-hidden />
-              </span>
-              {levelLabel}
-            </IdentityPill>
-            <IdentityPill href={profileDashboardHref("settings")}>
-              <span className="grid size-5 place-items-center rounded-full bg-white/[0.12] text-white">
-                <UserPlus className="size-3" aria-hidden />
-              </span>
-              {t("profile.overview.identity.accountType")}
-            </IdentityPill>
-            <IdentityPill href={profileDashboardHref("verification")}>
-              <span
-                className={cn(
-                  "grid size-5 place-items-center rounded-full text-[11px] font-bold",
-                  verified ? "bg-[#B7F500] text-black" : "bg-amber-500 text-black",
-                )}
-              >
-                {verified ? <Check className="size-3" aria-hidden /> : "!"}
-              </span>
-              {verified ? t("profile.overview.identity.verified") : t("profile.overview.identity.unverified")}
-            </IdentityPill>
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            maskImage: "radial-gradient(circle at 20% 0%, black 10%, transparent 70%)",
+          }}
+          aria-hidden
+        />
+
+        <div className="relative flex min-w-0 items-start gap-4 pr-12 sm:gap-5 sm:pr-14">
+          <ProfileMusicAvatar userId={userId} email={email} className="size-20 sm:size-[5.5rem]" />
+
+          <div className="min-w-0 flex-1 pt-0.5 sm:pt-1">
+            <h2 className="text-[clamp(1.45rem,5.5vw,2.85rem)] font-semibold leading-[1.02] tracking-[-0.04em] text-white break-words">
+              {nick}
+            </h2>
+
+            {userId ? (
+              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1">
+                <p className="min-w-0 text-[10px] leading-snug text-zinc-600 sm:text-[11px]">
+                  <span className="uppercase tracking-[0.08em]">{t("profile.overview.identity.idPrefix")}</span>{" "}
+                  <span className="font-mono text-[10px] text-zinc-500 sm:text-[11px]">{userId}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void onCopyId()}
+                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-zinc-600 transition hover:bg-white/[0.06] hover:text-zinc-300"
+                  aria-label={t("profile.overview.copyId")}
+                >
+                  {copied ? <Check className="size-3 text-[#B7F500]" /> : <Copy className="size-3" />}
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

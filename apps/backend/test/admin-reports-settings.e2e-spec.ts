@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PrismaClient, UserRoleCode, UserStatus } from '@prisma/client';
+import { UserRoleCode, UserStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-rs-${prefix}-${Date.now()}@example.com`;
@@ -14,17 +15,16 @@ async function registerUser(app: E2eApp, email: string) {
       .send(e2eRegisterPayload(email, password, 'E2E RS'));
   expect(reg.status).toBe(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.updateMany({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
   return password;
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -34,7 +34,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 async function staffToken(app: E2eApp, prefix: string, role: UserRoleCode) {
@@ -188,12 +187,11 @@ describe('Admin reports and settings fees (e2e)', () => {
       });
     expect([200, 201]).toContain(patchSuper.status);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audit = await prisma.auditLog.findFirst({
       where: { action: 'platform_fees.update' },
       orderBy: { createdAt: 'desc' },
     });
-    await prisma.$disconnect();
     expect(audit).toBeTruthy();
   });
 });

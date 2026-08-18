@@ -26,6 +26,7 @@ vi.mock("@/components/providers/auth-provider", () => ({
 vi.mock("@/lib/public-env", () => ({
   isLiveAccountEnabled: () => true,
   isAccountCenterPrototypeAllowed: () => false,
+  isStrictDeployMode: () => false,
 }));
 
 vi.mock("@/components/providers/i18n-provider", () => ({

@@ -1,8 +1,9 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PartnerType, PrismaClient, UserRoleCode, UserStatus } from '@prisma/client';
+import { PartnerType, UserRoleCode, UserStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { e2eEmail } from './helpers/e2e-unique';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return e2eEmail(`e2e-${prefix}`);
@@ -15,12 +16,11 @@ async function registerUser(app: E2eApp, email: string) {
       .send(e2eRegisterPayload(email, password, 'E2E Partner'));
   expect(reg.status).toBe(201);
 
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   await prisma.user.updateMany({
     where: { email },
     data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
   });
-  await prisma.$disconnect();
 
   const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -30,7 +30,7 @@ async function registerUser(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -40,7 +40,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 async function staffToken(app: E2eApp, prefix: string, role: UserRoleCode) {
@@ -117,12 +116,11 @@ describe('Admin referrals / partners (e2e)', () => {
     expect([200, 201]).toContain(approved.status);
     expect(approved.body.status).toBe('APPROVED');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audit = await prisma.auditLog.findFirst({
       where: { entityId: partnerId, action: 'partner.approve' },
       orderBy: { createdAt: 'desc' },
     });
-    await prisma.$disconnect();
     expect(audit).toBeTruthy();
   });
 
@@ -142,11 +140,10 @@ describe('Admin referrals / partners (e2e)', () => {
     expect([200, 201]).toContain(rejected.status);
     expect(rejected.body.status).toBe('REJECTED');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const audit = await prisma.auditLog.findFirst({
       where: { entityId: partnerId, action: 'partner.reject' },
     });
-    await prisma.$disconnect();
     expect(audit).toBeTruthy();
   });
 

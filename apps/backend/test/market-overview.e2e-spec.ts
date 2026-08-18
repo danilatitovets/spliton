@@ -1,6 +1,7 @@
 import request from 'supertest';
-import { Prisma, PrismaClient, ReleaseStatus } from '@prisma/client';
+import { Prisma, ReleaseStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 describe('Market overview (e2e)', () => {
   let app: E2eApp | undefined;
@@ -16,7 +17,7 @@ describe('Market overview (e2e)', () => {
   async function seedPublicRelease(
     status: ReleaseStatus = ReleaseStatus.ACTIVE,
   ) {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `mo-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -31,7 +32,6 @@ describe('Market overview (e2e)', () => {
         status,
       },
     });
-    await prisma.$disconnect();
     return release;
   }
 
@@ -147,7 +147,7 @@ describe('Market overview (e2e)', () => {
   });
 
   it('does not expose draft releases in overview', async () => {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const draft = await prisma.release.create({
       data: {
         slug: `mo-draft-${Date.now()}`,
@@ -160,7 +160,6 @@ describe('Market overview (e2e)', () => {
         status: ReleaseStatus.DRAFT,
       },
     });
-    await prisma.$disconnect();
 
     const list = await request(app!.getHttpServer()).get(
       '/api/v1/market/overview',

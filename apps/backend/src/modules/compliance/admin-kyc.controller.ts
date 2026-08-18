@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { KycLevel, KycStatus, UserRoleCode } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -8,6 +8,7 @@ import type { AuthUser } from '../auth/types/auth-user.type';
 import { ADMIN_PANEL_ROLE_CODES } from '../admin/admin-panel-roles';
 import { UserKycService } from './user-kyc.service';
 import { AmlProfileService } from './aml-profile.service';
+import { ApproveKycDto, RejectKycDto } from './dto/kyc-admin.dto';
 
 const KYC_MUTATE = [UserRoleCode.SUPER_ADMIN, UserRoleCode.COMPLIANCE] as const;
 const KYC_VIEW = [...KYC_MUTATE, UserRoleCode.ADMIN] as const;
@@ -29,16 +30,22 @@ export class AdminKycController {
 
   @Get('reviews/:id')
   @Roles(...KYC_VIEW)
-  getReview(@Param('id') id: string) {
+  getReview(@Param('id', ParseUUIDPipe) id: string) {
     return this.kyc.getReviewById(id);
+  }
+
+  @Get('reviews/:id/documents')
+  @Roles(...KYC_VIEW)
+  reviewDocuments(@Param('id', ParseUUIDPipe) id: string) {
+    return this.kyc.listReviewDocuments(id);
   }
 
   @Post('reviews/:id/approve')
   @Roles(...KYC_MUTATE)
   approve(
     @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() body: { level?: KycLevel },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: ApproveKycDto,
   ) {
     return this.kyc.approve(id, user.id, body.level ?? KycLevel.VERIFIED);
   }
@@ -47,8 +54,8 @@ export class AdminKycController {
   @Roles(...KYC_MUTATE)
   reject(
     @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() body: { reason: string },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: RejectKycDto,
   ) {
     return this.kyc.reject(id, user.id, body.reason);
   }

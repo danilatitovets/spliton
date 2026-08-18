@@ -29,6 +29,7 @@ type DashboardMobileMenuProps = {
   navItemActive: (item: DashboardNavItem, pathname: string, hash: string) => boolean;
   t: (key: string, fallback?: string) => string;
   isAuthenticated: boolean;
+  authPending?: boolean;
   balanceShort: string | null;
   balanceError: string | null;
   depositHref: string;
@@ -44,6 +45,7 @@ export function DashboardMobileMenu({
   navItemActive,
   t,
   isAuthenticated,
+  authPending = false,
   balanceShort,
   balanceError,
   depositHref,
@@ -169,13 +171,17 @@ export function DashboardMobileMenu({
             {t("navigation.header.profileLink")}
           </Link>
 
-          <Link
-            href={isAuthenticated ? depositHref : loginHref}
-            onClick={onClose}
-            className="mt-4 flex h-12 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-black transition active:scale-[0.98]"
-          >
-            {isAuthenticated ? t("navigation.header.depositUsdtMobile") : t("navigation.header.login")}
-          </Link>
+          {authPending ? (
+            <span className="mt-4 flex h-12 animate-pulse items-center justify-center rounded-full bg-white/12" aria-hidden />
+          ) : (
+            <Link
+              href={isAuthenticated ? depositHref : loginHref}
+              onClick={onClose}
+              className="mt-4 flex h-12 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-black transition active:scale-[0.98]"
+            >
+              {isAuthenticated ? t("navigation.header.depositUsdtMobile") : t("navigation.header.login")}
+            </Link>
+          )}
         </div>
       </div>
 

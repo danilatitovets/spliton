@@ -1,16 +1,19 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { AppLocale } from '@prisma/client';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { AppLocale, KycStatus } from '@prisma/client';
 import { normalizeAppLocale } from '../../common/i18n/app-locale';
 import { resolveSessionDeviceLabel } from '../../common/http/user-agent-label';
 import { UsersRepository } from './users.repository';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountCenterService } from './account-center.service';
+import { buildLightweightAccountCenter } from './account-center.scoring';
 import { AuthAuditService } from '../auth/services/auth-audit.service';
 import { SessionService } from '../auth/services/session.service';
 import type { RequestMeta } from './user-password.service';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly prisma: PrismaService,
@@ -19,37 +22,92 @@ export class UsersService {
     private readonly authAudit: AuthAuditService,
   ) {}
 
-  async getMe(userId: string, roles: string[] = []) {
+  async getMe(userId: string, _roles: string[] = []) {
     const user = await this.usersRepository.findUserWithProfileAndRoles(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    const [twoFaEnabled, sessionCount, accountCenter] = await Promise.all([
-      this.prisma.twoFactorMethod.count({
-        where: { userId, status: 'ENABLED' },
-      }),
-      this.prisma.userSession.count({
-        where: { userId, revokedAt: null },
-      }),
-      this.accountCenter.buildSummary(userId, roles),
+    if (!user.profile) {
+      await this.usersRepository.upsertProfile(userId, {});
+    }
+
+    const [hydrated, twoFaEnabled, sessionCount, kyc, securityPrefs] = await Promise.all([
+      user.profile
+        ? Promise.resolve(user)
+        : this.usersRepository.findUserWithProfileAndRoles(userId),
+      this.safeQuery('twoFactorMethod.count', userId, 0, () =>
+        this.prisma.twoFactorMethod.count({
+          where: { userId, status: 'ENABLED' },
+        }),
+      ),
+      this.safeQuery('userSession.count', userId, 0, () =>
+        this.prisma.userSession.count({
+          where: { userId, revokedAt: null },
+        }),
+      ),
+      this.safeQuery('kycVerification.findFirst', userId, null, () =>
+        this.prisma.kycVerification.findFirst({
+          where: { userId },
+          orderBy: { updatedAt: 'desc' },
+          select: { status: true, level: true },
+        }),
+      ),
+      this.safeQuery('userSecurityPreference.findUnique', userId, null, () =>
+        this.prisma.userSecurityPreference.findUnique({ where: { userId } }),
+      ),
     ]);
 
+    const resolved = hydrated ?? user;
+    const twoFa = twoFaEnabled > 0;
+    const sessions = sessionCount;
+    const accountCenter = buildLightweightAccountCenter({
+      displayName: resolved.profile?.displayName,
+      timezone: resolved.profile?.timezone,
+      emailVerified: Boolean(resolved.emailVerifiedAt),
+      twoFaEnabled: twoFa,
+      passwordSet: true,
+      passwordChangedAt: resolved.profile?.passwordChangedAt ?? null,
+      activeSessionsCount: sessions,
+      kycStatus: kyc?.status ?? KycStatus.NOT_STARTED,
+      kycLevel: kyc?.level ?? null,
+      withdrawalEmailConfirmationEnabled:
+        securityPrefs?.withdrawalEmailConfirmationEnabled,
+    });
+
     return {
-      id: user.id,
-      email: user.email,
-      status: user.status,
-      emailVerified: Boolean(user.emailVerifiedAt),
-      profile: user.profile,
-      roles: user.userRoles.map((item) => item.role.code),
-      preferredLocale: user.profile?.preferredLocale ?? 'ru',
+      id: resolved.id,
+      email: resolved.email,
+      status: resolved.status,
+      emailVerified: Boolean(resolved.emailVerifiedAt),
+      profile: resolved.profile,
+      roles: resolved.userRoles.map((item) => item.role.code),
+      preferredLocale: resolved.profile?.preferredLocale ?? 'ru',
       security: {
-        twoFaEnabled: twoFaEnabled > 0,
-        activeSessions: sessionCount,
+        twoFaEnabled: twoFa,
+        activeSessions: sessions,
       },
-      createdAt: user.createdAt,
+      createdAt: resolved.createdAt,
       accountCenter,
     };
+  }
+
+  private async safeQuery<T>(
+    label: string,
+    userId: string,
+    fallback: T,
+    run: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await run();
+    } catch (error: unknown) {
+      this.logger.warn(
+        `${label} failed for ${userId}: ${
+          error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
+      return fallback;
+    }
   }
 
   async getAccountCenter(userId: string, roles: string[] = []) {

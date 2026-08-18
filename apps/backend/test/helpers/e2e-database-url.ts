@@ -37,6 +37,12 @@ export function assertSafeE2eCleanupTarget(url: string): void {
   const isolated =
     process.env.E2E_ISOLATED_DATABASE === '1' ||
     /@(127\.0\.0\.1|localhost)(:|\/)/i.test(url);
+
+  if (/supabase\.com/i.test(url) && !isolated && process.env.ALLOW_E2E_CLEANUP !== '1') {
+    throw new Error(
+      'Refusing e2e cleanup against Supabase. Set TEST_DATABASE_URL to Docker :5433 (or another isolated DB).',
+    );
+  }
   // After configureE2eDatabase remaps TEST → DATABASE, the two env vars match by design.
   // Refuse only when both point at the same non-isolated URL (shared main DB misuse).
   if (

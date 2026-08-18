@@ -6,9 +6,11 @@ import "@/styles/surfaces.css";
 import { ConditionalSiteFooter } from "@/components/layout/conditional-site-footer";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { AppProviders } from "@/components/providers/app-providers";
+import { SPLITON_SESSION_COOKIE, hasSessionHintCookieValue } from "@/lib/auth/session-cookie";
 import { rootLayoutMetaAsync } from "@/lib/i18n/page-metadata";
 import { getPublicApiBaseUrl } from "@/lib/public-env";
 import { resolveServerLocale } from "@/lib/i18n/server-locale";
+import { cookies } from "next/headers";
 
 /** Inter Variable — same family Linear uses (OpenType via globals.css). */
 const inter = Inter({
@@ -34,6 +36,10 @@ export default async function RootLayout({
 }>) {
   const initialLocale = await resolveServerLocale();
   const apiOrigin = getPublicApiBaseUrl();
+  const cookieStore = await cookies();
+  const initialSessionHint = hasSessionHintCookieValue(
+    cookieStore.get(SPLITON_SESSION_COOKIE)?.value,
+  );
 
   return (
     <html
@@ -56,7 +62,7 @@ export default async function RootLayout({
         className={`${inter.className} flex min-h-dvh flex-col bg-black font-sans text-foreground antialiased`}
         suppressHydrationWarning
       >
-        <AppProviders initialLocale={initialLocale}>
+        <AppProviders initialLocale={initialLocale} initialSessionHint={initialSessionHint}>
           <AuthGuard>
             <div className="flex min-h-0 flex-1 flex-col bg-black">{children}</div>
             <ConditionalSiteFooter />

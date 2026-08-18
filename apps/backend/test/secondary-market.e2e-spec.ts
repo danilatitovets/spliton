@@ -1,12 +1,12 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   ReleaseStatus,
 } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -34,7 +34,7 @@ describe('Secondary market (e2e)', () => {
     const seller = await registerAndLogin(app!, sellerEmail);
     const buyer = await registerAndLogin(app!, buyerEmail);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-sm-${Date.now()}`,
@@ -58,7 +58,6 @@ describe('Secondary market (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(5),
       },
     });
-    await prisma.$disconnect();
 
     await seedWalletWithLedger(seller.userId, '0');
     const buyerWallet = await seedWalletWithLedger(buyer.userId, '500');
@@ -71,7 +70,7 @@ describe('Secondary market (e2e)', () => {
     expect(listingRes.status).toBe(201);
     const listingId = listingRes.body.id as string;
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const posAfterList = await prisma2.userPosition.findUnique({
       where: {
         userId_releaseId: { userId: seller.userId, releaseId: release.id },
@@ -86,7 +85,7 @@ describe('Secondary market (e2e)', () => {
       .send({ listingId });
     expect(tradeRes.status).toBe(201);
 
-    const prisma3 = new PrismaClient();
+    const prisma3 = createIsolatedE2ePrisma();
     const listing = await prisma3.marketListing.findUnique({
       where: { id: listingId },
     });
@@ -115,7 +114,7 @@ describe('Secondary market (e2e)', () => {
     const seller = await registerAndLogin(app!, sellerEmail);
     await registerAndLogin(app!, buyerEmail);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-rich-${Date.now()}`,
@@ -139,7 +138,6 @@ describe('Secondary market (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(10),
       },
     });
-    await prisma.$disconnect();
 
     const createRes = await request(app!.getHttpServer())
       .post('/api/v1/market/listings')

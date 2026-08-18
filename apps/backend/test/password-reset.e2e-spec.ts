@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { e2eRegisterPayload } from './helpers/register-e2e-user';
-import { PrismaClient, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(): string {
   return `pwd-reset-${Date.now()}@example.com`;
@@ -30,12 +31,11 @@ describe('Password reset (e2e)', () => {
       .send(e2eRegisterPayload(email, password))
       .expect(201);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     await prisma.user.update({
       where: { email },
       data: { status: UserStatus.ACTIVE, emailVerifiedAt: new Date() },
     });
-    await prisma.$disconnect();
     return password;
   }
 

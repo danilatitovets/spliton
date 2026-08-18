@@ -1,5 +1,6 @@
 import type { MarketTopCardMetrics } from "@/constants/market-overview/page";
 import { MARKET_SUMMARY_PANELS } from "@/constants/market-overview/page";
+import { isNoiseCatalogGenre, isNoiseCatalogRelease } from "@/lib/catalog/is-noise-catalog-item";
 import { resolveChartSeries } from "@/lib/market-overview/chart-series";
 import { formatUsdtCompact } from "@/lib/market-overview/format";
 import { DICTIONARIES, lookupDictionaryMessage } from "@/lib/i18n/dictionaries";
@@ -7,6 +8,7 @@ import type { AppLocale } from "@/lib/i18n/types";
 import type {
   MarketOverviewChartsApi,
   MarketOverviewStatsApi,
+  MarketOverviewTopReleaseRow,
 } from "@/services/market-overview.service";
 import type { MarketOverviewPeriod } from "@/types/market-overview";
 
@@ -129,7 +131,7 @@ export function buildLiveSummaryPanels(
   stats: MarketOverviewStatsApi,
   charts: MarketOverviewChartsApi | null,
 ): MarketSummaryPanelLive[] {
-  const genres = stats.distributions?.genres ?? [];
+  const genres = (stats.distributions?.genres ?? []).filter((g) => !isNoiseCatalogGenre(g.name));
   const maxGenreVol = Math.max(...genres.map((g) => Number(g.volumeUsdt) || 0), 1);
   const genreBars = genres.slice(0, 4).map((g) => {
     const value = Number(g.volumeUsdt) || g.count;
@@ -213,12 +215,19 @@ function genreToSlug(name: string): string {
   return s.replace(/\s+/g, "-").slice(0, 24) || "other";
 }
 
+function firstPublicTopRelease(
+  rows: MarketOverviewTopReleaseRow[] | undefined,
+): MarketOverviewTopReleaseRow | undefined {
+  return (rows ?? []).find((row) => !isNoiseCatalogRelease(row.title, row.symbol, row.artist));
+}
+
 export function mapGenresToSegmentRows(
   genres: MarketOverviewStatsApi["distributions"]["genres"],
 ): MarketSegmentLiveRow[] {
-  if (!genres?.length) return [];
-  const maxCount = Math.max(...genres.map((g) => g.count), 1);
-  return genres.slice(0, 8).map((g) => ({
+  const publicGenres = (genres ?? []).filter((g) => !isNoiseCatalogGenre(g.name));
+  if (!publicGenres.length) return [];
+  const maxCount = Math.max(...publicGenres.map((g) => g.count), 1);
+  return publicGenres.slice(0, 8).map((g) => ({
     id: genreToSlug(g.name),
     label: g.name,
     deepPlusShare: `${Math.round((g.count / maxCount) * 100)}%`,
@@ -240,7 +249,7 @@ export function mapSecondaryLiveSnapshot(
   stats: MarketOverviewStatsApi,
   locale: AppLocale = "en",
 ): MarketSecondaryLiveSnapshot {
-  const top = stats.topReleases?.byVolume?.[0];
+  const top = firstPublicTopRelease(stats.topReleases?.byVolume);
   const topDemand = top ? `${top.symbol} — ${top.title}` : "—";
   const tradesCount = stats.secondaryMarket?.tradesCount ?? 0;
   return {
@@ -280,7 +289,7 @@ export function mapTopReleasesToInsights(
 
   return blocks.map((block) => {
     const tag = mo(locale, block.tagKey, { period: periodLabel });
-    const row = stats.topReleases?.[block.key]?.[0];
+    const row = firstPublicTopRelease(stats.topReleases?.[block.key]);
     if (!row) {
       return {
         id: `empty-${block.key}`,

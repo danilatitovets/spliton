@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -128,17 +128,19 @@ export function ProfileOkxBanner({
   iconSize?: "sm" | "lg" | "xl";
 }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-[1.25rem] bg-[#111111] px-5 py-4 sm:px-6">
-      {icon ? <ProfileOkxLeading icon={icon} size={iconSize} /> : null}
-      <div className="min-w-0 flex-1">
-        <p className={cn("text-[14px] leading-snug", description ? "font-medium text-white" : "text-zinc-300")}>
-          {title}
-        </p>
-        {description ? (
-          <p className="mt-1 text-[13px] leading-snug text-zinc-400">{description}</p>
-        ) : null}
+    <div className="flex flex-col gap-3 rounded-[1.25rem] bg-[#111111] px-5 py-4 sm:flex-row sm:items-center sm:gap-3.5 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-start gap-3.5">
+        {icon ? <ProfileOkxLeading icon={icon} size={iconSize} /> : null}
+        <div className="min-w-0 flex-1">
+          <p className={cn("text-[14px] leading-snug", description ? "font-medium text-white" : "text-zinc-300")}>
+            {title}
+          </p>
+          {description ? (
+            <p className="mt-1 text-[13px] leading-snug text-zinc-400">{description}</p>
+          ) : null}
+        </div>
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </div>
   );
 }
@@ -148,11 +150,13 @@ export function ProfileOkxToggle({
   checked,
   onChange,
   disabled,
+  "aria-label": ariaLabel,
 }: {
   id?: string;
   checked: boolean;
   onChange?: (value: boolean) => void;
   disabled?: boolean;
+  "aria-label"?: string;
 }) {
   const interactive = Boolean(onChange) && !disabled;
   return (
@@ -160,13 +164,14 @@ export function ProfileOkxToggle({
       id={id}
       type="button"
       role="switch"
+      aria-label={ariaLabel}
       aria-checked={checked}
       disabled={!interactive}
       onClick={() => onChange?.(!checked)}
       className={cn(
         "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-        checked ? "bg-[#B7F500]" : "bg-white/15",
-        !interactive && "cursor-not-allowed opacity-50",
+        checked ? "bg-white" : "bg-white/35",
+        !interactive && "cursor-not-allowed opacity-70",
       )}
     >
       <span
@@ -194,16 +199,18 @@ export function ProfileOkxSection({
 }) {
   return (
     <section id={id} className="space-y-3">
-      <div className="flex items-end justify-between gap-3 px-0.5 sm:px-1">
+      <div className="flex flex-col gap-2 px-0.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:px-1">
         <div className="min-w-0">
           <h2 className="text-[16px] font-semibold tracking-tight text-white sm:text-[17px]">{title}</h2>
           {description ? (
             <p className="mt-1 max-w-[52ch] text-[13px] leading-relaxed text-zinc-500">{description}</p>
           ) : null}
         </div>
-        {action ? <div className="shrink-0 pb-0.5">{action}</div> : null}
+        {action ? (
+          <div className="w-full shrink-0 pb-0.5 sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">{action}</div>
+        ) : null}
       </div>
-      <div className="overflow-hidden rounded-[1.25rem] bg-[#111111] divide-y divide-white/[0.06]">
+      <div className="divide-y divide-white/[0.06] overflow-hidden rounded-[1.25rem] bg-[#111111]">
         {children}
       </div>
     </section>
@@ -226,16 +233,23 @@ export function ProfileOkxRow({
   action?: ReactNode;
 }) {
   return (
-    <div id={id} className="flex items-center gap-3.5 px-5 py-[1.15rem] sm:gap-4 sm:px-6">
-      {icon ? <ProfileOkxLeading icon={icon} size="sm" /> : null}
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[15px] font-semibold text-white">{title}</p>
-          {badge}
+    <div
+      id={id}
+      className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-6 sm:py-[1.15rem]"
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3.5 sm:items-center sm:gap-4">
+        {icon ? <ProfileOkxLeading icon={icon} size="sm" /> : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[15px] font-semibold text-white">{title}</p>
+            {badge}
+          </div>
+          {description ? <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{description}</p> : null}
         </div>
-        {description ? <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{description}</p> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? (
+        <div className="flex w-full shrink-0 items-center justify-end sm:w-auto sm:pl-4">{action}</div>
+      ) : null}
     </div>
   );
 }
@@ -245,6 +259,36 @@ export function ProfileOkxLink({ href, children }: { href: string; children: Rea
     <Link href={href} className={profileOkxGhostClass}>
       {children}
     </Link>
+  );
+}
+
+export const profileOkxTextLinkClass =
+  "shrink-0 whitespace-nowrap text-[13px] font-medium text-white/80 underline-offset-[5px] transition hover:text-white hover:underline";
+
+export function ProfileOkxSetupLink({
+  href,
+  onClick,
+  children,
+  className,
+}: {
+  href?: string;
+  onClick?: () => void;
+  children: ReactNode;
+  className?: string;
+}) {
+  const cls = cn(profileOkxTextLinkClass, className);
+  return (
+    <span className="flex justify-end">
+      {href ? (
+        <Link href={href} className={cls}>
+          {children}
+        </Link>
+      ) : (
+        <button type="button" onClick={onClick} className={cls}>
+          {children}
+        </button>
+      )}
+    </span>
   );
 }
 

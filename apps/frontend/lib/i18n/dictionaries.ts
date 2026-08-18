@@ -32,6 +32,12 @@ export function looksTechnical(message: string): boolean {
   );
 }
 
+const I18N_KEY = /^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9]+)+$/;
+
+export function looksLikeI18nKey(value: string): boolean {
+  return I18N_KEY.test(value);
+}
+
 export function messageForApiError(
   code: string | undefined,
   locale: AppLocale,
@@ -42,6 +48,16 @@ export function messageForApiError(
   if (code && dict[code]) return dict[code];
   if (code && locale !== "ru" && en[code]) return en[code];
   if (code) return dict.UNKNOWN_ERROR ?? en.UNKNOWN_ERROR ?? "Operation failed. Please try again.";
-  if (fallback && fallback.trim() && !looksTechnical(fallback) && locale === "ru") return fallback;
+  if (fallback && dict[fallback]) return dict[fallback];
+  if (fallback && en[fallback]) return en[fallback];
+  if (
+    fallback &&
+    fallback.trim() &&
+    !looksTechnical(fallback) &&
+    !looksLikeI18nKey(fallback) &&
+    locale === "ru"
+  ) {
+    return fallback;
+  }
   return dict.UNKNOWN_ERROR ?? en.UNKNOWN_ERROR ?? "Operation failed. Please try again.";
 }

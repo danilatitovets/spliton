@@ -96,6 +96,7 @@ describe("ProfileLegalContent", () => {
     await waitFor(() => expect(mockFetchLegalCenter).toHaveBeenCalled());
     expect(screen.getByText("profile.legal.acceptSection.title")).toBeInTheDocument();
     expect(screen.getByText("profile.legal.activeTitle")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "profile.okx.setup" }).length).toBeGreaterThan(0);
   });
 
   it("opens missing consent document from the accept list", async () => {
@@ -132,5 +133,29 @@ describe("ProfileLegalContent", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "profile.legal.readDocument" })[0]);
     expect(mockPush).toHaveBeenCalledWith(ROUTES.dashboardProfileLegalDoc("p1", true));
     expect(mockAcceptLegalConsents).not.toHaveBeenCalled();
+  });
+
+  it("shows error with retry and no fallback policies when legal center fails", async () => {
+    mockFetchLegalCenter.mockRejectedValue(Object.assign(new Error("boom"), { status: 500 }));
+
+    render(<ProfileLegalContent />);
+    await waitFor(() => expect(mockFetchLegalCenter).toHaveBeenCalled());
+    expect(screen.getByText("profile.legal.loadError")).toBeInTheDocument();
+    expect(screen.queryByText("profile.legal.activeTitle")).not.toBeInTheDocument();
+    expect(screen.queryByText("TERMS_OF_SERVICE")).not.toBeInTheDocument();
+
+    mockFetchLegalCenter.mockResolvedValue(centerWithMissing);
+    fireEvent.click(screen.getByRole("button", { name: "profile.legal.retry" }));
+    await waitFor(() => expect(screen.getByText("profile.legal.activeTitle")).toBeInTheDocument());
+  });
+
+  it("shows empty state when legal center returns no policies", async () => {
+    mockFetchLegalCenter.mockResolvedValue({
+      ...centerWithMissing,
+      activePolicies: [],
+    });
+    render(<ProfileLegalContent />);
+    await waitFor(() => expect(screen.getByText("profile.legal.empty")).toBeInTheDocument());
+    expect(screen.queryByText("profile.legal.loadError")).not.toBeInTheDocument();
   });
 });

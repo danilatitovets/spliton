@@ -13,9 +13,10 @@ import { fetchWalletBalanceCached, invalidateWalletBalanceCache } from "@/lib/wa
 import { fetchWalletBalance } from "@/services/wallet.service";
 
 export function useHeaderWalletBalance() {
-  const { authorizedFetch, isAuthenticated, user } = useAuth();
+  const { authorizedFetch, isAuthenticated, user, isLoading, status } = useAuth();
   const { locale } = useI18n();
   const demoPreview = useCabinetDemoPreview();
+  const uiPending = status === "initializing" || status === "refreshing" || (isLoading && !isAuthenticated);
   const live = getWalletDataSource() === "live" && isAuthenticated && !demoPreview;
   const [display, setDisplay] = useState<string | null>(demoPreview ? PROFILE_DEMO_BALANCE : null);
   const [loading, setLoading] = useState(false);
@@ -66,6 +67,7 @@ export function useHeaderWalletBalance() {
   return {
     live,
     isAuthenticated,
+    isAuthPending: uiPending || status === "error",
     userEmail: user?.email ?? null,
     balanceLabel: loading ? "…" : display,
     balanceShort: loading ? "…" : display?.replace(/\sUSDT$/, "") ?? null,

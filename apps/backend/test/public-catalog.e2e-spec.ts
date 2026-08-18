@@ -1,6 +1,7 @@
 import request from 'supertest';
-import { Prisma, PrismaClient, ReleaseStatus } from '@prisma/client';
+import { Prisma, ReleaseStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 describe('Public catalog (e2e)', () => {
   let app: E2eApp | undefined;
@@ -17,7 +18,7 @@ describe('Public catalog (e2e)', () => {
     status: ReleaseStatus,
     opts?: { withArtist?: boolean; title?: string; genre?: string },
   ) {
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
     const artist = opts?.withArtist
       ? await prisma.artist.create({
@@ -65,7 +66,6 @@ describe('Public catalog (e2e)', () => {
       });
     }
 
-    await prisma.$disconnect();
     return release;
   }
 
@@ -176,7 +176,7 @@ describe('Public catalog (e2e)', () => {
 
   it('funding payouts filter uses kind=payouts without status conflict', async () => {
     const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const soldOut = await prisma.release.create({
       data: {
         slug: `payout-${suffix}`,
@@ -203,7 +203,6 @@ describe('Public catalog (e2e)', () => {
         soldUnits: new Prisma.Decimal(1000),
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       '/api/v1/catalog/releases?kind=payouts',
@@ -215,7 +214,7 @@ describe('Public catalog (e2e)', () => {
 
   it('phase open with kind=all keeps secondary market cards', async () => {
     const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const seller = await prisma.user.create({
       data: {
         email: `seller-${suffix}@example.com`,
@@ -259,7 +258,6 @@ describe('Public catalog (e2e)', () => {
         unitsTotal: new Prisma.Decimal(10),
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer()).get(
       '/api/v1/catalog/releases?status=open',

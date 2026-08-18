@@ -1,8 +1,9 @@
 import request from 'supertest';
-import { Prisma, PrismaClient, ReleaseStatus } from '@prisma/client';
+import { Prisma, ReleaseStatus } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -18,7 +19,7 @@ async function seedPosition(
     primaryPrice: string;
   },
 ) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const release = await prisma.release.create({
     data: {
       slug: `pf-${Date.now()}-${Math.random()}`,
@@ -42,7 +43,6 @@ async function seedPosition(
       avgEntryPrice: new Prisma.Decimal(opts.avgEntry),
     },
   });
-  await prisma.$disconnect();
   return { release, position };
 }
 
@@ -109,7 +109,7 @@ describe('Portfolio API (e2e)', () => {
     const email = uniqueEmail('portfolio-act');
     const { token, userId } = await registerE2eUser(app!, email);
     const wallet = await seedWalletWithLedger(userId, '200');
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const older = new Date('2026-01-01T10:00:00Z');
     const newer = new Date('2026-06-01T10:00:00Z');
     await prisma.walletTransaction.create({
@@ -138,7 +138,6 @@ describe('Portfolio API (e2e)', () => {
         happenedAt: newer,
       },
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get('/api/v1/portfolio/activity')

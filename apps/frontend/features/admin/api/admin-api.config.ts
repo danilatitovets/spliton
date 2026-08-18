@@ -135,6 +135,7 @@ export const ADMIN_API_PATHS = {
   kycReviews: `${ADMIN_API_V1_PREFIX}/kyc/reviews`,
   kycReviewApprove: (id: string) => `${ADMIN_API_V1_PREFIX}/kyc/reviews/${id}/approve`,
   kycReviewReject: (id: string) => `${ADMIN_API_V1_PREFIX}/kyc/reviews/${id}/reject`,
+  kycReviewDocuments: (id: string) => `${ADMIN_API_V1_PREFIX}/kyc/reviews/${id}/documents`,
   legalPolicies: `${ADMIN_API_V1_PREFIX}/legal/policies`,
   legalPoliciesGrouped: `${ADMIN_API_V1_PREFIX}/legal/policies/grouped`,
   legalPolicyVersions: (type: string) =>

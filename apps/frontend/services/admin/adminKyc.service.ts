@@ -9,8 +9,13 @@ export type AdminKycReview = {
   status: string;
   level?: string | null;
   countryCode?: string | null;
+  documentType?: string | null;
+  documentReference?: string | null;
   submittedAt?: string | null;
   reviewedAt?: string | null;
+  rejectionReasonSafe?: string | null;
+  documentViewerAvailable?: boolean;
+  files?: { identity?: boolean; address?: boolean; selfie?: boolean };
   user?: {
     id: string;
     email: string;
@@ -18,12 +23,29 @@ export type AdminKycReview = {
   };
 };
 
+export type AdminKycDocument = {
+  docType: string;
+  kind?: "pdf" | "image";
+  uploadedAt: string;
+  status: string;
+  signedUrl: string | null;
+  expiresInSeconds: number | null;
+};
+
+export type AdminKycDocumentsPayload = {
+  id: string;
+  userId: string;
+  documentViewerAvailable: boolean;
+  address: { city: string; street: string; postalCode: string; countryCode?: string } | null;
+  documents: AdminKycDocument[];
+};
+
 const MOCK_REVIEWS: AdminKycReview[] = [
   {
     id: "kyc-demo-1",
     userId: "user-demo-1",
     status: "PENDING",
-    countryCode: "RU",
+    countryCode: null,
     submittedAt: new Date().toISOString(),
     user: { id: "user-demo-1", email: "demo@spliton.test", profile: { displayName: "Demo User" } },
   },
@@ -52,6 +74,24 @@ export async function approveAdminKycReview(
     return;
   }
   await adminMockDelay(200);
+}
+
+export async function fetchAdminKycDocuments(
+  id: string,
+  client?: AdminApiClient,
+): Promise<AdminKycDocumentsPayload> {
+  if (getAdminDataSource() === "live") {
+    requireAdminLiveClient(client);
+    return client.get<AdminKycDocumentsPayload>(ADMIN_API_PATHS.kycReviewDocuments(id));
+  }
+  await adminMockDelay(80);
+  return {
+    id,
+    userId: "user-demo-1",
+    documentViewerAvailable: false,
+    address: null,
+    documents: [],
+  };
 }
 
 export async function rejectAdminKycReview(

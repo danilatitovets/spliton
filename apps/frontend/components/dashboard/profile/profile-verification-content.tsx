@@ -4,40 +4,35 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
   VERIFICATION_STATUS_QUERY,
   parseVerificationUiStatus,
-  type VerificationUiStatus,
 } from "@/constants/dashboard/profile-verification";
 import { ProfileVerificationLiveContent } from "@/components/dashboard/profile/profile-verification-live-content";
 import {
   ProfileOkxAlert,
   ProfileOkxBanner,
   ProfileOkxLink,
-  ProfileOkxRecommended,
   ProfileOkxRow,
   ProfileOkxSection,
   ProfileOkxSpotlight,
-  profileOkxGhostClass,
 } from "@/components/dashboard/profile/profile-okx";
+import {
+  ProfileVerificationDocsSection,
+  type VerificationDocDrafts,
+} from "@/components/dashboard/profile/profile-verification-docs-section";
 import { PROFILE_GLASS, profileLineIcon } from "@/components/dashboard/profile/profile-shared";
 import { ProfileVerificationStatusHero } from "@/components/dashboard/profile/profile-verification-status-hero";
 import { profilePrimaryButtonClass } from "@/components/dashboard/profile/profile-ui";
-import { useAuth } from "@/components/providers/auth-provider";
+import { useAuthUi } from "@/hooks/use-auth-ui";
+import { ProfileSectionSkeleton } from "@/components/dashboard/profile/profile-section-skeleton";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { SplitonCtaPill } from "@/components/ui/spliton-cta-pill";
 import { isAccountCenterPrototypeAllowed, isLiveAccountEnabled } from "@/lib/public-env";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
-
-function VerificationHref(next: VerificationUiStatus) {
-  const u = new URLSearchParams();
-  u.set("tab", "verification");
-  u.set(VERIFICATION_STATUS_QUERY, next);
-  return `${ROUTES.dashboardProfile}?${u.toString()}`;
-}
 
 const ACCESS_ROW_DEFS = [
   { id: "deposit", labelKey: "verification.access.deposit", before: "limited" as const, after: "full" as const },
@@ -53,10 +48,14 @@ function accessLabel(level: "full" | "limited" | "none", t: (k: string) => strin
 }
 
 export function ProfileVerificationContent() {
-  const { isAuthenticated } = useAuth();
+  const { authenticated, pending } = useAuthUi();
   const { t } = useI18n();
-  const live = isLiveAccountEnabled() && isAuthenticated;
+  const live = isLiveAccountEnabled() && authenticated;
   const prototype = isAccountCenterPrototypeAllowed();
+
+  if (pending) {
+    return <ProfileSectionSkeleton variant="form" />;
+  }
 
   if (live) {
     return <ProfileVerificationLiveContent />;
@@ -84,53 +83,40 @@ function ProfileVerificationDemoContent() {
     () => parseVerificationUiStatus(searchParams.get(VERIFICATION_STATUS_QUERY)),
     [searchParams],
   );
-  const idOk = status === "pending_review" || status === "approved" || status === "in_progress";
-  const addrOk = status === "pending_review" || status === "approved";
-  const selfieOk = status === "pending_review" || status === "approved";
+  const [done, setDone] = useState({ identity: false, address: false, selfie: false });
+  const [requestedModal, setRequestedModal] = useState<"details" | null>(null);
+  const [drafts, setDrafts] = useState<VerificationDocDrafts>({
+    countryCode: "",
+    documentType: "passport",
+    documentRef: "",
+    city: "",
+    street: "",
+    postalCode: "",
+  });
 
-  const heroAction =
-    status === "not_started" || status === "rejected"
-      ? {
-          label: status === "rejected" ? t("verification.formAndContinue") : t("verification.manualFormOpen"),
-          href: VerificationHref("in_progress"),
-        }
-      : status === "in_progress"
-        ? {
-            label: t("verification.manualFormOpen"),
-            href: VerificationHref("pending_review"),
-          }
-        : status === "approved"
-          ? {
-              label: t("verification.goPayouts", "История выплат"),
-              href: ROUTES.dashboardPayoutsHistory,
-            }
-          : null;
+  const heroAction = {
+    label: t("verification.manualFormOpen"),
+    onClick: () => setRequestedModal("details"),
+  };
 
-  const spotlightCta =
-    status === "not_started" || status === "rejected" ? (
-      <SplitonCtaPill href={VerificationHref("in_progress")} tone="onDark" className="w-full min-w-0">
-        {status === "rejected" ? t("verification.formAndContinue") : t("verification.start")}
-      </SplitonCtaPill>
-    ) : status === "in_progress" ? (
-      <SplitonCtaPill href={VerificationHref("pending_review")} tone="onDark" className="w-full min-w-0">
-        {t("verification.manualFormOpen")}
-      </SplitonCtaPill>
-    ) : null;
+  const spotlightCta = (
+    <SplitonCtaPill type="button" tone="onDark" className="w-full min-w-0" onClick={() => setRequestedModal("details")}>
+      {t("verification.start")}
+    </SplitonCtaPill>
+  );
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <ProfileVerificationStatusHero action={heroAction} />
 
-      {status === "not_started" || status === "rejected" ? (
-        <ProfileOkxSpotlight
-          icon={profileLineIcon("verification", "xl")}
-          headline={t("profile.okx.spotlight.verification.headline")}
-          body={t("profile.okx.spotlight.verification.body")}
-          detailsHref={ROUTES.dashboardSupport}
-          detailsLabel={t("profile.okx.details")}
-          cta={spotlightCta}
-        />
-      ) : null}
+      <ProfileOkxSpotlight
+        icon={profileLineIcon("verification", "xl")}
+        headline={t("profile.okx.spotlight.verification.headline")}
+        body={t("profile.okx.spotlight.verification.body")}
+        detailsHref={ROUTES.dashboardSupport}
+        detailsLabel={t("profile.okx.details")}
+        cta={spotlightCta}
+      />
 
       {status === "rejected" ? (
         <ProfileOkxAlert title={t("verification.rejectionTitle")}>
@@ -140,39 +126,30 @@ function ProfileVerificationDemoContent() {
         </ProfileOkxAlert>
       ) : null}
 
-      <ProfileOkxSection title={t("verification.documents.prepare")}>
-        <ProfileOkxRow
-          icon={profileLineIcon("id")}
-          title={t("verification.doc.idTitle")}
-          description={t("verification.doc.idSub")}
-          action={
-            <span className={profileOkxGhostClass}>
-              {idOk ? t("verification.step.done", "Пройден") : t("profile.okx.setup")}
-            </span>
-          }
-        />
-        <ProfileOkxRow
-          icon={profileLineIcon("address")}
-          title={t("verification.doc.addrTitle")}
-          description={t("verification.doc.addrSub")}
-          badge={<ProfileOkxRecommended>{t("profile.okx.recommended")}</ProfileOkxRecommended>}
-          action={
-            <span className={profileOkxGhostClass}>
-              {addrOk ? t("verification.step.done", "Пройден") : t("profile.okx.setup")}
-            </span>
-          }
-        />
-        <ProfileOkxRow
-          icon={profileLineIcon("selfie")}
-          title={t("verification.doc.selfieTitle")}
-          description={t("verification.doc.selfieSub")}
-          action={
-            <span className={profileOkxGhostClass}>
-              {selfieOk ? t("verification.step.done", "Пройден") : t("profile.okx.setup")}
-            </span>
-          }
-        />
-      </ProfileOkxSection>
+      <ProfileVerificationDocsSection
+        identityDone={done.identity}
+        addressDone={done.address}
+        selfieDone={done.selfie}
+        canEdit
+        showDetailsRow
+        drafts={drafts}
+        onDraftsChange={setDrafts}
+        onSaveIdentity={() => {
+          setDone((prev) => ({ ...prev, identity: true }));
+          return true;
+        }}
+        onSaveAddress={() => {
+          setDone((prev) => ({ ...prev, address: true }));
+          return true;
+        }}
+        onSaveSelfie={() => {
+          setDone((prev) => ({ ...prev, selfie: true }));
+          return true;
+        }}
+        requireSelfieFile={false}
+        requestedModal={requestedModal}
+        onRequestedModalHandled={() => setRequestedModal(null)}
+      />
 
       <ProfileOkxSection title={t("verification.accessTitle")}>
         {ACCESS_ROW_DEFS.map((row) => {
@@ -188,40 +165,12 @@ function ProfileVerificationDemoContent() {
         })}
       </ProfileOkxSection>
 
-      {status === "in_progress" || status === "pending_review" || status === "approved" || status === "rejected" ? (
-        <ProfileOkxSection title={t("verification.submitted.title", "Кратко о данных")}>
-          <ProfileOkxRow
-            icon={profileLineIcon("profile")}
-            title={t("verification.submitted.name", "ФИО")}
-            description="Иванов И. И."
-          />
-          <ProfileOkxRow
-            icon={profileLineIcon("id")}
-            title={t("verification.submitted.doc", "Документ")}
-            description="Паспорт 4512"
-          />
-          <ProfileOkxRow
-            icon={profileLineIcon("address")}
-            title={t("verification.submitted.country", "Страна")}
-            description="Россия"
-          />
-        </ProfileOkxSection>
-      ) : null}
-
-      {status === "in_progress" ? (
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className={profileOkxGhostClass}>
-            {t("verification.saveDraft")}
-          </button>
-        </div>
-      ) : null}
-
       <ProfileOkxBanner
         icon={PROFILE_GLASS.support}
         iconSize="lg"
         title={t("verification.helpTitle")}
         description={t("verification.helpBody")}
-        action={<ProfileOkxLink href={ROUTES.dashboardSupport}>{t("profile.okx.use")}</ProfileOkxLink>}
+        action={<ProfileOkxLink href={ROUTES.dashboardSupport}>{t("verification.contactSupport")}</ProfileOkxLink>}
       />
     </div>
   );

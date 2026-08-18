@@ -55,7 +55,7 @@ export type MarketCard = {
 
 export type CatalogItem = FundingCard | MarketCard;
 
-/** Landing preview when live catalog is empty/unavailable — 3 releases, hero-journey covers. */
+/** Landing preview when catalog data source is explicitly mock. */
 export const catalogLandingDemoItems: FundingCard[] = [
   {
     kind: "funding",

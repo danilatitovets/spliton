@@ -1,6 +1,7 @@
 import { KycStatus } from '@prisma/client';
 import {
   buildAccountCompleteness,
+  buildLightweightAccountCenter,
   buildSecuritySummary,
 } from './account-center.scoring';
 
@@ -59,5 +60,22 @@ describe('account-center.scoring', () => {
     expect(
       with2fa.recommendations.find((r) => r.code === 'ENABLE_2FA'),
     ).toBeUndefined();
+  });
+
+  it('builds a /users/me summary without requiring the full fan-out', () => {
+    const summary = buildLightweightAccountCenter({
+      displayName: 'Alex',
+      timezone: 'Europe/Moscow',
+      emailVerified: true,
+      twoFaEnabled: false,
+      passwordSet: true,
+      passwordChangedAt: null,
+      activeSessionsCount: 2,
+      kycStatus: KycStatus.NOT_STARTED,
+    });
+    expect(summary.accountCompleteness.maxScore).toBeGreaterThan(0);
+    expect(summary.security.score).toBeGreaterThanOrEqual(0);
+    expect(summary.verification.status).toBe(KycStatus.NOT_STARTED);
+    expect(summary.recentSecurityEvents).toEqual([]);
   });
 });

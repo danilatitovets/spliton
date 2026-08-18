@@ -25,3 +25,7 @@ export function hasClientSessionHint(): boolean {
     .some((part) => part.trim() === `${SPLITON_SESSION_COOKIE}=1`);
 }
 
+export function hasSessionHintCookieValue(value: string | undefined | null): boolean {
+  return value === "1";
+}
+

@@ -5,6 +5,8 @@ import type { EligibilityResult } from "@/services/legal.service";
 export type EligibilityAccessStatus =
   | "allowed"
   | "kyc_required"
+  | "in_review"
+  | "action_required"
   | "legal_required"
   | "email_required"
   | "blocked"
@@ -58,17 +60,31 @@ export function mapEligibilityToAccess(
       ctaLabelKey: "verification.eligibility.cta.acceptLegal",
     };
   }
-  if (code.startsWith("KYC") || code === "KYC_REQUIRED" || code === "KYC_IN_REVIEW" || code === "KYC_REJECTED") {
+  if (code === "KYC_IN_REVIEW") {
     return {
       id,
       labelKey,
-      status: code === "KYC_IN_REVIEW" ? "limited" : "kyc_required",
-      message: result.userMessage,
+      status: "in_review",
       ctaHref: profileDashboardHref("verification"),
-      ctaLabelKey:
-        code === "KYC_IN_REVIEW"
-          ? "verification.eligibility.cta.viewStatus"
-          : "verification.eligibility.cta.completeKyc",
+      ctaLabelKey: "verification.eligibility.cta.viewStatus",
+    };
+  }
+  if (code === "KYC_REJECTED") {
+    return {
+      id,
+      labelKey,
+      status: "action_required",
+      ctaHref: profileDashboardHref("verification"),
+      ctaLabelKey: "verification.fixAndContinue",
+    };
+  }
+  if (code.startsWith("KYC") || code === "KYC_REQUIRED") {
+    return {
+      id,
+      labelKey,
+      status: "kyc_required",
+      ctaHref: profileDashboardHref("verification"),
+      ctaLabelKey: "verification.eligibility.cta.completeKyc",
     };
   }
 

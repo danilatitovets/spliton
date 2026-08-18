@@ -1,13 +1,13 @@
 import request from 'supertest';
 import {
   Prisma,
-  PrismaClient,
   PriceBucket,
   ReleaseStatus,
 } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -31,7 +31,7 @@ describe('Secondary market depth & detail (e2e)', () => {
 
   it('returns listing detail with market summary', async () => {
     const seller = await registerAndLogin(app!, uniqueEmail('depth-seller'));
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-depth-${Date.now()}`,
@@ -55,7 +55,6 @@ describe('Secondary market depth & detail (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(5),
       },
     });
-    await prisma.$disconnect();
 
     const listingRes = await request(app!.getHttpServer())
       .post('/api/v1/market/listings')
@@ -85,7 +84,7 @@ describe('Secondary market depth & detail (e2e)', () => {
 
   it('returns order book depth for active release', async () => {
     const seller = await registerAndLogin(app!, uniqueEmail('depth-book'));
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-book-${Date.now()}`,
@@ -108,7 +107,6 @@ describe('Secondary market depth & detail (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(8),
       },
     });
-    await prisma.$disconnect();
 
     await request(app!.getHttpServer())
       .post('/api/v1/market/listings')
@@ -127,7 +125,7 @@ describe('Secondary market depth & detail (e2e)', () => {
 
   it('returns terminal summary and order preview', async () => {
     const seller = await registerAndLogin(app!, uniqueEmail('term-seller'));
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-term-${Date.now()}`,
@@ -150,7 +148,6 @@ describe('Secondary market depth & detail (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(8),
       },
     });
-    await prisma.$disconnect();
 
     await request(app!.getHttpServer())
       .post('/api/v1/market/listings')
@@ -181,7 +178,7 @@ describe('Secondary market depth & detail (e2e)', () => {
 
   it('returns ordered price history', async () => {
     const user = await registerAndLogin(app!, uniqueEmail('depth-prices'));
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-ph-${Date.now()}`,
@@ -224,7 +221,6 @@ describe('Secondary market depth & detail (e2e)', () => {
         },
       ],
     });
-    await prisma.$disconnect();
 
     const res = await request(app!.getHttpServer())
       .get(`/api/v1/market/prices?releaseId=${release.id}&bucket=D1&period=30d`)
@@ -239,7 +235,7 @@ describe('Secondary market depth & detail (e2e)', () => {
   it('depth ask levels decrease after trade', async () => {
     const seller = await registerAndLogin(app!, uniqueEmail('depth-trade-s'));
     const buyer = await registerAndLogin(app!, uniqueEmail('depth-trade-b'));
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `e2e-trade-depth-${Date.now()}`,
@@ -262,7 +258,6 @@ describe('Secondary market depth & detail (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(10),
       },
     });
-    await prisma.$disconnect();
     await seedWalletWithLedger(seller.userId, '0');
     await seedWalletWithLedger(buyer.userId, '500');
 

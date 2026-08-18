@@ -2,7 +2,6 @@ import request from 'supertest';
 import {
   OwnershipEventType,
   Prisma,
-  PrismaClient,
   ReleaseStatus,
   UserRoleCode,
   UserStatus,
@@ -10,6 +9,7 @@ import {
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function staffEmail(prefix: string): string {
   return `e2e-revenue-${prefix}-${Date.now()}@example.com`;
@@ -21,7 +21,7 @@ async function registerUser(app: E2eApp, email: string) {
 }
 
 async function assignRole(email: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (user && role) {
@@ -31,7 +31,6 @@ async function assignRole(email: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
   return user!.id;
 }
 
@@ -46,7 +45,7 @@ async function staffToken(app: E2eApp, role: UserRoleCode): Promise<string> {
 }
 
 async function seedReleaseWithHolders(app: E2eApp) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const investorEmail = `inv-${Date.now()}@example.com`;
   const { userId: investorId, password } = await registerE2eUser(app, investorEmail);
   await seedWalletWithLedger(investorId, '1000');
@@ -89,7 +88,6 @@ async function seedReleaseWithHolders(app: E2eApp) {
     },
   });
 
-  await prisma.$disconnect();
   return { release, investorId, investorEmail, password };
 }
 
@@ -186,7 +184,7 @@ describe('Admin revenue distribution API (e2e)', () => {
       .send({ revenueEventId: eventId });
     expect(dup.status).toBe(409);
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const payout = await prisma.payout.findFirst({
       where: { userId: investorId, releaseId: release.id },
     });
@@ -216,12 +214,11 @@ describe('Admin revenue distribution API (e2e)', () => {
     expect(analytics.status).toBe(200);
     expect(analytics.body.userPayouts.length).toBeGreaterThan(0);
 
-    await prisma.$disconnect();
   });
 
   it('preview save rejects period with no eligible holders at cutoff', async () => {
     const adminToken = await staffToken(app!, UserRoleCode.SUPER_ADMIN);
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const orphanEmail = `orphan-${Date.now()}@example.com`;
     const { userId } = await registerE2eUser(app!, orphanEmail);
     const release = await prisma.release.create({
@@ -249,7 +246,6 @@ describe('Admin revenue distribution API (e2e)', () => {
         avgEntryPrice: new Prisma.Decimal(10),
       },
     });
-    await prisma.$disconnect();
 
     const create = await request(app!.getHttpServer())
       .post('/api/admin/v1/revenue-events')

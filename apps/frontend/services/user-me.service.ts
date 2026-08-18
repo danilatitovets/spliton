@@ -1,5 +1,5 @@
+import { assertApiOk, parseApiClientError } from "@/lib/api/api-client-error";
 import { getPublicApiBaseUrl } from "@/lib/public-env";
-import { parseApiClientError } from "@/lib/api/api-client-error";
 
 type AuthorizedFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -91,7 +91,7 @@ export type UserMeProfile = {
 
 export async function fetchUserMe(fetcher: AuthorizedFetch): Promise<UserMeProfile> {
   const res = await fetcher(`${getPublicApiBaseUrl()}/users/me`);
-  if (!res.ok) throw new Error("profile.overview.loadProfileError");
+  await assertApiOk(res);
   return res.json() as Promise<UserMeProfile>;
 }
 
@@ -121,7 +121,7 @@ export type UserSessionItem = {
 
 export async function fetchUserSessions(fetcher: AuthorizedFetch) {
   const res = await fetcher(`${getPublicApiBaseUrl()}/api/v1/me/sessions`);
-  if (!res.ok) throw new Error("Не удалось загрузить сессии");
+  await assertApiOk(res);
   return res.json() as Promise<{ items: UserSessionItem[] }>;
 }
 
@@ -149,7 +149,7 @@ export type SecurityEventItem = {
 
 export async function fetchSecurityEvents(fetcher: AuthorizedFetch) {
   const res = await fetcher(`${getPublicApiBaseUrl()}/api/v1/me/security-events`);
-  if (!res.ok) throw new Error("profile.security.events.loadError");
+  await assertApiOk(res);
   return res.json() as Promise<{ items: SecurityEventItem[] }>;
 }
 
@@ -161,7 +161,7 @@ export type UserSecurityPreferences = {
 
 export async function fetchSecurityPreferences(fetcher: AuthorizedFetch): Promise<UserSecurityPreferences> {
   const res = await fetcher(`${getPublicApiBaseUrl()}/api/v1/me/security-preferences`);
-  if (!res.ok) throw new Error("profile.security.preferences.loadError");
+  await assertApiOk(res);
   return res.json() as Promise<UserSecurityPreferences>;
 }
 
@@ -174,7 +174,7 @@ export async function patchSecurityPreferences(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error("profile.security.preferences.saveError");
+  await assertApiOk(res);
   return res.json() as Promise<UserSecurityPreferences>;
 }
 

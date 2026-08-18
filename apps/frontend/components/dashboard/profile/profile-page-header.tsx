@@ -1,20 +1,23 @@
 "use client";
 
-import { ChevronDown } from "@/lib/lucide";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
-import { parseProfilePageTabParam } from "@/constants/dashboard/profile-page";
 import { useI18n } from "@/components/providers/i18n-provider";
+import {
+  resolveProfilePageTab,
+  type ProfilePageTabId,
+} from "@/constants/dashboard/profile-page";
 import { profileTabLabel } from "@/lib/i18n/profile-messages";
-import type { ProfilePageTabId } from "@/constants/dashboard/profile-page";
+import { ChevronDown } from "@/lib/lucide";
 
 export function ProfilePageHeader() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { locale, t } = useI18n();
   const tab = useMemo(
-    () => parseProfilePageTabParam(searchParams.get("tab")),
-    [searchParams],
+    () => resolveProfilePageTab(pathname, searchParams.get("tab")),
+    [pathname, searchParams],
   );
   const title = profileTabLabel(tab as ProfilePageTabId, locale) || t("profile.header.fallbackTitle");
 

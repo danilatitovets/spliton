@@ -440,11 +440,11 @@ export function FeesPageContent() {
     );
   }
 
-  if (live && error && !liveFees) {
+  if (live && !liveFees) {
     return (
       <div className="border-y border-rose-200 py-12 text-center">
         <p className="text-sm font-medium text-rose-800">{t("fees.error.title")}</p>
-        <p className="mt-2 text-sm text-rose-600/90">{error}</p>
+        {error ? <p className="mt-2 text-sm text-rose-600/90">{error}</p> : null}
         <button
           type="button"
           onClick={() => void reload()}

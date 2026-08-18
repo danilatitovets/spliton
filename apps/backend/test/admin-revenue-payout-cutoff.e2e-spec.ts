@@ -2,18 +2,18 @@ import request from 'supertest';
 import {
   OwnershipEventType,
   Prisma,
-  PrismaClient,
   ReleaseStatus,
   UserRoleCode,
 } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
+import { createIsolatedE2ePrisma, getE2ePrisma } from './helpers/e2e-prisma';
 
 async function staffToken(app: E2eApp, role: UserRoleCode): Promise<string> {
   const email = `e2e-cutoff-${role.toLowerCase()}-${Date.now()}@example.com`;
   await registerE2eUser(app, email);
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const roleRow = await prisma.role.findUniqueOrThrow({ where: { code: role } });
   await prisma.userRole.upsert({
@@ -21,7 +21,6 @@ async function staffToken(app: E2eApp, role: UserRoleCode): Promise<string> {
     create: { userId: user.id, roleId: roleRow.id },
     update: {},
   });
-  await prisma.$disconnect();
   const login = await request(app.getHttpServer())
     .post('/auth/login')
     .send({ email, password: 'TestPass123!' });
@@ -75,7 +74,7 @@ describe('Revenue payout cutoff model (e2e)', () => {
     await seedWalletWithLedger(seller.userId, '100');
     await seedWalletWithLedger(buyer.userId, '100');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `cutoff-${Date.now()}`,
@@ -147,7 +146,6 @@ describe('Revenue payout cutoff model (e2e)', () => {
         },
       ],
     });
-    await prisma.$disconnect();
 
     const create = await request(app!.getHttpServer())
       .post('/api/admin/v1/revenue-events')
@@ -179,7 +177,7 @@ describe('Revenue payout cutoff model (e2e)', () => {
     );
     expect(run.status).toBe(201);
 
-    const prisma2 = new PrismaClient();
+    const prisma2 = createIsolatedE2ePrisma();
     const sellerPayout = await prisma2.payout.findFirst({
       where: { userId: seller.userId, releaseId: release.id },
     });
@@ -199,7 +197,7 @@ describe('Revenue payout cutoff model (e2e)', () => {
     await seedWalletWithLedger(seller.userId, '100');
     await seedWalletWithLedger(buyer.userId, '100');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const release = await prisma.release.create({
       data: {
         slug: `split-${Date.now()}`,
@@ -245,7 +243,6 @@ describe('Revenue payout cutoff model (e2e)', () => {
         },
       ],
     });
-    await prisma.$disconnect();
 
     const create = await request(app!.getHttpServer())
       .post('/api/admin/v1/revenue-events')

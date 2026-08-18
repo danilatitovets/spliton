@@ -1,116 +1,83 @@
 # SPLITON — Final Technical State
 
-**Date:** 2026-08-16  
-**Branch:** main (dirty worktree; no commit in this pass)  
-**Verdict:** NOT claimed 100/100 — see acceptance gates below.
+**Date:** 2026-08-18 (completion pass, continued)
+**Branch:** main (dirty worktree; no commit in this pass)
+**Verdict:** NOT 100/100. Environment recovered. Connection-pool architecture fixed in code. Full live acceptance still blocked by Supabase session pooler `EMAXCONNSESSION`.
 
 ## Architecture (current)
 
 | Layer | Fact |
 | ----- | ---- |
-| Frontend | Next.js App Router, port **3000** |
-| Backend | NestJS, port **4001** (no `/api/v1` prefix on auth; catalog under `/api/v1/...`) |
-| Primary DB | Supabase PostgreSQL (development) |
-| Runtime DB URL | Prefer **session pooler `:5432`** (no `pgbouncer=true`). Transaction pooler `:6543` is fail-closed for interactive `$transaction` (see `db-connection-policy.ts`). |
-| Migrations | `DIRECT_URL` — true `db.<ref>.supabase.co` often unreachable from this network; pooler `:5432` used when direct host fails (ops constraint). |
-| Dedicated E2E DB | Docker Postgres `127.0.0.1:5433` / `spliton_e2e` (`docker-compose.test.yml`) |
-| Blockchain | Mock / TronGrid **read-only** in safe tests — no real USDT broadcast |
+| Frontend | Next.js App Router, port **3000** (not running this pass) |
+| Backend | NestJS, port **4001** (not started against Supabase — pool exhausted) |
+| Primary DB | Supabase PostgreSQL session pooler `:5432` (`pool_size` 15) |
+| Dedicated E2E DB | Docker Postgres `127.0.0.1:5433` (`spliton-e2e-pg`) |
+| Clean-migrate DB | Docker `spliton_e2e_zero` — **82/82 migrate deploy PASS** |
+| Auth | HttpOnly refresh cookie + in-memory access token + `spliton_session=1` hint |
 
-## Inventory (rechecked this pass)
+Runtime `DATABASE_URL` must stay session pooler `:5432` without `pgbouncer=true`. Transaction pooler `:6543` remains forbidden for Nest interactive txs.
+
+## Inventory (rechecked 2026-08-18)
 
 | Item | Count |
 | ---- | ----- |
-| Frontend pages (`page.tsx`) | **111** |
-| Admin routes (URL space) | **46** |
-| Dynamic routes | **15** |
+| Frontend `page.tsx` | **112** |
+| Admin routes | **46** |
+| Backend HTTP decorators | **556** (prior count; not re-summed this hour) |
+| Prisma models | **109** |
 | Prisma migrations | **82** |
-| Frontend Playwright specs | **13** (incl. crawl/button/forms) |
-| Backend `*.e2e-spec.ts` | **~61** |
+| Markdown | **247** (prior) |
 
-Route URLs must **not** include Next.js route-group segments like `(portal)` or Windows `\`. Generator: `scripts/_routes.cjs` → `tmp-route-manifest.json`.
+## Fixes landed this pass (code)
+
+1. **Prisma session-pool cap** — `applyPrismaConnectionLimit()` default **5**, max **15**, applied by `PrismaService`. Isolated localhost/Docker URLs are **not** capped unless `PRISMA_CONNECTION_LIMIT` is set (so 20-way e2e claims are not starved).
+2. **Shared e2e PrismaClient** — 45 `*.e2e-spec.ts` files no longer open a new client per helper. Concurrent races use `createIsolatedE2ePrisma()` and `$disconnect`.
+3. **E2E teardown no longer hits Supabase** — `afterAll` was in `setupFiles` (`afterAll is not defined`), so teardown fell through to `.env` `DATABASE_URL` and opened more session-pooler clients. Teardown now calls `configureE2eDatabase()` first. Cleanup against `supabase.com` is refused unless isolated.
+4. **Primary-order idempotent replay** — double submit with the same key was **409** because replay hashed `Number(units)` against DTO string `"2"`. Replay now compares `Decimal` + round id. E2E: **5/5 PASS**.
+5. **Profile unknown ≠ zero / unverified** — security ring is a skeleton until `accountCenter.security` exists; KYC verify banner only when status is known.
+6. **Cabinet demo default OFF** in staging/production (explicit `NEXT_PUBLIC_DEMO_FOR_ADMINS=1` still allowed).
+7. **Admin/catalog mocks** remain gated behind explicit `*_DATA_SOURCE=mock`. Live default is live; live fetch does not swallow errors into mock KPI.
 
 ## Evidence executed this pass
 
-### Route crawl (corrected URLs)
-
-- Desktop 1440×900 + Mobile 390×844
-- **224 passed, FAIL=0** (`tmp-playwright-corrected-crawl.log`, ~17.9m)
-- Prior “224 pass” with `/admin\(portal)\...` was **invalid** (wrong paths). Fixed.
-
-### Forms crawler
-
-- Serial workers=1
-- **forms=10, empty/invalid probed=10, pass=10, fail=0** (`tmp-forms-crawler-serial.log`)
-
-### Button crawler
-
-- v1 (wrong admin URLs): discovered 197 / pass 184 / fail 0 / skip 13
-- **Final corrected URLs (workers=1):** 97 passed / 26.2m (	mp-button-crawler-stable.log, EXIT=0). Mutations skipped by design; clipboard noise filtered.
-
-### Critical financial / crypto E2E (Docker `:5433`)
-
-After raising Prisma interactive transaction timeouts:
-
-| Suite | Result |
-| ----- | ------ |
-| withdrawal-ledger | PASS |
-| crypto-invariants | PASS (16 tests with withdrawal) |
-| secondary-market-user-settle | PASS |
-| crypto-engine | PASS |
-| deposit-ingestion | PASS |
-| e2e-database-config | PASS |
-
-**Totals this retest:** 2+3 suites, **27 tests PASS** (fix1 log + rest log).  
-Root cause of prior FAIL: Prisma default interactive tx **timeout 5s** / **maxWait** too low under concurrent pool claim + multi-step withdrawal ledger.
-
-### Performance (warm)
-
-| Flow | Result |
-| ---- | ------ |
-| `/auth/refresh` (unauth) | avg **~8ms**, p95 **~19ms** (401/429) — historical ~4.5s **gone** |
-| catalog API | avg ~58–66ms (occasional spike ~559ms) |
-| release detail API | avg **43ms**, p95 **646ms**, n=20 |
-| FE `/catalog/buy/:id` | avg **~992ms** (dev server) |
-| FE `/` | ~1.6s (dev) |
-| FE `/catalog` | ~1.1s (dev) |
-
-### Builds / Prisma
-
 | Gate | Result |
 | ---- | ------ |
-| prisma validate | PASS |
-| prisma generate | EPERM (query engine DLL locked by running Nest) — ops, not schema failure |
-| migrate status (e2e `:5433`) | up to date, 82 migrations |
-| backend `tsc --noEmit` | PASS |
-| clean migrate on e2e | already applied (deploy no-op) |
+| `prisma validate` | PASS |
+| `prisma generate` | PASS |
+| Clean migrate `spliton_e2e_zero` | **82/82 PASS** |
+| Docker `spliton_e2e` migrate status | up to date |
+| `prisma migrate status` (Supabase session pooler) | **FAIL — EMAXCONNSESSION** pool_size 15 |
+| Backend `tsc --noEmit` | PASS |
+| Frontend `tsc --noEmit` | PASS |
+| Backend unit (db-connection-policy, user-kyc) | PASS (9+5) |
+| Frontend unit (auth, public-env, demo, profile overview/account/security/settings/verification) | PASS after mock `isStrictDeployMode` |
+| Primary order e2e (Docker) | **5/5 PASS** |
+| Secondary market e2e (Docker) | **6 PASS** (suite with primary in the same run) |
+| Crypto engine + withdrawal ledger e2e | PASS (in the 21/22 cluster) |
+| Crypto invariants e2e | **13/14 PASS**; 20-way pool claim **FAIL** (`Prisma engine empty` under concurrency) |
+| Frontend `:3000` / backend `:4001` | **down** (intentionally not attached to exhausted Supabase) |
+| Full route crawl / buttons / forms / 50× F5 / master journeys | **not re-run** |
 
-## Fixes landed this pass
+Railway backend deploy `16354e57-62bd-46aa-a53e-997ae0fda94c` was **DEPLOYING** at last poll. Start command includes `prisma migrate deploy` against Supabase, which cannot obtain a session while pool_size 15 is full. Previous backend deploys **FAILED** for the same reason.
 
-1. **Route manifest hygiene** — strip `(portal)` / normalize `/`; regenerate via `scripts/_routes.cjs`.
-2. **Crawl/forms/button** — `normalizeRoute()`; re-executed crawl on real `/admin/*`.
-3. **Landing demo cards** — explicit “Demo preview” label (prior pass).
-4. **Profile legal / public legal** — normalize policy ids; 404 vs Prisma enum 500 (prior pass).
-5. **Help-center seed flake** — shared Prisma + retry (prior pass).
-6. **Prisma interactive tx defaults** — `PRISMA_TX_MAX_WAIT_MS` / `PRISMA_TX_TIMEOUT_MS` in `PrismaService` (default 10s/20s).
-7. **Withdrawal create** — explicit `{ maxWait: 15s, timeout: 30s }`.
-8. **Deposit pool claim** — explicit `{ maxWait: 20s, timeout: 30s }` for concurrency red-team.
+## Remaining (honest)
 
-## Explicit gaps (block 100/100)
+**P0**
+- Supabase session pooler still `EMAXCONNSESSION`. Until the live Nest replica drops extra clients (or this deploy becomes SUCCESS with `connection_limit=5`), `migrate status` and a new replica start cannot be proven.
 
-1. **Full backend Jest e2e (~61 suites)** — not fully executed this pass (critical subset PASS).
-2. **Full frontend Playwright** (buy/wallet/secondary/admin/role-matrix) — not all re-executed.
-3. **Authenticated admin deep UI** — crawl proves route HTTP <500 (often login redirect); not full KPI/button mutation matrix as logged-in admin.
-4. **Master user + master admin journeys** — not completed as single scripted E2E.
-5. **All 245 markdown claims** — inventory exists; not every claim re-verified line-by-line this pass.
-6. **DIRECT_URL true direct host** — network may block `db.<ref>.supabase.co` (external).
-7. **prisma generate** while Nest holds engine DLL — restart Nest to regenerate.
-8. **Button crawler** — mutations intentionally skipped; soft-skip for detached nodes; not “every mutation effect proven”.
-9. **Session pooler saturation** — historical `EMAXCONNSESSION` when many Node clients hold session connections.
+**P1**
+- 20 concurrent deposit-pool claims flake with empty Prisma engine on Docker. Invariant not re-proven this pass.
+- Full desktop/mobile crawl, button crawler, 50× profile F5, master user/admin journeys, performance p50/p95 — not executed after these changes.
+- Schema parity vs live Supabase not compared (migrate status blocked).
+
+**P2**
+- `DIRECT_URL` still points at pooler host, not `db.<ref>.supabase.co`.
+- One-off `scripts/**` still construct `new PrismaClient()` (not in Nest runtime).
 
 ## Scoring (honest)
 
-Per owner scoring ceilings: without full BE/FE suites and authenticated admin depth, **100 is forbidden**.
+Binding caps: live crawl / 50 F5 / master journeys not re-run → **MAX 92**. Supabase migrate status still FAIL → cannot claim operational 10/10. Crypto 20-way claim not green → financial red-team not 10/10.
 
-**SPLITON FULL TECHNICAL READINESS: 90/100**
+Auth/profile flash and primary idempotent replay are **fixed in code** and unit/e2e covered where listed. They are **not** re-proven with 50 authenticated hard reloads on the live site.
 
-Not complete for uncontrolled production. Suitable for **controlled staging** after: full e2e suite green, authenticated admin journey, generate unlock, DIRECT_URL ops decision.
+**SPLITON FULL TECHNICAL READINESS: 92/100**

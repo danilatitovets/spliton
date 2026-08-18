@@ -1,3 +1,4 @@
+import { PAYOUTS_OVERVIEW_ICONS } from "@/constants/assets/payouts-overview-icons";
 import { ROUTES } from "@/constants/routes";
 
 export type DashboardNavBadge = "new" | "free" | "hot";
@@ -31,6 +32,20 @@ export type DashboardNavItem = {
   children?: DashboardNavSubItem[];
 };
 
+/** Same marble smoke as profile / payouts cards — not photographic stills. */
+export const MEGAMENU_CARD_TEXTURE = PAYOUTS_OVERVIEW_ICONS.compareTexture;
+
+export const MEGAMENU_TEXTURE_POSITION: Record<string, string> = {
+  catalog: "28% 40%",
+  holdings: "72% 36%",
+  payouts: "48% 72%",
+  misc: "18% 78%",
+};
+
+export function megamenuTexturePosition(id: string): string {
+  return MEGAMENU_TEXTURE_POSITION[id] ?? MEGAMENU_TEXTURE_POSITION.catalog!;
+}
+
 export const dashboardNavItems: DashboardNavItem[] = [
   { id: "home", label: "Главная", href: ROUTES.dashboard },
   {
@@ -38,7 +53,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     label: "Каталог",
     href: ROUTES.dashboardCatalog,
     megaTeaser:
-      "Spliton: доли дохода по трекам — юниты, USDT (TRC20), раунды, выплаты и вторичный рынок для передачи прав без брокерской модели.",
+      "Юниты в треках, которые уже звучат. Раунды, выплаты USDT и вторичный рынок — без брокера между вами и каталогом.",
     children: [
       {
         label: "Каталог релизов",
@@ -82,7 +97,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     id: "holdings",
     label: "Мои активы",
     href: ROUTES.myAssetsOverview,
-    megaTeaser: "Сводка активов: позиции, юниты, структура и операции по релизам.",
+    megaTeaser: "Портфель без шума: позиции, юниты и движение по релизам — одним взглядом, без лишней панели.",
     children: [
       {
         label: "Сводка",
@@ -118,7 +133,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     id: "payouts",
     label: "Выплаты",
     href: ROUTES.dashboardPayouts,
-    megaTeaser: "Обзор, сравнение периодов, график начислений и операции USDT без лишних шагов.",
+    megaTeaser: "Начисления, сравнение периодов и вывод USDT. Деньги приходят туда, куда вы указали.",
     children: [
       {
         label: "Обзор",
@@ -166,7 +181,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     id: "misc",
     label: "Сервисы",
     href: ROUTES.support,
-    megaTeaser: "Сервисные разделы: калькулятор, статус и программы — без лишнего шума.",
+    megaTeaser: "Калькулятор, комиссии, статус и программы. Всё, что держит платформу рядом — без лишнего шума.",
     children: [
       {
         label: "Калькулятор",

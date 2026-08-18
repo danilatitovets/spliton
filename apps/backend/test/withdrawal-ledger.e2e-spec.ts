@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { PrismaClient, UserRoleCode } from '@prisma/client';
+import { UserRoleCode } from '@prisma/client';
 import { createE2eApp, E2eApp } from './helpers/create-e2e-app';
 import { registerE2eUser } from './helpers/register-e2e-user';
 import { seedWalletWithLedger } from './helpers/seed-wallet-ledger';
@@ -7,6 +7,7 @@ import { uniqueTrc20Address } from './helpers/e2e-trc20-address';
 import { canonicalTestTxHash } from './helpers/canonical-tx-hash';
 import { mockUsdtTransfer } from './helpers/mock-usdt-transfer';
 import { MockDepositProvider } from '../src/modules/deposit-ingestion/providers/mock-deposit.provider';
+import { getE2ePrisma } from './helpers/e2e-prisma';
 
 function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now()}@example.com`;
@@ -23,7 +24,7 @@ async function registerAndLogin(
 }
 
 async function grantStaffRole(userId: string, roleCode: UserRoleCode) {
-  const prisma = new PrismaClient();
+  const prisma = getE2ePrisma();
   const role = await prisma.role.findUnique({ where: { code: roleCode } });
   if (role) {
     await prisma.userRole.upsert({
@@ -32,7 +33,6 @@ async function grantStaffRole(userId: string, roleCode: UserRoleCode) {
       update: {},
     });
   }
-  await prisma.$disconnect();
 }
 
 describe('Withdrawal ledger flow (e2e)', () => {
@@ -63,7 +63,7 @@ describe('Withdrawal ledger flow (e2e)', () => {
     const withdrawalId = createRes.body.id as string;
     expect(createRes.body.status).toBe('pending');
 
-    const prisma = new PrismaClient();
+    const prisma = getE2ePrisma();
     const afterCreateBalance = await prisma.walletBalance.findUnique({
       where: { walletId: wallet.id },
     });
@@ -165,7 +165,6 @@ describe('Withdrawal ledger flow (e2e)', () => {
     expect(Number(afterRejectBalance!.available.toString())).toBe(200);
     expect(Number(afterRejectBalance!.locked.toString())).toBe(0);
 
-    await prisma.$disconnect();
   });
 
   it('rejects invalid TRC20 and insufficient balance', async () => {

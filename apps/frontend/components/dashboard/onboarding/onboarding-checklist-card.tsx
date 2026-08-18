@@ -30,7 +30,7 @@ export function OnboardingChecklistCard({ className }: { className?: string }) {
 
   const activeData = data && !data.completed && !data.dismissed ? data : null;
   const progressPct =
-    activeData?.progressPct ?? (live && isAuthenticated ? 0 : LANDING_ONBOARDING_DEMO_PROGRESS);
+    activeData?.progressPct ?? (!live ? LANDING_ONBOARDING_DEMO_PROGRESS : 0);
 
   if (loading && live && isAuthenticated && !data) {
     return (

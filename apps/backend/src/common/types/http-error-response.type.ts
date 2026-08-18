@@ -10,4 +10,7 @@ export type HttpErrorResponse = {
   code?: string;
   details?: unknown;
   requestId?: string;
+  /** Alias of requestId for client correlation UI ("Error ID"). */
+  correlationId?: string;
+  retryable: boolean;
 };
